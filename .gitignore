@@ -1,0 +1,50 @@
+# ==========================================
+# 🎨 FRONTEND DEPS & CACHE (Next.js / Node)
+# ==========================================
+node_modules/
+.next/
+out/
+build/
+dist/
+.turbo/
+.pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+npm-debug.log*
+
+# ==========================================
+# 🧠 BACKEND DEPS & CACHE (FastAPI / Python)
+# ==========================================
+venv/
+.venv/
+env/
+ENV/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+pip-log.txt
+pip-delete-this-directory.txt
+.pytest_cache/
+.poetry/
+
+# ==========================================
+# 🔑 SECURITY & SECRETS (Never commit these!)
+# ==========================================
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.pem
+*.key
+auth_state.json
+
+# ==========================================
+# 💻 OS & IDE CACHE
+# ==========================================
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
