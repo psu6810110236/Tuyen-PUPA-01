@@ -5,12 +5,14 @@ from models.user import User  # ดึงโมเดล User มาใช้ง
 from models.inventory import InventoryItem  # ดึงโมเดล InventoryItem มาใช้งาน
 from routers.auth import router as auth_router  # ดึง Router สำหรับ Authentication มาใช้งาน
 from routers.inventory import router as inventory_router  # ดึง Router สำหรับ Inventory มาใช้งาน
+from routers.recipe import router as recipe_router  # ดึง Router สำหรับ Recipe มาใช้งาน
 import time
 
 app = FastAPI() # (ใช้ app ตัวเดิมของคุณที่มีอยู่แล้วได้เลย)
 
 app.include_router(auth_router)  # (สมมติว่า auth_router คือ Router ที่คุณสร้างใน auth.py)
 app.include_router(inventory_router)  # (สมมติว่า inventory_router คือ Router ที่คุณสร้างใน inventory.py)
+app.include_router(recipe_router)  # (สมมติว่า recipe_router คือ Router ที่คุณสร้างใน recipe.py)
 
 
 @app.middleware("http")
