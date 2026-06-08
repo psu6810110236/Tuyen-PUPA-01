@@ -2,13 +2,15 @@ from fastapi import FastAPI, Depends, HTTPException,Request
 from sqlalchemy.orm import Session
 from database import get_db
 from models.user import User  # ดึงโมเดล User มาใช้งาน
-from Routers.auth import router as auth_router  # ดึง Router สำหรับ Authentication มาใช้งาน
+from models.inventory import InventoryItem  # ดึงโมเดล InventoryItem มาใช้งาน
+from routers.auth import router as auth_router  # ดึง Router สำหรับ Authentication มาใช้งาน
+from routers.inventory import router as inventory_router  # ดึง Router สำหรับ Inventory มาใช้งาน
 import time
-
 
 app = FastAPI() # (ใช้ app ตัวเดิมของคุณที่มีอยู่แล้วได้เลย)
 
 app.include_router(auth_router)  # (สมมติว่า auth_router คือ Router ที่คุณสร้างใน auth.py)
+app.include_router(inventory_router)  # (สมมติว่า inventory_router คือ Router ที่คุณสร้างใน inventory.py)
 
 
 @app.middleware("http")
