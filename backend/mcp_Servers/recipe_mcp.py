@@ -1,53 +1,49 @@
 import os
 import sys
 
-# 💡 ทริคเด็ดสำหรับ Windows: ดึงพาธของโฟลเดอร์ย่อยเข้าสู่ระบบสากลของไฟล์นี้
-# มันจะหาโฟลเดอร์ปัจจุบันที่ไฟล์นี้อยู่ แล้วถอยหลังกลับไปหาโฟลเดอร์หลักให้อัตโนมัติ
-current_dir = os.path.dirname(os.path.abspath(__file__))
-parent_dir = os.path.dirname(current_dir) # จะได้พาธของโฟลเดอร์ backend
+# 💡 ทริคเด็ดสำหรับ Windows: บังคับให้ Python รู้จักโฟลเดอร์ backend เสมอ ไม่ว่าจะสั่งรันจากมุมไหนของโลก
+current_dir = os.path.dirname(os.path.abspath(__file__)) # อยู่ที่โฟลเดอร์ mcp_servers
+backend_dir = os.path.dirname(current_dir)             # ถอยกลับมาที่โฟลเดอร์ backend
 
-if parent_dir not in sys.path:
-    sys.path.append(parent_dir)
-if current_dir not in sys.path:
-    sys.path.append(current_dir)
+if backend_dir not in sys.path:
+    sys.path.append(backend_dir)
 
-# -------------------------------------------------------------
-# 🎯 คราวนี้สั่ง Import แบบคลีนๆ ดั้งเดิมตามสเปกสถาปัตยกรรมของคุณได้เลยครับ:
+# ----------------------------------------------------------------------
+# 🎯 ตอนนี้ระบบจะ Import ได้แบบปลอดภัย ไร้เออเร่อ ModuleNotFoundError แล้วครับ
 from mcp.server.fastmcp import FastMCP
 import services.recipe_service as recipe_service
 
-
+# สร้างเซิร์ฟเวอร์ MCP สำหรับให้ AI มาหยิบเครื่องมือ
 mcp = FastMCP("SmartFood AI Recipe Manager")
 
+# 📋 เครื่องมือชิ้นที่ 1: แนะนำเมนูอาหารจากวัตถุดิบ (ส่งให้ AI อ่าน)
 @mcp.tool()
 async def suggest_recipes_tool(ingredients: list[str]) -> list[dict]:
     """
     Suggests delicious recipes that can be cooked based on a provided list of ingredient names.
     Use this tool when the user wants to find out what meals they can make with their available ingredients.
-    
-    Args:
-        ingredients: A list of string names of available ingredients (e.g., ['egg', 'pork', 'garlic']).
     """
+    # เพื่อป้องกันปัญหาภาษาไทย ให้เปลี่ยนมาดึงข้อมูลผ่าน Service ตรงๆ
     return await recipe_service.suggest_recipes(ingredients)
 
-@mcp.tool()
-async def get_recipe_detail_tool(recipe_id: int) -> dict:
-    """
-    Retrieves detailed preparation steps, cooking instructions, active time, and portion sizes 
-    for a specific recipe using its unique ID. Use this when the user selects a specific dish to cook.
-    
-    Args:
-        recipe_id: The unique integer identifier of the target Spoonacular recipe.
-    """
-    return await recipe_service.get_recipe_detail(recipe_id)
-
+# 🔍 เครื่องมือชิ้นที่ 2: ค้นหาชื่อเมนูตรงๆ
 @mcp.tool()
 async def search_recipe_tool(name: str) -> list[dict]:
     """
-    Searches for global food recipes based on a generic textual query name or keyword.
-    Use this tool when the user explicitly searches for a specific dish name like 'Tom Yum' or 'Pasta'.
-    
-    Args:
-        name: The name or part of the name of the recipe to search for.
+    Search for recipes by their name.
+    Use this tool when the user specifically mentions a dish name and wants to look it up.
     """
     return await recipe_service.search_recipe_by_name(name)
+
+# 🔎 เครื่องมือชิ้นที่ 3: ดูวิธีทำอาหารละเอียด
+@mcp.tool()
+async def get_recipe_detail_tool(recipe_id: int) -> dict:
+    """
+    Get detailed instructions, preparation time, and servings for a specific recipe ID.
+    Use this tool when the user selects a recipe and wants to see how to cook it step-by-step.
+    """
+    return await recipe_service.get_recipe_detail(recipe_id)
+
+if __name__ == "__main__":
+    mcp.run()
+
