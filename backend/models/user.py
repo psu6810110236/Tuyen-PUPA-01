@@ -10,3 +10,5 @@ class User(Base):
     username = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
     inventory_items = relationship("InventoryItem", back_populates="owner", cascade="all, delete-orphan")
+    saved_recipes = relationship("RecipeSaved", back_populates="user", cascade="all, delete-orphan")
+    nutrition_logs = relationship("NutritionLog", back_populates="user", cascade="all, delete-orphan")

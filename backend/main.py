@@ -6,6 +6,7 @@ from models.inventory import InventoryItem  # ดึงโมเดล Inventory
 from routers.auth import router as auth_router  # ดึง Router สำหรับ Authentication มาใช้งาน
 from routers.inventory import router as inventory_router  # ดึง Router สำหรับ Inventory มาใช้งาน
 from routers.recipe import router as recipe_router  # ดึง Router สำหรับ Recipe มาใช้งาน
+from routers.nutrition import router as nutrition_router  # ดึง Router สำหรับ Nutrition มาใช้งาน
 import time
 
 app = FastAPI() # (ใช้ app ตัวเดิมของคุณที่มีอยู่แล้วได้เลย)
@@ -13,7 +14,7 @@ app = FastAPI() # (ใช้ app ตัวเดิมของคุณที�
 app.include_router(auth_router)  # (สมมติว่า auth_router คือ Router ที่คุณสร้างใน auth.py)
 app.include_router(inventory_router)  # (สมมติว่า inventory_router คือ Router ที่คุณสร้างใน inventory.py)
 app.include_router(recipe_router)  # (สมมติว่า recipe_router คือ Router ที่คุณสร้างใน recipe.py)
-
+app.include_router(nutrition_router)  # (สมมติว่า nutrition_router คือ Router ที่คุณสร้างใน nutrition.py)
 
 @app.middleware("http")
 async def log_and_time_middleware(request: Request, call_next):
