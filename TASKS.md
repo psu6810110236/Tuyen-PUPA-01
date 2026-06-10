@@ -32,7 +32,7 @@ Task board for dividing responsibilities among team members and tracking develop
 
 | Task ID | Description | Assigned To | Status | Notes |
 | :--- | :--- | :--- | :---: | :--- |
-| **FE-01** | Initialize React + Vite + TS in `/frontend` directory | Frontend Dev | `TODO` 🟡 | Preparing directory structure. |
+| **FE-01** | Initialize React + Vite + TS in `/frontend` directory | Frontend Dev | `DONE` 🟢 | Bootstrapped with Next.js 16 App Router + Tailwind v4 + TypeScript. |
 | **FE-02** | Design Auth UI (Login/Register) using Tailwind CSS | Frontend Dev | `TODO` 🟡 | Focus on premium aesthetics. |
 | **FE-03** | Integrate Register/Login APIs with frontend state | Frontend Dev | `TODO` 🟡 | Store JWT token in local storage/memory. |
 | **FE-04** | Build Dashboard UI for nutrition analysis and visualizations | Frontend Dev | `TODO` 🟡 | Integrate Recharts for graphing. |
