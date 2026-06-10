@@ -1,5 +1,6 @@
 import os
 import httpx
+from urllib.parse import quote
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy import and_
@@ -64,7 +65,12 @@ async def get_recipe_detail(recipe_id: int) -> dict:
         "servings": data.get("servings"),
         "instructions": data.get("instructions"),
         "extendedIngredients": [
-            {"name": ing["name"], "amount": ing["amount"], "unit": ing["unit"]}
+            {
+                "name": ing["name"], 
+                "amount": ing["amount"], 
+                "unit": ing["unit"],
+                "lotus_search_url": f"https://www.lotuss.com/th/search?q={quote(ing['name'])}"
+            }
             for ing in data.get("extendedIngredients", [])
         ]
     }

@@ -54,6 +54,49 @@ async def search_recipes(q: str, current_user: User = Depends(get_current_user))
         raise HTTPException(status_code=400, detail="กรุณากรอกคำค้นหาในพารามิเตอร์ q")
     return await recipe_service.search_recipe_by_name(q)
 
+@router.get("/test-mock/{recipe_id}")
+async def get_mock_recipe_details(recipe_id: int):
+    """(สำหรับทดลองเทสแบบเห็นภาพ) ดึงข้อมูลเมนูข้าวผัดอกไก่จำลองพร้อมลิงก์ Lotus's"""
+    return {
+        "id": recipe_id,
+        "title": "ข้าวผัดอกไก่ (Chicken Fried Rice)",
+        "image": "https://example.com/fried-rice.jpg",
+        "readyInMinutes": 15,
+        "servings": 1,
+        "extendedIngredients": [
+            {
+                "name": "chicken", 
+                "amount": 100, 
+                "unit": "g",
+                "lotus_search_url": "https://www.lotuss.com/th/search?q=chicken"
+            },
+            {
+                "name": "egg", 
+                "amount": 1, 
+                "unit": "piece",
+                "lotus_search_url": "https://www.lotuss.com/th/search?q=egg"
+            },
+            {
+                "name": "garlic", 
+                "amount": 2, 
+                "unit": "cloves",
+                "lotus_search_url": "https://www.lotuss.com/th/search?q=garlic"
+            },
+            {
+                "name": "rice", 
+                "amount": 150, 
+                "unit": "g",
+                "lotus_search_url": "https://www.lotuss.com/th/search?q=rice"
+            },
+            {
+                "name": "soy sauce", 
+                "amount": 1, 
+                "unit": "tablespoon",
+                "lotus_search_url": "https://www.lotuss.com/th/search?q=soy%20sauce"
+            }
+        ]
+    }
+
 @router.get("/{recipe_id}")
 async def get_recipe_details(recipe_id: int, current_user: User = Depends(get_current_user)):
     """ดึงขั้นตอนวิธีทำและส่วนผสมเชิงลึกของเมนูที่เลือกมาแสดงผล"""
