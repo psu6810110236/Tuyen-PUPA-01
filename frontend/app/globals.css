@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
@@ -6,51 +6,74 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme {
-  /* ─── Primary (Teal Wellness) ─── */
-  --color-primary: #0D9488;
-  --color-primary-light: #5EEAD4;
-  --color-primary-pale: #CCFBF1;
-  --color-primary-dark: #0F766E;
-
-  /* ─── Secondary (Warm Coral) ─── */
-  --color-secondary: #FF8A65;
-  --color-secondary-light: #FFCCBC;
-  --color-secondary-soft: #FDE68A;
-
-  /* ─── Surfaces ─── */
-  --color-background: #F8FAFB;
-  --color-surface: #FFFFFF;
-  --color-surface-alt: #F0FDFA;
-
-  /* ─── Text ─── */
-  --color-foreground: #1E293B;
-  --color-foreground-secondary: #64748B;
-  --color-foreground-muted: #94A3B8;
-
-  /* ─── Borders ─── */
-  --color-border: #E2E8F0;
-  --color-border-light: #F1F5F9;
-
-  /* ─── Accents ─── */
-  --color-accent-blush: #FECDD3;
-  --color-accent-lavender: #DDD6FE;
-  --color-accent-yellow: #FFD54F;
-  --color-accent-yellow-light: #FFF8E1;
-
-  /* ─── Status ─── */
-  --color-success: #10B981;
-  --color-warning: #F59E0B;
-  --color-danger: #EF4444;
-
-  /* ─── Typography ─── */
+  /* ─── Typography (Tooyen Core) ─── */
+  --font-heading: 'Plus Jakarta Sans', sans-serif;
+  --font-body: 'Inter', sans-serif;
   --font-thai: 'IBM Plex Sans Thai', 'Inter', system-ui, sans-serif;
   --font-sans: 'Inter', 'IBM Plex Sans Thai', system-ui, sans-serif;
 
-  /* ─── Shadows ─── */
-  --shadow-soft: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.04);
-  --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.04), 0 2px 4px -2px rgba(0, 0, 0, 0.03);
-  --shadow-elevated: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -4px rgba(0, 0, 0, 0.03);
-  --shadow-glow-teal: 0 0 20px rgba(13, 148, 136, 0.15);
+  /* ─── Primary (Cool Indigo-Blue — Elegant) ─── */
+  --color-primary: #5C7CFA;
+  --color-primary-foreground: #2B4ACB;
+  --color-primary-fixed: #8DA4FC;
+  --color-primary-light: #BAC8FF;
+  --color-primary-pale: #EDF2FF;
+  --color-primary-dark: #4263EB;
+
+  /* ─── Secondary (Slate Periwinkle) ─── */
+  --color-secondary: #748FFC;
+  --color-secondary-foreground: #ffffff;
+  --color-secondary-light: #DBE4FF;
+  --color-secondary-soft: #EDF2FF;
+
+  /* ─── Surfaces (Cool Gray) ─── */
+  --color-surface: #ffffff;
+  --color-surface-dim: #E9ECEF;
+  --color-surface-bright: #F8F9FA;
+  --color-surface-tint: #364FC7;
+  --color-surface-alt: #F1F3F9;
+
+  /* ─── Backgrounds (Split-View — Cool Undertone) ─── */
+  --color-background: #F5F7FB;
+  --color-background-agent: #F0F2F8;
+
+  /* ─── Text (Deeper Slate) ─── */
+  --color-foreground: #1A1F36;
+  --color-foreground-secondary: #555E7E;
+  --color-foreground-muted: #8E95A9;
+
+  /* ─── Outlines & Borders (Cool Gray) ─── */
+  --color-outline: #E5E8EE;
+  --color-outline-variant: #C8CDD8;
+  --color-border: #E5E8EE;
+  --color-border-light: #F0F1F5;
+
+  /* ─── Accents (Muted Elegant Pastels) ─── */
+  --color-accent-green: #D3F9F0;
+  --color-accent-orange: #FFF4E6;
+  --color-accent-red: #FFF0F0;
+  --color-accent-blush: #FFE0E8;
+  --color-accent-lavender: #E8E0FF;
+  --color-accent-yellow: #FFE066;
+  --color-accent-yellow-light: #FFFBEB;
+
+  /* ─── Status (Muted Elegant) ─── */
+  --color-success: #20C997;
+  --color-warning: #FAB005;
+  --color-danger: #FA5252;
+
+  /* ─── Shadows (Indigo-Tinted Soft-Tactile) ─── */
+  --shadow-soft: 0 1px 3px 0 rgba(26, 31, 54, 0.04), 0 1px 2px -1px rgba(26, 31, 54, 0.03);
+  --shadow-card: 0 4px 12px -2px rgba(92, 124, 250, 0.06), 0 2px 4px -2px rgba(26, 31, 54, 0.03);
+  --shadow-soft-blue: 0px 8px 32px rgba(92, 124, 250, 0.10), 0px 2px 8px rgba(26, 31, 54, 0.04);
+  --shadow-elevated: 0 12px 24px -4px rgba(92, 124, 250, 0.12), 0 4px 8px -4px rgba(26, 31, 54, 0.04);
+  --shadow-glow-teal: 0 0 24px rgba(92, 124, 250, 0.18);
+
+  /* ─── Spacing (Tooyen Core) ─── */
+  --spacing-base: 8px;
+  --spacing-container-padding: 24px;
+  --spacing-gutter: 16px;
+  --spacing-app-bar-height: 72px;
 
   /* ─── Animations ─── */
   --animate-fade-in: fade-in 0.3s ease-out;
@@ -115,7 +138,7 @@ body {
 }
 
 @theme inline {
-  --font-heading: var(--font-sans);
+  --font-heading: 'Plus Jakarta Sans', sans-serif;
   --font-sans: var(--font-sans);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -158,72 +181,74 @@ body {
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
+  /* ─── Tooyen Core — Cool Indigo-Blue (Light) ─── */
+  --background: #F5F7FB;
+  --foreground: #1A1F36;
+  --card: #ffffff;
+  --card-foreground: #1A1F36;
+  --popover: #ffffff;
+  --popover-foreground: #1A1F36;
+  --primary: #5C7CFA;
+  --primary-foreground: #ffffff;
+  --secondary: #748FFC;
+  --secondary-foreground: #ffffff;
+  --muted: #F1F3F9;
+  --muted-foreground: #8E95A9;
+  --accent: #EDF2FF;
+  --accent-foreground: #2B4ACB;
+  --destructive: #FA5252;
+  --border: #E5E8EE;
+  --input: #E5E8EE;
+  --ring: #BAC8FF;
+  --chart-1: #5C7CFA;
+  --chart-2: #748FFC;
+  --chart-3: #8DA4FC;
+  --chart-4: #4263EB;
+  --chart-5: #2B4ACB;
   --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --sidebar: #F8F9FA;
+  --sidebar-foreground: #1A1F36;
+  --sidebar-primary: #5C7CFA;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #EDF2FF;
+  --sidebar-accent-foreground: #2B4ACB;
+  --sidebar-border: #E5E8EE;
+  --sidebar-ring: #BAC8FF;
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  /* ─── Tooyen Core — Cool Indigo-Blue (Dark) ─── */
+  --background: #0F1225;
+  --foreground: #E8EAF0;
+  --card: #1A1D35;
+  --card-foreground: #E8EAF0;
+  --popover: #1A1D35;
+  --popover-foreground: #E8EAF0;
+  --primary: #748FFC;
+  --primary-foreground: #0F1225;
+  --secondary: #2B3A67;
+  --secondary-foreground: #BAC8FF;
+  --muted: #1F2340;
+  --muted-foreground: #8E95A9;
+  --accent: #2B3A67;
+  --accent-foreground: #BAC8FF;
+  --destructive: #FA5252;
+  --border: #2B3055;
+  --input: #2B3055;
+  --ring: #5C7CFA;
+  --chart-1: #748FFC;
+  --chart-2: #8DA4FC;
+  --chart-3: #BAC8FF;
+  --chart-4: #5C7CFA;
+  --chart-5: #4263EB;
+  --sidebar: #151830;
+  --sidebar-foreground: #E8EAF0;
+  --sidebar-primary: #748FFC;
+  --sidebar-primary-foreground: #0F1225;
+  --sidebar-accent: #2B3A67;
+  --sidebar-accent-foreground: #BAC8FF;
+  --sidebar-border: #2B3055;
+  --sidebar-ring: #5C7CFA;
 }
 
 @layer base {

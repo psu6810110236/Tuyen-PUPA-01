@@ -31,8 +31,8 @@ export default function ScannerView() {
     <div className="flex flex-col gap-6 animate-fade-in">
       {/* ─── Header ─── */}
       <div>
-        <h2 className="text-2xl font-bold text-foreground">📷 สแกนอาหาร</h2>
-        <p className="mt-1 text-sm text-foreground-secondary">
+        <h2 className="text-2xl font-heading font-bold text-foreground">📷 สแกนอาหาร</h2>
+        <p className="mt-1 text-sm font-body text-foreground-secondary">
           ถ่ายรูปหรืออัปโหลดรูปอาหาร เพื่อวิเคราะห์คุณค่าทางโภชนาการอัตโนมัติ
         </p>
       </div>
@@ -46,7 +46,7 @@ export default function ScannerView() {
         className={`relative flex min-h-[320px] cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed p-8 transition-all duration-300 ${
           isDragging
             ? "border-primary bg-primary-pale/50 shadow-glow-teal scale-[1.01]"
-            : "border-border hover:border-primary-light hover:bg-surface-alt"
+            : "border-outline hover:border-primary-light hover:bg-surface-alt"
         }`}
       >
         <input
@@ -60,7 +60,7 @@ export default function ScannerView() {
         <div className={`mb-4 rounded-2xl p-5 transition-all duration-300 ${isDragging ? 'bg-primary-pale' : 'bg-surface-alt'}`}>
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            className={`h-16 w-16 transition-colors duration-300 ${isDragging ? 'text-primary' : 'text-foreground-muted'}`}
+            className={`h-16 w-16 transition-colors duration-300 ${isDragging ? 'text-primary-dark' : 'text-foreground-muted'}`}
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -71,22 +71,22 @@ export default function ScannerView() {
           </svg>
         </div>
 
-        <p className="text-lg font-semibold text-foreground">
+        <p className="text-lg font-heading font-semibold text-foreground">
           {isDragging ? "ปล่อยเพื่ออัปโหลด" : "ลากวางรูปภาพอาหารที่นี่"}
         </p>
-        <p className="mt-1 text-sm text-foreground-secondary">หรือคลิกเพื่อเลือกไฟล์</p>
-        <p className="mt-3 text-xs text-foreground-muted">รองรับไฟล์ JPG, PNG, HEIC · ขนาดไม่เกิน 10MB</p>
+        <p className="mt-1 text-sm font-body text-foreground-secondary">หรือคลิกเพื่อเลือกไฟล์</p>
+        <p className="mt-3 text-xs font-body text-foreground-muted">รองรับไฟล์ JPG, PNG, HEIC · ขนาดไม่เกิน 10MB</p>
       </div>
 
       {/* ─── Or Divider ─── */}
       <div className="flex items-center gap-4">
-        <div className="h-px flex-1 bg-border" />
-        <span className="text-sm font-medium text-foreground-muted">หรือ</span>
-        <div className="h-px flex-1 bg-border" />
+        <div className="h-px flex-1 bg-outline" />
+        <span className="text-sm font-body font-medium text-foreground-muted">หรือ</span>
+        <div className="h-px flex-1 bg-outline" />
       </div>
 
-      {/* ─── Camera Button ─── */}
-      <button className="flex items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-primary to-primary-dark py-4 text-base font-semibold text-white shadow-card transition-airy hover:shadow-glow-teal hover:scale-[1.01] active:scale-[0.99]">
+      {/* ─── Camera Button (Primary FAB — rounded-full) ─── */}
+      <button className="flex items-center justify-center gap-3 rounded-full border-2 border-white bg-gradient-to-r from-primary to-primary-dark py-4 text-base font-heading font-semibold text-white shadow-soft-blue transition-airy hover:shadow-glow-teal hover:scale-[1.01] active:scale-[0.99]">
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
           <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z" />
@@ -96,27 +96,27 @@ export default function ScannerView() {
 
       {/* ─── Recent Scans ─── */}
       <div>
-        <h3 className="mb-3 text-sm font-semibold text-foreground">🕐 สแกนล่าสุด</h3>
+        <h3 className="mb-3 text-sm font-heading font-semibold text-foreground">🕐 สแกนล่าสุด</h3>
         <div className="flex flex-col gap-3">
           {recentScans.map((scan) => (
             <div
               key={scan.name}
-              className="flex items-center justify-between rounded-2xl bg-surface p-4 shadow-soft transition-airy hover-lift cursor-pointer"
+              className="flex items-center justify-between rounded-2xl border-2 border-white bg-surface p-4 shadow-soft-blue transition-airy hover-lift cursor-pointer"
             >
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-pale">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary-pale">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary-dark" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-foreground">{scan.name}</p>
-                  <p className="text-xs text-foreground-muted">{scan.time}</p>
+                  <p className="text-sm font-heading font-semibold text-foreground">{scan.name}</p>
+                  <p className="text-xs font-body text-foreground-muted">{scan.time}</p>
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-sm font-semibold text-foreground">{scan.calories} kcal</p>
-                <p className="text-xs text-success">ความแม่นยำ {scan.confidence}%</p>
+                <p className="text-sm font-heading font-semibold text-foreground">{scan.calories} kcal</p>
+                <p className="text-xs font-body text-success">ความแม่นยำ {scan.confidence}%</p>
               </div>
             </div>
           ))}

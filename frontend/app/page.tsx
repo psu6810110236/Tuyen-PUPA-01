@@ -20,9 +20,9 @@ const navItems: { id: ViewType; label: string; icon: string }[] = [
 // ─── Weekly Summary Stats ───
 const weeklyStats = [
   { label: "แคลอรี่เฉลี่ย", value: "1,850", unit: "kcal", color: "bg-primary-pale text-primary-dark" },
-  { label: "โปรตีนเฉลี่ย", value: "82", unit: "g", color: "bg-accent-lavender text-purple-700" },
-  { label: "น้ำดื่ม", value: "2.1", unit: "ลิตร", color: "bg-blue-50 text-blue-600" },
-  { label: "ออกกำลังกาย", value: "4", unit: "วัน", color: "bg-secondary-light text-orange-700" },
+  { label: "โปรตีนเฉลี่ย", value: "82", unit: "g", color: "bg-accent-lavender text-purple-600" },
+  { label: "น้ำดื่ม", value: "2.1", unit: "ลิตร", color: "bg-secondary-light text-surface-tint" },
+  { label: "ออกกำลังกาย", value: "4", unit: "วัน", color: "bg-accent-green text-teal-700" },
 ];
 
 export default function DashboardPage() {
@@ -47,18 +47,18 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* ─── Top Header Bar ─── */}
-      <header className="sticky top-0 z-50 border-b border-border bg-surface/80 backdrop-blur-md">
+      <header className="sticky top-0 z-50 border-b-2 border-white bg-surface/80 backdrop-blur-md shadow-soft-blue">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-3">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary-light">
-              <span className="text-lg font-bold text-white">T</span>
+            <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-secondary">
+              <span className="text-lg font-heading font-bold text-white">T</span>
             </div>
-            <h1 className="text-lg font-semibold text-foreground">
+            <h1 className="text-lg font-heading font-semibold text-foreground">
               TUYEN
             </h1>
           </div>
           <div className="flex items-center gap-3">
-            <button className="relative rounded-xl p-2 text-foreground-secondary transition-airy hover:bg-surface-alt">
+            <button className="relative rounded-2xl p-2 text-foreground-secondary transition-airy hover:bg-surface-alt">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
               </svg>
@@ -79,34 +79,34 @@ export default function DashboardPage() {
         <aside className="hidden w-[340px] shrink-0 lg:block">
           <div className="sticky top-[73px] flex flex-col gap-5">
             {/* ── Profile Greeting Card ── */}
-            <div className="rounded-2xl bg-gradient-to-br from-primary to-primary-dark p-5 text-white shadow-card">
+            <div className="rounded-2xl border-2 border-white bg-gradient-to-br from-primary to-primary-dark p-5 text-white shadow-soft-blue">
               <div className="flex items-center gap-3">
                 <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/20 text-xl">
                   👋
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-white/80">สวัสดีตอนเย็น</p>
-                  <h2 className="text-lg font-semibold">คุณสมชาย</h2>
+                  <p className="text-sm font-body font-medium text-white/80">สวัสดีตอนเย็น</p>
+                  <h2 className="text-lg font-heading font-semibold">คุณสมชาย</h2>
                 </div>
               </div>
-              <p className="mt-3 text-sm leading-relaxed text-white/70">
+              <p className="mt-3 text-sm font-body leading-relaxed text-white/70">
                 วันนี้คุณรับประทานอาหารได้ดีมาก! เหลืออีกแค่ 350 kcal ก็ครบเป้าหมาย
               </p>
             </div>
 
             {/* ── Weekly Summary Stats ── */}
-            <div className="rounded-2xl bg-surface p-5 shadow-card">
-              <h3 className="mb-4 text-sm font-semibold text-foreground">📊 สรุปประจำสัปดาห์</h3>
+            <div className="rounded-2xl border-2 border-white bg-surface p-5 shadow-soft-blue">
+              <h3 className="mb-4 text-sm font-heading font-semibold text-foreground">📊 สรุปประจำสัปดาห์</h3>
               <div className="grid grid-cols-2 gap-3">
                 {weeklyStats.map((stat) => (
                   <div
                     key={stat.label}
-                    className={`rounded-xl ${stat.color} p-3 transition-airy hover-lift`}
+                    className={`rounded-2xl ${stat.color} p-3 transition-airy hover-lift`}
                   >
-                    <p className="text-xs font-medium opacity-80">{stat.label}</p>
-                    <p className="mt-1 text-lg font-bold">
+                    <p className="text-xs font-body font-medium opacity-80">{stat.label}</p>
+                    <p className="mt-1 text-lg font-heading font-bold">
                       {stat.value}
-                      <span className="ml-1 text-xs font-normal opacity-60">{stat.unit}</span>
+                      <span className="ml-1 text-xs font-body font-normal opacity-60">{stat.unit}</span>
                     </p>
                   </div>
                 ))}
@@ -114,16 +114,16 @@ export default function DashboardPage() {
             </div>
 
             {/* ── Quick Navigation ── */}
-            <div className="rounded-2xl bg-surface p-5 shadow-card">
-              <h3 className="mb-4 text-sm font-semibold text-foreground">🧭 เมนูลัด</h3>
+            <div className="rounded-2xl border-2 border-white bg-surface p-5 shadow-soft-blue">
+              <h3 className="mb-4 text-sm font-heading font-semibold text-foreground">🧭 เมนูลัด</h3>
               <nav className="flex flex-col gap-1.5">
                 {navItems.map((item) => (
                   <button
                     key={item.id}
                     onClick={() => setActiveView(item.id)}
-                    className={`flex items-center gap-3 rounded-xl px-4 py-3 text-left text-sm font-medium transition-airy ${
+                    className={`flex items-center gap-3 rounded-2xl px-4 py-3 text-left text-sm font-body font-medium transition-airy ${
                       activeView === item.id
-                        ? "bg-primary-pale text-primary-dark shadow-soft"
+                        ? "bg-primary-pale text-primary-dark shadow-soft-blue"
                         : "text-foreground-secondary hover:bg-surface-alt hover:text-foreground"
                     }`}
                   >
@@ -138,12 +138,12 @@ export default function DashboardPage() {
             </div>
 
             {/* ── Daily Tip Card ── */}
-            <div className="rounded-2xl bg-accent-yellow-light p-5 shadow-card">
+            <div className="rounded-2xl border-2 border-white bg-accent-yellow-light p-5 shadow-soft-blue">
               <div className="flex items-start gap-3">
                 <span className="text-2xl">💡</span>
                 <div>
-                  <h3 className="text-sm font-semibold text-foreground">เคล็ดลับวันนี้</h3>
-                  <p className="mt-1.5 text-sm leading-relaxed text-foreground-secondary">
+                  <h3 className="text-sm font-heading font-semibold text-foreground">เคล็ดลับวันนี้</h3>
+                  <p className="mt-1.5 text-sm font-body leading-relaxed text-foreground-secondary">
                     การดื่มน้ำก่อนมื้ออาหาร 30 นาที ช่วยให้ระบบย่อยอาหารทำงานได้ดีขึ้น
                     และช่วยควบคุมปริมาณอาหารที่รับประทาน
                   </p>
@@ -155,20 +155,20 @@ export default function DashboardPage() {
       </div>
 
       {/* ─── Mobile Bottom Navigation ─── */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-surface/90 backdrop-blur-md lg:hidden">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 border-t-2 border-white bg-surface/90 backdrop-blur-md shadow-soft-blue lg:hidden">
         <div className="mx-auto flex max-w-md items-center justify-around py-2">
           {navItems.map((item) => (
             <button
               key={item.id}
               onClick={() => setActiveView(item.id)}
-              className={`flex flex-col items-center gap-1 rounded-xl px-4 py-2 transition-airy ${
+              className={`flex flex-col items-center gap-1 rounded-2xl px-4 py-2 transition-airy ${
                 activeView === item.id
-                  ? "text-primary"
+                  ? "text-primary-dark"
                   : "text-foreground-muted"
               }`}
             >
               <span className="text-xl">{item.icon}</span>
-              <span className="text-[10px] font-medium">{item.label}</span>
+              <span className="text-[10px] font-body font-medium">{item.label}</span>
               {activeView === item.id && (
                 <span className="h-1 w-6 rounded-full bg-primary"></span>
               )}

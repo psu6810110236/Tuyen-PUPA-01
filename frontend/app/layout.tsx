@@ -1,9 +1,19 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { Geist } from "next/font/google";
+import { Plus_Jakarta_Sans, Inter } from "next/font/google";
 import { cn } from "@/lib/utils";
 
-const geist = Geist({subsets:['latin'],variable:'--font-sans'});
+const plusJakarta = Plus_Jakarta_Sans({
+  subsets: ['latin'],
+  variable: '--font-heading',
+  display: 'swap',
+});
+
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-body',
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
   title: "TUYEN - ผู้ช่วยโภชนาการอัจฉริยะ",
@@ -17,8 +27,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="th" className={cn("h-full", "font-sans", geist.variable)}>
-      <body className="min-h-full font-thai antialiased">{children}</body>
+    <html lang="th" className={cn("h-full", plusJakarta.variable, inter.variable)}>
+      <body className="min-h-full font-body antialiased">{children}</body>
     </html>
   );
 }
+
