@@ -33,19 +33,25 @@ async def _fetch_from_spoonacular(endpoint: str, params: dict = None) -> dict:
             )
 
 # 📋 1. ค้นหาเมนูอาหารแนะนำจากวัตถุดิบที่ส่งเข้าไป
+# ตัวอย่างไอเดีย: แอบแปลงร่างคำศัพท์ก่อนยิงไปหา Spoonacular
 async def suggest_recipes(ingredients: list[str]) -> list[dict]:
-    ingredients_str = ",".join(ingredients)
-    params = {"ingredients": ingredients_str, "number": 10, "ranking": 1}
-    data = await _fetch_from_spoonacular("findByIngredients", params)
     
-    # ทำการ Map หน้าตาข้อมูลคืนกลับไปให้คลีนตามสเปกที่กำหนด
-    return [{
-        "id": r["id"],
-        "title": r["title"],
-        "image": r.get("image"),
-        "usedIngredientCount": r.get("usedIngredientCount", 0),
-        "missedIngredientCount": r.get("missedIngredientCount", 0)
-    } for r in data]
+    # 💡 อนาคตอาจจะเอาบอทแปลภาษามาครอบตรงนี้ 
+    # จาก ['อกไก่สด', 'ไข่ไก่'] แปลงให้กลายเป็น ['chicken', 'egg']
+    translated_ingredients = []
+    for item in ingredients:
+        if "อกไก่" in item or "ไก่" in item:
+            translated_ingredients.append("chicken")
+        elif "ไข่" in item:
+            translated_ingredients.append("egg")
+        elif "ผักกาด" in item:
+            translated_ingredients.append("cabbage")
+        else:
+            translated_ingredients.append(item) # ถ้าเป็นอังกฤษอยู่แล้วปล่อยผ่าน
+
+    ingredients_str = ",".join(translated_ingredients)
+    data = await _fetch_from_spoonacular("findByIngredients", {"ingredients": ingredients_str, "number": 10, "ranking": 1})
+    return data
 
 # 🔍 2. ดึงรายละเอียดเชิงลึกของเมนูอาหารรายตัว
 async def get_recipe_detail(recipe_id: int) -> dict:
