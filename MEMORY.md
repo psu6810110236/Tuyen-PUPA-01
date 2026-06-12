@@ -27,6 +27,8 @@ This log tracks architectural design decisions, the current project state, and t
 | **Jun 10, 2026** | **Swagger Mock Test Route** | Added `GET /recipes/test-mock/{recipe_id}` to allow instant visual testing of ingredient comparison and Lotus's link generation directly in Swagger UI. |
 | **Jun 12, 2026** | **Modularized Inventory Check** | Moved refrigerator ingredient comparison logic to a central helper `check_recipe_inventory` in `recipe_service.py`. Refactored `recipe_mcp.py` and `/recipes/{recipe_id}` router to use it. Updated `/recipes/test-mock/{recipe_id}` to return separated `available_ingredients` and `missing_ingredients` to support frontend binding. |
 | **Jun 12, 2026** | **LINE Share Fix & HTML Test Route** | Corrected deprecated LINE share URL format from `line.me/R/msg/text/?` to the official `line.me/R/share?text=`. Added `/test-line` route in `main.py` rendering a custom HTML manual test page for mobile and PC web testing. |
+| **Jun 13, 2026** | **Code Verification & Dev Push** | Verified backend & SQLite integration stability locally without errors. Pushed consolidated local changes (LINE share, Lotus's query fix, refactored recipe service) from branch `dev1` to remote `dev`. |
+| **Jun 13, 2026** | **FastMCP SSE Transport Plan** | Inspected `fastmcp` capabilities. Verified it supports stdio, sse, and streamable-http. Proposed mounting the MCP's SSE app directly into the FastAPI backend to run within a single container. |
 
 ---
 
@@ -37,6 +39,7 @@ This log tracks architectural design decisions, the current project state, and t
 - [ ] Add credentials and API keys to the root `.env` file (e.g., Gemini and Spoonacular keys).
 - [ ] Run `docker compose up --build` to test local PostgreSQL database and API connection.
 - [ ] Connect Next.js frontend recipe page to the `/recipes/{recipe_id}` endpoint and render the Lotus's shopping list buttons.
+- [ ] Integrate FastMCP SSE server into the FastAPI application and configure routing.
 
 ### 🟨 Medium-Term (Feature Development)
 - [x] Design Spoonacular/OpenFoodFacts API connections for food nutrition queries (API integrated in backend recipe/nutrition services).
