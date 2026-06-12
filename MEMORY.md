@@ -6,7 +6,7 @@ This log tracks architectural design decisions, the current project state, and t
 
 ## 📌 1. Current Project State
 
-- **Backend**: FastAPI app with basic authentication, recipe suggestions, and daily nutrition logs. Supports SQLite for local non-docker testing.
+- **Backend**: FastAPI app with basic authentication, recipe suggestions, and daily nutrition logs. Reorganized recipe endpoints to perform automatic refrigerator inventory comparisons and generate Lotus's search URLs. Supports SQLite for local non-docker testing.
 - **Frontend**: The `/frontend` directory contains Next.js App Router setup with shadcn/ui components (ChatView, HomeView, RecipeView, ScannerView) added by team members.
 - **Database**: PostgreSQL 15 setup in Docker Compose. SQLite database (`test.db`) used for local developer staging.
 - **DevOps**: Centralized root Docker orchestration with health checks, local python venv setup, and `.gitignore` updated to prevent database file exposure.
@@ -25,6 +25,8 @@ This log tracks architectural design decisions, the current project state, and t
 | **Jun 10, 2026** | **SQLite Local Testing** | Defaulted `DATABASE_URL` in `.env` to SQLite (`sqlite:///./test.db`) for fast non-docker development and local testing. Added `*.db` and `*.sqlite3` to `.gitignore`. |
 | **Jun 10, 2026** | **Grocery MCP Integration** | Implemented `check_missing_ingredients_tool` in [recipe_mcp.py](file:///E:/PUPA-Tuyen/backend/mcp_Servers/recipe_mcp.py) and appended `lotus_search_url` to ingredient details in [recipe_service.py](file:///E:/PUPA-Tuyen/backend/services/recipe_service.py) to enable automated Lotus's online shopping link generation. |
 | **Jun 10, 2026** | **Swagger Mock Test Route** | Added `GET /recipes/test-mock/{recipe_id}` to allow instant visual testing of ingredient comparison and Lotus's link generation directly in Swagger UI. |
+| **Jun 12, 2026** | **Modularized Inventory Check** | Moved refrigerator ingredient comparison logic to a central helper `check_recipe_inventory` in `recipe_service.py`. Refactored `recipe_mcp.py` and `/recipes/{recipe_id}` router to use it. Updated `/recipes/test-mock/{recipe_id}` to return separated `available_ingredients` and `missing_ingredients` to support frontend binding. |
+| **Jun 12, 2026** | **LINE Share Fix & HTML Test Route** | Corrected deprecated LINE share URL format from `line.me/R/msg/text/?` to the official `line.me/R/share?text=`. Added `/test-line` route in `main.py` rendering a custom HTML manual test page for mobile and PC web testing. |
 
 ---
 
@@ -34,7 +36,7 @@ This log tracks architectural design decisions, the current project state, and t
 - [x] Scaffold the frontend boilerplate (React + Vite + TS) in `/frontend` (Done by Frontend Developer using Next.js).
 - [ ] Add credentials and API keys to the root `.env` file (e.g., Gemini and Spoonacular keys).
 - [ ] Run `docker compose up --build` to test local PostgreSQL database and API connection.
-- [ ] Integrate the new Lotus's shopping list link into the frontend pages (`RecipeView.tsx`).
+- [ ] Connect Next.js frontend recipe page to the `/recipes/{recipe_id}` endpoint and render the Lotus's shopping list buttons.
 
 ### 🟨 Medium-Term (Feature Development)
 - [x] Design Spoonacular/OpenFoodFacts API connections for food nutrition queries (API integrated in backend recipe/nutrition services).

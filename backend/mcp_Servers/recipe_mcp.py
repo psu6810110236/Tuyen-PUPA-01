@@ -54,87 +54,14 @@ async def check_missing_ingredients_tool(user_id: int, recipe_id: int) -> dict:
     Identifies which ingredients are missing, and generates Lotus's search URLs for those missing items
     to facilitate easy ordering.
     """
-    # 1. ดึงรายละเอียดสูตรอาหาร
-    try:
-        recipe = await recipe_service.get_recipe_detail(recipe_id)
-    except Exception as e:
-        return {"error": f"Failed to retrieve recipe: {str(e)}"}
-        
-    recipe_ingredients = recipe.get("extendedIngredients", [])
-    
-    # 2. ดึงของในตู้เย็นของผู้ใช้
     db = SessionLocal()
     try:
-        inventory_items = db.query(InventoryItem).filter(InventoryItem.user_id == user_id).all()
+        result = await recipe_service.check_recipe_inventory(user_id, recipe_id, db)
+        return result
     except Exception as e:
+        return {"error": f"Failed to check recipe inventory: {str(e)}"}
+    finally:
         db.close()
-        return {"error": f"Database error: {str(e)}"}
-        
-    # ดึงชื่อของที่มีในตู้เย็น (แปลงเป็นตัวเล็กเพื่อเปรียบเทียบง่าย)
-    user_inv_names = [item.name.lower() for item in inventory_items]
-    
-    available = []
-    missing = []
-    
-    # แปลงคำอ่านภาษาไทยเบื้องต้นเพื่อแมตช์วัตถุดิบกับตู้เย็นภาษาไทย
-    thai_translations = {
-        "egg": ["ไข่", "ไข่ไก่", "ไข่เป็ด"],
-        "chicken": ["ไก่", "อกไก่", "เนื้อไก่"],
-        "pork": ["หมู", "หมูสับ", "เนื้อหมู"],
-        "garlic": ["กระเทียม"],
-        "onion": ["หอมใหญ่", "หัวหอม"],
-        "cabbage": ["กะหล่ำปลี", "ผักกาด"],
-        "rice": ["ข้าว", "ข้าวสวย", "ข้าวสาร"],
-    }
-    
-    # 3. ตรวจสอบวัตถุดิบทีละตัว
-    for ing in recipe_ingredients:
-        ing_name = ing["name"]
-        found = False
-        
-        # ค้นหาแบบจับคู่ชื่อตรงๆ
-        for inv_name in user_inv_names:
-            if ing_name.lower() in inv_name or inv_name in ing_name.lower():
-                found = True
-                break
-                
-        # ค้นหาผ่านตารางคำแปลภาษาไทยเพิ่มเติม
-        if not found:
-            base_name = ing_name.lower()
-            for eng_key, translation_list in thai_translations.items():
-                if eng_key in base_name:
-                    for translation in translation_list:
-                        for inv_name in user_inv_names:
-                            if translation in inv_name:
-                                found = True
-                                break
-                        if found:
-                            break
-                if found:
-                    break
-                    
-        ing_info = {
-            "name": ing_name,
-            "amount": ing.get("amount"),
-            "unit": ing.get("unit")
-        }
-        
-        if found:
-            available.append(ing_info)
-        else:
-            # สร้างลิงก์ค้นหาบน Lotus's ภาษาอังกฤษ (เพราะเว็บ Lotus's รองรับคำค้นหาภาษาอังกฤษด้วย)
-            encoded_query = quote(ing_name)
-            ing_info["lotus_search_url"] = f"https://www.lotuss.com/th/search?q={encoded_query}"
-            missing.append(ing_info)
-            
-    db.close()
-    
-    return {
-        "recipe_title": recipe.get("title"),
-        "available_ingredients": available,
-        "missing_ingredients": missing,
-        "shopping_list_ready": len(missing) > 0
-    }
 
 if __name__ == "__main__":
     mcp.run()
