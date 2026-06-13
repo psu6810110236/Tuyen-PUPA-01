@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse
+from fastapi.middleware.cors import CORSMiddleware
 from urllib.parse import quote
 from sqlalchemy.orm import Session
 from database import get_db
@@ -10,15 +11,26 @@ from routers.inventory import router as inventory_router  # ดึง Router ส
 from routers.recipe import router as recipe_router  # ดึง Router สำหรับ Recipe มาใช้งาน
 from routers.nutrition import router as nutrition_router  # ดึง Router สำหรับ Nutrition มาใช้งาน
 from routers.agent import router as agent_router  # ดึง Router สำหรับ AI Agent มาใช้งาน
+from routers.ai import router as ai_router  # ดึง Router สำหรับ AI มาใช้งาน
 import time
 
 app = FastAPI() # (ใช้ app ตัวเดิมของคุณที่มีอยู่แล้วได้เลย)
+
+# 🔓 CORS Middleware — อนุญาตให้ Frontend (Next.js) เรียก API ข้ามโดเมนได้
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],  # ที่อยู่ของ Next.js dev server
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type"],
+)
 
 app.include_router(auth_router)  # (สมมติว่า auth_router คือ Router ที่คุณสร้างใน auth.py)
 app.include_router(inventory_router)  # (สมมติว่า inventory_router คือ Router ที่คุณสร้างใน inventory.py)
 app.include_router(recipe_router)  # (สมมติว่า recipe_router คือ Router ที่คุณสร้างใน recipe.py)
 app.include_router(nutrition_router)  # (สมมติว่า nutrition_router คือ Router ที่คุณสร้างใน nutrition.py)
 app.include_router(agent_router)  # รวมเราเตอร์ของ AI Agent เข้าสู่ระบบหลัก
+app.include_router(ai_router)
 
 @app.middleware("http")
 async def log_and_time_middleware(request: Request, call_next):

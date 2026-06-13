@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { useAuth } from "@/components/AuthContext";
+import AuthPage from "@/components/views/AuthPage";
 import HomeView from "@/components/views/HomeView";
 import ScannerView from "@/components/views/ScannerView";
 import RecipeView from "@/components/views/RecipeView";
@@ -12,7 +14,7 @@ type ViewType = "home" | "scanner" | "recipe" | "chat";
 // ─── Navigation Items ───
 const navItems: { id: ViewType; label: string; icon: string }[] = [
   { id: "home", label: "หน้าหลัก", icon: "🏠" },
-  { id: "scanner", label: "สแกนอาหาร", icon: "📷" },
+  { id: "scanner", label: "สแกนวัตถุดิบ", icon: "📷" },
   { id: "recipe", label: "สูตรอาหาร", icon: "🍳" },
   { id: "chat", label: "แชทกับ AI", icon: "💬" },
 ];
@@ -26,7 +28,38 @@ const weeklyStats = [
 ];
 
 export default function DashboardPage() {
+  const { isAuthenticated, isLoading, user, logout } = useAuth();
   const [activeView, setActiveView] = useState<ViewType>("home");
+
+  // ─── Loading State ───
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-4 animate-fade-in">
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-primary-dark shadow-soft-blue">
+            <span className="text-3xl font-heading font-bold text-white">T</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <svg className="h-5 w-5 animate-spin text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+            </svg>
+            <span className="text-sm font-body text-foreground-muted">กำลังโหลด...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ─── Not Authenticated → Show Login ───
+  if (!isAuthenticated) {
+    return <AuthPage />;
+  }
+
+  // ─── Greeting based on time ───
+  const hour = new Date().getHours();
+  const greeting =
+    hour < 12 ? "สวัสดีตอนเช้า" : hour < 17 ? "สวัสดีตอนบ่าย" : "สวัสดีตอนเย็น";
 
   // ─── Render Active View ───
   const renderView = () => {
@@ -64,6 +97,17 @@ export default function DashboardPage() {
               </svg>
               <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-danger"></span>
             </button>
+            {/* Logout Button */}
+            <button
+              onClick={logout}
+              className="flex items-center gap-1.5 rounded-2xl px-3 py-2 text-sm font-body font-medium text-foreground-secondary transition-airy hover:bg-accent-red hover:text-danger"
+              title="ออกจากระบบ"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+              </svg>
+              <span className="hidden sm:inline">ออกจากระบบ</span>
+            </button>
           </div>
         </div>
       </header>
@@ -85,8 +129,10 @@ export default function DashboardPage() {
                   👋
                 </div>
                 <div>
-                  <p className="text-sm font-body font-medium text-white/80">สวัสดีตอนเย็น</p>
-                  <h2 className="text-lg font-heading font-semibold">คุณสมชาย</h2>
+                  <p className="text-sm font-body font-medium text-white/80">{greeting}</p>
+                  <h2 className="text-lg font-heading font-semibold">
+                    คุณ{user?.username || "ผู้ใช้"}
+                  </h2>
                 </div>
               </div>
               <p className="mt-3 text-sm font-body leading-relaxed text-white/70">

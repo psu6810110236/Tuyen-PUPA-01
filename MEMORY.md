@@ -6,10 +6,10 @@ This log tracks architectural design decisions, the current project state, and t
 
 ## 📌 1. Current Project State
 
-- **Backend**: FastAPI app with basic authentication, recipe suggestions, and daily nutrition logs. Reorganized recipe endpoints to perform automatic refrigerator inventory comparisons and generate Lotus's search URLs. Supports SQLite for local non-docker testing.
+- **Backend**: FastAPI app with basic authentication, recipe suggestions, and daily nutrition logs. Reorganized recipe endpoints to perform automatic refrigerator inventory comparisons and generate Lotus's search URLs. Supports SQLite for local non-docker testing. Connected to PostgreSQL.
 - **Frontend**: The `/frontend` directory contains Next.js App Router setup with shadcn/ui components (ChatView, HomeView, RecipeView, ScannerView) added by team members.
 - **Database**: PostgreSQL 15 setup in Docker Compose. SQLite database (`test.db`) used for local developer staging.
-- **DevOps**: Centralized root Docker orchestration with health checks, local python venv setup, and `.gitignore` updated to prevent database file exposure.
+- **DevOps**: Centralized root Docker orchestration with health checks and volume-mounted hot-reloading for local development. `.gitignore` updated to prevent database file exposure.
 
 ---
 
@@ -36,7 +36,7 @@ This log tracks architectural design decisions, the current project state, and t
 ## 🛣️ 3. Project Roadmap
 
 ### 🟩 Short-Term (Immediate Tasks)
-- [x] Scaffold the frontend boilerplate (React + Vite + TS) in `/frontend` (Done by Frontend Developer using Next.js).
+- [x] Scaffold the frontend boilerplate (Next.js + Tailwind CSS) in `/frontend` (Done by Frontend Developer using Next.js).
 - [x] Add credentials and API keys to the root `.env` file (Gemini API key added by developer).
 - [ ] Run `docker compose up --build` to test local PostgreSQL database and API connection.
 - [ ] Connect Next.js frontend recipe page to the `/recipes/{recipe_id}` endpoint and render the Lotus's shopping list buttons.

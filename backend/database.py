@@ -5,6 +5,7 @@ from sqlalchemy.orm import declarative_base, sessionmaker
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 load_dotenv(os.path.join(current_dir, ".env"))
+load_dotenv(os.path.join(current_dir, "..", ".env"))
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 

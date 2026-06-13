@@ -10,8 +10,8 @@ This directory registers the roles and responsibilities of all team members, inc
 | :--- | :--- | :--- |
 | **DevOps / Project Manager** | System architecture design, environments, Docker, and CI/CD pipelines | (User / You) |
 | **Backend Developer** | FastAPI development, database schemas, and API Endpoints | [Backend Developer Name] |
-| **Frontend Developer** | UI development with React (Vite + TS), API integration, and routing | [Frontend Developer Name] |
-| **AI Developer** | Computer vision models (YOLOv8) design and Gemini AI integration | [AI Developer Name] |
+| **Frontend Developer** | UI development with Next.js and Tailwind CSS, API integration, and routing | [Frontend Developer Name] |
+| **AI Developer** | Gemini Vision integration and AI Agent design using FastMCP | [AI Developer Name] |
 
 ---
 

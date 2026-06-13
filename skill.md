@@ -8,7 +8,7 @@ This guideline (`skill.md`) is designed to instruct all AI coding assistants and
 
 The project uses a Monorepo structure:
 - **`/backend`**: FastAPI application (Python)
-- **`/frontend`**: React + Vite application (TypeScript)
+- **`/frontend`**: Next.js application (TypeScript)
 - **Root Directory**: Orchestration files, environment settings, and configurations (`.env`, `docker-compose.yml`)
 
 ---
@@ -32,7 +32,7 @@ The project uses a Monorepo structure:
 
 ---
 
-## 🎨 3. Frontend Standards (React + Vite + TypeScript)
+## 🎨 3. Frontend Standards (Next.js + Tailwind CSS)
 
 - **Language**: TypeScript (`.ts`, `.tsx`)
 - **Styling and UI**:

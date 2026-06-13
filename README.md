@@ -1,18 +1,18 @@
-# 🛒 SmartFood AI (React + FastAPI Premium Edition)
+# 🛒 TUYEN (Smart Fridge Chef)
 
-ผู้ช่วยตัดสินใจเรื่องอาหารด้วยพลัง AI ขับเคลื่อนด้วยสถาปัตยกรรม Model Context Protocol
+เว็บแอปพลิเคชันผู้ช่วยจัดการตู้เย็นและโภชนาการอัจฉริยะแบบ Gamification ทำงานร่วมกับ AI
 
-## 🛠️ Enterprise Tech Stack ของทีม PUPA
+## 🛠️ Tech Stack ของโปรเจกต์
 
-*   **Frontend:** React, Vite, Tailwind CSS, shadcn/ui, Recharts
-*   **Backend:** FastAPI, SQLAlchemy, FastMCP
+*   **Frontend:** Next.js, Tailwind CSS (Mobile-first, Premium UI)
+*   **Backend:** FastAPI, PostgreSQL (ทำหน้าที่เป็นสมองกล)
+*   **AI Agent:** FastMCP, Gemini Vision (วิเคราะห์ภาพวัตถุดิบ), Spoonacular API
 *   **Database:** PostgreSQL (รันผ่าน Docker Container)
-*   **AI & APIs:** Gemini 2.5 Flash, YOLOv8, OpenFoodFacts API, Spoonacular API
 *   **Deployment:** AWS EC2, Docker, GitHub Actions
 
 ## 📂 โครงสร้างโฟลเดอร์และการพัฒนา (Monorepo Architecture)
 
-*   `/frontend` : ส่วนติดต่อผู้ใช้งานแอปพลิเคชันหน้าบ้าน (React + Vite)
+*   `/frontend` : ส่วนติดต่อผู้ใช้งานแอปพลิเคชันหน้าบ้าน (Next.js + Tailwind CSS)
 *   `/backend` : ระบบหลังบ้าน สมองส่วนกลางเชื่อม AI และฐานข้อมูล (FastAPI)
 *   `.github` : ระบบทำงานอัตโนมัติ CI และ CD
 

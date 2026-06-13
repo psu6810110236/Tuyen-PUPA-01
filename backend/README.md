@@ -42,15 +42,19 @@ DATABASE_URL=postgresql+psycopg2://myuser:mypassword@localhost:5432/mydatabase
 SECRET_KEY=super-secret-key-xyz-123456789
 ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=30
+```
 
-AI Agent
-•	POST /agent/chat — รับ message → Gemini ตัดสินใจเรียก MCP
+### AI Agent Endpoints (เพิ่มเติม)
+* `POST /agent/chat` — รับ message → Gemini ตัดสินใจเรียก MCP
 
-Tips ก่อนแชร์ให้ทีม
-รันคำสั่งนี้ขณะที่ venv active อยู่ เพื่อ export library list:
-pip freeze > requirements.txt
-แชร์ README.md + requirements.txt ให้ทีมพร้อมกันได้เลย
-=======
+> [!TIP]
+> **Tips ก่อนแชร์ให้ทีม:** รันคำสั่งนี้ขณะที่ `venv` กำลัง active อยู่ เพื่อส่งออกรายการไลบรารี:
+> ```bash
+> pip freeze > requirements.txt
+> ```
+
+---
+
 ## ⚙️ เทคโนโลยีที่ใช้
 
 *   **Framework:** FastAPI
@@ -66,9 +70,16 @@ pip freeze > requirements.txt
    **สำคัญ:** สำหรับการรันฐานข้อมูลในเครื่อง Local ให้ใช้ลิงก์นี้
    `DATABASE_URL=postgresql+psycopg2://myuser:mypassword@localhost:5432/mydatabase`
 
-## 🚀 การรันเซิร์ฟเวอร์
+## 🚀 การรันเซิร์ฟเวอร์แบบแมนนวล (ไม่ผ่าน Docker Compose)
 
-ต้องเปิดใช้งานฐานข้อมูลจากหน้าแรกสุดของโปรเจคก่อนเสมอ จากนั้นใช้คำสั่ง: `uvicorn main:app --reload`
+1. ตรวจสอบว่าได้รันฐานข้อมูล (PostgreSQL) ไว้แล้ว (เช่น รันเฉพาะคอนเทนเนอร์ `postgres_db` ของ Docker)
+2. เข้าไปยังโฟลเดอร์ `backend` เสมอ:
+   ```bash
+   cd backend
+   ```
+3. รันคำสั่งเริ่มทำงานของเซิร์ฟเวอร์:
+   ```bash
+   uvicorn main:app --reload
+   ```
+   เซิร์ฟเวอร์จะเริ่มทำงานที่พอร์ต 8000
 
-เซิร์ฟเวอร์จะเริ่มทำงานที่พอร์ต 8000
->>>>>>> Stashed changes

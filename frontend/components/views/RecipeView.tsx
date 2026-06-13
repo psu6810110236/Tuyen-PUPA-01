@@ -1,76 +1,192 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
+import {
+  recipeAPI,
+  type RecipeSuggestion,
+  type RecipeSearchResult,
+  type RecipeDetail,
+} from "@/lib/api";
 
-const categories = [
-  { id: "all", label: "ทั้งหมด" },
-  { id: "thai", label: "🇹🇭 อาหารไทย" },
-  { id: "salad", label: "🥗 สลัด" },
-  { id: "soup", label: "🍲 ซุป" },
-  { id: "clean", label: "🥦 อาหารคลีน" },
-  { id: "dessert", label: "🍰 ของหวาน" },
-];
-
-const recipes = [
-  {
-    id: 1,
-    name: "สลัดอกไก่ย่างซอสงา",
-    time: "15 นาที",
-    calories: 320,
-    difficulty: "ง่าย",
-    gradient: "from-primary-pale to-primary-light",
-    emoji: "🥗",
-  },
-  {
-    id: 2,
-    name: "ต้มยำกุ้งน้ำใส",
-    time: "25 นาที",
-    calories: 280,
-    difficulty: "ปานกลาง",
-    gradient: "from-secondary-light to-secondary",
-    emoji: "🍲",
-  },
-  {
-    id: 3,
-    name: "ข้าวกล้องผัดผัก",
-    time: "20 นาที",
-    calories: 380,
-    difficulty: "ง่าย",
-    gradient: "from-accent-yellow-light to-accent-yellow",
-    emoji: "🍚",
-  },
-  {
-    id: 4,
-    name: "สมูทตี้เบอร์รี่โยเกิร์ต",
-    time: "5 นาที",
-    calories: 180,
-    difficulty: "ง่ายมาก",
-    gradient: "from-accent-blush to-pink-300",
-    emoji: "🫐",
-  },
-  {
-    id: 5,
-    name: "แกงจืดเต้าหู้หมูสับ",
-    time: "30 นาที",
-    calories: 250,
-    difficulty: "ปานกลาง",
-    gradient: "from-primary-fixed to-primary",
-    emoji: "🥘",
-  },
-  {
-    id: 6,
-    name: "โอ๊ตมีลกล้วยหอม",
-    time: "10 นาที",
-    calories: 290,
-    difficulty: "ง่าย",
-    gradient: "from-accent-lavender to-purple-300",
-    emoji: "🥣",
-  },
-];
+type ViewMode = "suggest" | "search" | "detail";
 
 export default function RecipeView() {
-  const [activeCategory, setActiveCategory] = useState("all");
+  const [viewMode, setViewMode] = useState<ViewMode>("suggest");
+  const [suggestions, setSuggestions] = useState<RecipeSuggestion[]>([]);
+  const [searchResults, setSearchResults] = useState<RecipeSearchResult[]>([]);
+  const [recipeDetail, setRecipeDetail] = useState<RecipeDetail | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSearching, setIsSearching] = useState(false);
+  const [error, setError] = useState("");
+  const [saveMessage, setSaveMessage] = useState("");
+
+  // ─── Load suggestions on mount ───
+  useEffect(() => {
+    loadSuggestions();
+  }, []);
+
+  const loadSuggestions = async () => {
+    setIsLoading(true);
+    setError("");
+    try {
+      const data = await recipeAPI.suggest();
+      // handle both array response and {message, recipes} response
+      if (Array.isArray(data)) {
+        setSuggestions(data);
+      } else {
+        const obj = data as unknown as { recipes?: RecipeSuggestion[]; message?: string };
+        setSuggestions(obj.recipes || []);
+        if (obj.message && (!obj.recipes || obj.recipes.length === 0)) {
+          setError(obj.message);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to load suggestions:", err);
+      setError("ไม่สามารถโหลดเมนูแนะนำได้ — กรุณาเพิ่มวัตถุดิบในตู้เย็นก่อน");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // ─── Search recipes ───
+  const handleSearch = useCallback(async () => {
+    if (!searchQuery.trim()) return;
+    setIsSearching(true);
+    setError("");
+    setViewMode("search");
+    try {
+      const data = await recipeAPI.search(searchQuery);
+      setSearchResults(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("Search failed:", err);
+      setError("การค้นหาล้มเหลว กรุณาลองใหม่");
+    } finally {
+      setIsSearching(false);
+    }
+  }, [searchQuery]);
+
+  // ─── View recipe detail ───
+  const openDetail = async (id: number) => {
+    setIsLoading(true);
+    setError("");
+    try {
+      const detail = await recipeAPI.getDetail(id);
+      setRecipeDetail(detail);
+      setViewMode("detail");
+    } catch (err) {
+      console.error("Failed to load recipe detail:", err);
+      setError("ไม่สามารถโหลดรายละเอียดเมนูได้");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // ─── Save recipe ───
+  const handleSave = async (recipe: { id: number; title: string; image?: string | null; readyInMinutes?: number; servings?: number }) => {
+    try {
+      await recipeAPI.save({
+        spoonacular_id: recipe.id,
+        title: recipe.title,
+        image_url: recipe.image || undefined,
+        ready_in_minutes: recipe.readyInMinutes,
+        servings: recipe.servings,
+      });
+      setSaveMessage(`บันทึก "${recipe.title}" สำเร็จ! ✅`);
+      setTimeout(() => setSaveMessage(""), 3000);
+    } catch (err) {
+      console.error("Failed to save recipe:", err);
+      setSaveMessage("ไม่สามารถบันทึกเมนูได้ ❌");
+      setTimeout(() => setSaveMessage(""), 3000);
+    }
+  };
+
+  // ─── Back to list ───
+  const goBack = () => {
+    setRecipeDetail(null);
+    setViewMode(searchQuery.trim() ? "search" : "suggest");
+  };
+
+  // ─── Search on Enter ───
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") handleSearch();
+  };
+
+  // ─── Recipe Detail View ───
+  if (viewMode === "detail" && recipeDetail) {
+    return (
+      <div className="flex flex-col gap-6 animate-fade-in">
+        {/* Back Button */}
+        <button
+          onClick={goBack}
+          className="flex items-center gap-2 self-start rounded-2xl px-4 py-2 text-sm font-body font-medium text-foreground-secondary transition-airy hover:bg-surface-alt hover:text-foreground"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+          </svg>
+          กลับไปรายการ
+        </button>
+
+        {/* Recipe Header */}
+        <div className="rounded-2xl border-2 border-white bg-surface overflow-hidden shadow-soft-blue">
+          {recipeDetail.image && (
+            <img src={recipeDetail.image} alt={recipeDetail.title} className="h-56 w-full object-cover" />
+          )}
+          <div className="p-6">
+            <h2 className="text-xl font-heading font-bold text-foreground">{recipeDetail.title}</h2>
+            <div className="mt-3 flex flex-wrap gap-3">
+              <span className="flex items-center gap-1.5 rounded-full bg-primary-pale px-3 py-1.5 text-xs font-body font-medium text-primary-dark">
+                ⏱️ {recipeDetail.readyInMinutes} นาที
+              </span>
+              <span className="flex items-center gap-1.5 rounded-full bg-secondary-light px-3 py-1.5 text-xs font-body font-medium text-surface-tint">
+                👥 {recipeDetail.servings} ที่
+              </span>
+            </div>
+
+            {/* Save Button */}
+            <button
+              onClick={() => handleSave(recipeDetail)}
+              className="mt-4 flex items-center gap-2 rounded-full bg-gradient-to-r from-primary to-primary-dark px-5 py-2.5 text-sm font-heading font-semibold text-white shadow-soft-blue transition-airy hover:shadow-glow-teal hover:scale-[1.01] active:scale-[0.99]"
+            >
+              💾 บันทึกเมนูนี้
+            </button>
+          </div>
+        </div>
+
+        {/* Ingredients */}
+        {recipeDetail.extendedIngredients.length > 0 && (
+          <div className="rounded-2xl border-2 border-white bg-surface p-6 shadow-soft-blue">
+            <h3 className="mb-4 text-sm font-heading font-semibold text-foreground">🥘 ส่วนผสม</h3>
+            <div className="flex flex-col gap-2">
+              {recipeDetail.extendedIngredients.map((ing, i) => (
+                <div key={i} className="flex items-center gap-3 rounded-2xl bg-surface-alt px-4 py-2.5">
+                  <span className="text-sm">•</span>
+                  <span className="text-sm font-body text-foreground">
+                    {ing.name} — {ing.amount} {ing.unit}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Instructions */}
+        {recipeDetail.instructions && (
+          <div className="rounded-2xl border-2 border-white bg-surface p-6 shadow-soft-blue">
+            <h3 className="mb-4 text-sm font-heading font-semibold text-foreground">📝 วิธีทำ</h3>
+            <div
+              className="prose prose-sm max-w-none text-sm font-body leading-relaxed text-foreground-secondary"
+              dangerouslySetInnerHTML={{ __html: recipeDetail.instructions }}
+            />
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ─── Recipe List View (Suggestions or Search Results) ───
+  const displayRecipes = viewMode === "search" ? searchResults : suggestions;
+  const isListLoading = viewMode === "search" ? isSearching : isLoading;
 
   return (
     <div className="flex flex-col gap-6 animate-fade-in">
@@ -78,84 +194,159 @@ export default function RecipeView() {
       <div>
         <h2 className="text-2xl font-heading font-bold text-foreground">🍳 สูตรอาหาร</h2>
         <p className="mt-1 text-sm font-body text-foreground-secondary">
-          ค้นหาสูตรอาหารเพื่อสุขภาพที่เหมาะกับคุณ
+          {viewMode === "suggest"
+            ? "เมนูแนะนำจากวัตถุดิบในตู้เย็นของคุณ"
+            : `ผลการค้นหา "${searchQuery}"`}
         </p>
       </div>
 
-      {/* ─── Search Bar (Pill-shaped — rounded-full) ─── */}
-      <div className="relative">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-foreground-muted"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          strokeWidth={1.5}
+      {/* Save Notification */}
+      {saveMessage && (
+        <div className="flex items-center gap-2 rounded-2xl border-2 border-accent-green bg-accent-green px-4 py-3 animate-scale-in">
+          <p className="text-sm font-body font-medium text-success">{saveMessage}</p>
+        </div>
+      )}
+
+      {/* ─── Search Bar ─── */}
+      <div className="relative flex gap-2">
+        <div className="relative flex-1">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-foreground-muted"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={1.5}
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+          </svg>
+          <input
+            type="text"
+            placeholder="ค้นหาสูตรอาหาร... (ภาษาอังกฤษ เช่น chicken salad)"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={handleKeyDown}
+            className="w-full rounded-full border-2 border-white bg-surface py-3.5 pl-12 pr-4 text-sm font-body text-foreground placeholder-foreground-muted shadow-soft-blue transition-airy focus:border-primary-light focus:outline-none focus:ring-2 focus:ring-primary-pale"
+          />
+        </div>
+        <button
+          onClick={handleSearch}
+          disabled={!searchQuery.trim() || isSearching}
+          className="shrink-0 rounded-full bg-primary px-5 py-3.5 text-sm font-heading font-semibold text-white shadow-soft-blue transition-airy hover:bg-primary-dark disabled:opacity-50"
         >
-          <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-        </svg>
-        <input
-          type="text"
-          placeholder="ค้นหาสูตรอาหาร..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full rounded-full border-2 border-white bg-surface py-3.5 pl-12 pr-4 text-sm font-body text-foreground placeholder-foreground-muted shadow-soft-blue transition-airy focus:border-primary-light focus:outline-none focus:ring-2 focus:ring-primary-pale"
-        />
+          ค้นหา
+        </button>
       </div>
 
-      {/* ─── Category Chips (Pill-shaped — rounded-full) ─── */}
-      <div className="flex gap-2 overflow-x-auto pb-1">
-        {categories.map((cat) => (
+      {/* ─── Mode Tabs ─── */}
+      <div className="flex gap-2">
+        <button
+          onClick={() => { setViewMode("suggest"); loadSuggestions(); }}
+          className={`rounded-full px-4 py-2 text-sm font-body font-medium transition-airy ${
+            viewMode === "suggest"
+              ? "bg-primary text-white shadow-soft-blue"
+              : "border-2 border-white bg-surface text-foreground-secondary hover:bg-surface-alt shadow-soft-blue"
+          }`}
+        >
+          ✨ เมนูแนะนำ
+        </button>
+        {searchQuery.trim() && (
           <button
-            key={cat.id}
-            onClick={() => setActiveCategory(cat.id)}
-            className={`shrink-0 rounded-full px-4 py-2 text-sm font-body font-medium transition-airy ${
-              activeCategory === cat.id
+            onClick={() => setViewMode("search")}
+            className={`rounded-full px-4 py-2 text-sm font-body font-medium transition-airy ${
+              viewMode === "search"
                 ? "bg-primary text-white shadow-soft-blue"
                 : "border-2 border-white bg-surface text-foreground-secondary hover:bg-surface-alt shadow-soft-blue"
             }`}
           >
-            {cat.label}
+            🔍 ผลค้นหา
           </button>
-        ))}
+        )}
       </div>
 
+      {/* Error */}
+      {error && (
+        <div className="flex items-center gap-2 rounded-2xl border-2 border-accent-orange bg-accent-orange px-4 py-3">
+          <span>💡</span>
+          <p className="text-sm font-body text-foreground-secondary">{error}</p>
+        </div>
+      )}
+
       {/* ─── Recipe Grid ─── */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {recipes.map((recipe) => (
-          <div
-            key={recipe.id}
-            className="group cursor-pointer overflow-hidden rounded-2xl border-2 border-white bg-surface shadow-soft-blue transition-airy hover-lift"
-          >
-            {/* Image Placeholder */}
-            <div className={`relative flex h-40 items-center justify-center bg-gradient-to-br ${recipe.gradient}`}>
-              <span className="text-5xl transition-transform duration-300 group-hover:scale-110">
-                {recipe.emoji}
-              </span>
-              <div className="absolute right-3 top-3 rounded-full bg-white/80 px-2.5 py-1 text-xs font-body font-medium text-foreground-secondary backdrop-blur-sm">
-                {recipe.difficulty}
+      {isListLoading ? (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div key={i} className="overflow-hidden rounded-2xl border-2 border-white bg-surface shadow-soft-blue">
+              <div className="h-40 bg-surface-alt animate-pulse" />
+              <div className="p-4">
+                <div className="h-4 w-3/4 rounded-full bg-surface-alt animate-pulse" />
+                <div className="mt-3 h-3 w-1/2 rounded-full bg-surface-alt animate-pulse" />
               </div>
             </div>
-            {/* Card Body */}
-            <div className="p-4">
-              <h4 className="text-sm font-heading font-semibold text-foreground group-hover:text-primary-dark transition-colors">
-                {recipe.name}
-              </h4>
-              <div className="mt-2 flex items-center gap-4 text-xs font-body text-foreground-muted">
-                <span className="flex items-center gap-1">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  {recipe.time}
-                </span>
-                <span className="flex items-center gap-1">
-                  🔥 {recipe.calories} kcal
-                </span>
+          ))}
+        </div>
+      ) : displayRecipes.length === 0 ? (
+        <div className="flex flex-col items-center gap-3 rounded-2xl border-2 border-white bg-surface p-12 shadow-soft-blue">
+          <span className="text-5xl">🍳</span>
+          <p className="text-sm font-body font-medium text-foreground">
+            {viewMode === "suggest" ? "ยังไม่มีเมนูแนะนำ" : "ไม่พบสูตรอาหารที่ค้นหา"}
+          </p>
+          <p className="text-xs font-body text-foreground-muted">
+            {viewMode === "suggest" ? "เพิ่มวัตถุดิบในตู้เย็นของคุณเพื่อรับเมนูแนะนำ" : "ลองเปลี่ยนคำค้นหาใหม่"}
+          </p>
+        </div>
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {displayRecipes.map((recipe) => (
+            <div
+              key={recipe.id}
+              onClick={() => openDetail(recipe.id)}
+              className="group cursor-pointer overflow-hidden rounded-2xl border-2 border-white bg-surface shadow-soft-blue transition-airy hover-lift"
+            >
+              {/* Recipe Image */}
+              <div className="relative h-40 bg-gradient-to-br from-primary-pale to-secondary-light">
+                {recipe.image ? (
+                  <img
+                    src={recipe.image}
+                    alt={recipe.title}
+                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
+                ) : (
+                  <div className="flex h-full items-center justify-center">
+                    <span className="text-5xl transition-transform duration-300 group-hover:scale-110">🍳</span>
+                  </div>
+                )}
+                {"usedIngredientCount" in recipe && (
+                  <div className="absolute right-3 top-3 rounded-full bg-white/80 px-2.5 py-1 text-xs font-body font-medium text-foreground-secondary backdrop-blur-sm">
+                    {(recipe as RecipeSuggestion).usedIngredientCount} วัตถุดิบตรง
+                  </div>
+                )}
+              </div>
+              {/* Card Body */}
+              <div className="p-4">
+                <h4 className="text-sm font-heading font-semibold text-foreground group-hover:text-primary-dark transition-colors line-clamp-2">
+                  {recipe.title}
+                </h4>
+                <div className="mt-2 flex items-center gap-4 text-xs font-body text-foreground-muted">
+                  {"readyInMinutes" in recipe && (recipe as RecipeSearchResult).readyInMinutes > 0 && (
+                    <span className="flex items-center gap-1">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      {(recipe as RecipeSearchResult).readyInMinutes} นาที
+                    </span>
+                  )}
+                  {"missedIngredientCount" in recipe && (
+                    <span className="flex items-center gap-1 text-warning">
+                      ⚠️ ขาด {(recipe as RecipeSuggestion).missedIngredientCount} อย่าง
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
