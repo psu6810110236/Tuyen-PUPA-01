@@ -73,11 +73,28 @@ export const authAPI = {
       body: JSON.stringify({ username, password }),
     }),
 
-  login: (username: string, password: string) =>
-    fetchAPI<{ access_token: string; token_type: string }>("/auth/login", {
+  login: async (username: string, password: string) => {
+    const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+    const formData = new URLSearchParams();
+    formData.append("username", username);
+    formData.append("password", password);
+
+    const res = await fetch(`${API_BASE_URL}/auth/login`, {
       method: "POST",
-      body: JSON.stringify({ username, password }),
-    }),
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: formData.toString(),
+    });
+
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}));
+      throw new APIError(
+        errorData.detail || `Login failed: ${res.status}`,
+        res.status
+      );
+    }
+
+    return res.json() as Promise<{ access_token: string; token_type: string }>;
+  },
 
   logout: () =>
     fetchAPI<{ message: string }>("/auth/logout", { method: "POST" }),
