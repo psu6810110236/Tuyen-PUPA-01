@@ -18,6 +18,12 @@ from ai_services.integration import (
 
 app = FastAPI(title="SmartFood AI Service")
 
+from mcp_servers.vision_mcp import mcp as vision_mcp
+
+app.mount("/mcp/vision", vision_mcp.sse_app())
+
+
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000"],
