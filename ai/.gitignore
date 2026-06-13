@@ -1,0 +1,16 @@
+# Environment
+.env
+venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# Test files
+test_*.py
+
+# Model files
+*.pt
+
+# Misc
+.DS_Store
+food.jpg

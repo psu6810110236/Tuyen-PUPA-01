@@ -54,3 +54,9 @@ Thumbs.db
 # ==========================================
 *.db
 *.sqlite3
+
+# AI team - environment files
+ai/.env
+ai/venv/
+ai/__pycache__/
+ai/**/__pycache__/

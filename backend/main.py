@@ -32,6 +32,8 @@ app.include_router(nutrition_router)  # (สมมติว่า nutrition_rout
 app.include_router(agent_router)  # รวมเราเตอร์ของ AI Agent เข้าสู่ระบบหลัก
 app.include_router(ai_router)
 
+
+
 @app.middleware("http")
 async def log_and_time_middleware(request: Request, call_next):
     # 1. จังหวะขาเข้า: บันทึกเวลาเริ่มต้นที่ Request วิ่งเข้ามาชนเซิร์ฟเวอร์
@@ -48,7 +50,7 @@ async def log_and_time_middleware(request: Request, call_next):
     
     # ส่ง Response กลับไปหาหน้าเว็บเบราว์เซอร์ของผู้ใช้
     return response
- 
+
 # ----------------------------------------------------
 # 📋 1. อ่านข้อมูลผู้ใช้ "ทั้งหมด" ในฐานข้อมูล (ดึงออกมาเป็น List)
 # ----------------------------------------------------
