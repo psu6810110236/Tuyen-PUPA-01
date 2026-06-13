@@ -1,9 +1,11 @@
 import os
 import httpx
+from urllib.parse import quote
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy import and_
 from models.recipe import RecipeSaved
+from models.inventory import InventoryItem
 
 SPOONACULAR_KEY = os.getenv("SPOONACULAR_API_KEY")
 BASE_URL = "https://api.spoonacular.com/recipes"
@@ -64,7 +66,12 @@ async def get_recipe_detail(recipe_id: int) -> dict:
         "servings": data.get("servings"),
         "instructions": data.get("instructions"),
         "extendedIngredients": [
-            {"name": ing["name"], "amount": ing["amount"], "unit": ing["unit"]}
+            {
+                "name": ing["name"], 
+                "amount": ing["amount"], 
+                "unit": ing["unit"],
+                "lotus_search_url": f"https://www.lotuss.com/th/search/{quote(ing['name'])}?sort=relevance:DESC"
+            }
             for ing in data.get("extendedIngredients", [])
         ]
     }
@@ -119,3 +126,89 @@ async def delete_saved_recipe(user_id: int, recipe_id: int, db: Session) -> bool
     db.delete(item)
     db.commit()
     return True
+
+# 🛒 7. ตรวจสอบวัตถุดิบและของที่ขาดเพื่อจัดทำรายการสั่งของ Lotus's
+async def check_recipe_inventory(user_id: int, recipe_id: int, db: Session) -> dict:
+    # 1. ดึงรายละเอียดสูตรอาหาร (ซึ่งจะมี lotus_search_url อยู่แล้ว)
+    recipe = await get_recipe_detail(recipe_id)
+    recipe_ingredients = recipe.get("extendedIngredients", [])
+
+    # 2. ดึงของในตู้เย็นของผู้ใช้จริง
+    inventory_items = db.query(InventoryItem).filter(InventoryItem.user_id == user_id).all()
+    user_inv_names = [item.name.lower() for item in inventory_items]
+
+    available = []
+    missing = []
+
+    # ตารางคำแปลภาษาไทยเบื้องต้นเพื่อแมตช์คำระหว่างตู้เย็นไทยกับสูตรอังกฤษ
+    thai_translations = {
+        "egg": ["ไข่", "ไข่ไก่", "ไข่เป็ด"],
+        "chicken": ["ไก่", "อกไก่", "เนื้อไก่"],
+        "pork": ["หมู", "หมูสับ", "เนื้อหมู"],
+        "garlic": ["กระเทียม"],
+        "onion": ["หอมใหญ่", "หัวหอม"],
+        "cabbage": ["กะหล่ำปลี", "ผักกาด"],
+        "rice": ["ข้าว", "ข้าวสวย", "ข้าวสาร"],
+    }
+
+    # 3. วนลูปแมตช์วัตถุดิบ
+    for ing in recipe_ingredients:
+        ing_name = ing["name"]
+        found = False
+
+        # เทียบชื่อตรงๆ
+        for inv_name in user_inv_names:
+            if ing_name.lower() in inv_name or inv_name in ing_name.lower():
+                found = True
+                break
+
+        # เทียบผ่านคำแปลไทย
+        if not found:
+            base_name = ing_name.lower()
+            for eng_key, translation_list in thai_translations.items():
+                if eng_key in base_name:
+                    for translation in translation_list:
+                        for inv_name in user_inv_names:
+                            if translation in inv_name:
+                                found = True
+                                break
+                        if found:
+                            break
+                if found:
+                    break
+
+        ing_info = {
+            "name": ing_name,
+            "amount": ing.get("amount"),
+            "unit": ing.get("unit"),
+            "lotus_search_url": ing.get("lotus_search_url")
+        }
+
+        if found:
+            available.append(ing_info)
+        else:
+            missing.append(ing_info)
+
+    # 4. สร้างลิงก์สำหรับส่งรายการช้อปปิ้งของขาดเข้า Line
+    line_share_url = None
+    if missing:
+        text_lines = [f"🛒 รายการของต้องซื้อจาก Lotus's สำหรับทำ '{recipe['title']}':"]
+        for i, ing in enumerate(missing, 1):
+            text_lines.append(f"{i}. {ing['name']} ({ing['amount']} {ing['unit']})")
+            text_lines.append(f"   👉 https://www.lotuss.com/th/search/{quote(ing['name'])}?sort=relevance:DESC")
+        
+        share_text = "\n".join(text_lines)
+        line_share_url = f"https://line.me/R/share?text={quote(share_text)}"
+
+    return {
+        "id": recipe["id"],
+        "title": recipe["title"],
+        "image": recipe["image"],
+        "readyInMinutes": recipe["readyInMinutes"],
+        "servings": recipe["servings"],
+        "instructions": recipe["instructions"],
+        "available_ingredients": available,
+        "missing_ingredients": missing,
+        "line_share_url": line_share_url,
+        "shopping_list_ready": len(missing) > 0
+    }

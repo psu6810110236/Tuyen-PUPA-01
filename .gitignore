@@ -48,3 +48,9 @@ auth_state.json
 Thumbs.db
 .vscode/
 .idea/
+
+# ==========================================
+# 🗄️ DATABASES (SQLite, etc.)
+# ==========================================
+*.db
+*.sqlite3

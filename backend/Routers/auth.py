@@ -4,7 +4,7 @@ import jwt
 import bcrypt  # ใช้ bcrypt ดิบโดยตรง ตัด passlib ทิ้งถาวร
 from pydantic import BaseModel
 from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
 # 🛠️ พาธการดึงข้อมูลตามโครงสร้างจริงของคุณ
@@ -100,7 +100,7 @@ def register(user_data: UserAuthSchema, db: Session = Depends(get_db)):
     return {"message": "สมัครสมาชิกสำเร็จแล้ว!"}
 
 @router.post("/login", response_model=TokenSchema)
-def login(user_data: UserAuthSchema, db: Session = Depends(get_db)):
+def login(user_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     user = db.query(User).filter(User.username == user_data.username).first()
     if not user or not verify_password(user_data.password, user.hashed_password):
         raise HTTPException(status_code=400, detail="Username หรือ Password ไม่ถูกต้อง")

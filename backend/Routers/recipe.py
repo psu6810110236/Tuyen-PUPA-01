@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
+from urllib.parse import quote
 
 from database import get_db
 from routers.auth import get_current_user
@@ -54,10 +55,77 @@ async def search_recipes(q: str, current_user: User = Depends(get_current_user))
         raise HTTPException(status_code=400, detail="กรุณากรอกคำค้นหาในพารามิเตอร์ q")
     return await recipe_service.search_recipe_by_name(q)
 
+@router.get("/test-mock/{recipe_id}")
+async def get_mock_recipe_details(recipe_id: int):
+    """(สำหรับทดลองเทสแบบเห็นภาพ) ดึงข้อมูลเมนูข้าวผัดอกไก่จำลองพร้อมแยกของขาดสำหรับสั่ง Lotus's"""
+    mock_title = "ข้าวผัดอกไก่ (Chicken Fried Rice)"
+    mock_missing = [
+        {"name": "egg", "amount": 1, "unit": "piece"},
+        {"name": "garlic", "amount": 2, "unit": "cloves"},
+        {"name": "rice", "amount": 150, "unit": "g"},
+        {"name": "soy sauce", "amount": 1, "unit": "tablespoon"}
+    ]
+    
+    # คำนวณลิงก์สำหรับแชร์เข้า Line เลียนแบบหลังบ้านจริง
+    text_lines = [f"🛒 รายการของต้องซื้อจาก Lotus's สำหรับทำ '{mock_title}':"]
+    for i, ing in enumerate(mock_missing, 1):
+        text_lines.append(f"{i}. {ing['name']} ({ing['amount']} {ing['unit']})")
+        text_lines.append(f"   👉 https://www.lotuss.com/th/search/{quote(ing['name'])}?sort=relevance:DESC")
+    share_text = "\n".join(text_lines)
+    line_share_url = f"https://line.me/R/share?text={quote(share_text)}"
+
+    return {
+        "id": recipe_id,
+        "title": mock_title,
+        "image": "https://example.com/fried-rice.jpg",
+        "readyInMinutes": 15,
+        "servings": 1,
+        "available_ingredients": [
+            {
+                "name": "chicken", 
+                "amount": 100, 
+                "unit": "g",
+                "lotus_search_url": "https://www.lotuss.com/th/search/chicken?sort=relevance:DESC"
+            }
+        ],
+        "missing_ingredients": [
+            {
+                "name": "egg", 
+                "amount": 1, 
+                "unit": "piece",
+                "lotus_search_url": "https://www.lotuss.com/th/search/egg?sort=relevance:DESC"
+            },
+            {
+                "name": "garlic", 
+                "amount": 2, 
+                "unit": "cloves",
+                "lotus_search_url": "https://www.lotuss.com/th/search/garlic?sort=relevance:DESC"
+            },
+            {
+                "name": "rice", 
+                "amount": 150, 
+                "unit": "g",
+                "lotus_search_url": "https://www.lotuss.com/th/search/rice?sort=relevance:DESC"
+            },
+            {
+                "name": "soy sauce", 
+                "amount": 1, 
+                "unit": "tablespoon",
+                "lotus_search_url": "https://www.lotuss.com/th/search/soy%20sauce?sort=relevance:DESC"
+            }
+        ],
+        "line_share_url": line_share_url,
+        "shopping_list_ready": True
+    }
+
 @router.get("/{recipe_id}")
-async def get_recipe_details(recipe_id: int, current_user: User = Depends(get_current_user)):
-    """ดึงขั้นตอนวิธีทำและส่วนผสมเชิงลึกของเมนูที่เลือกมาแสดงผล"""
-    return await recipe_service.get_recipe_detail(recipe_id)
+async def get_recipe_details(
+    recipe_id: int, 
+    db: Session = Depends(get_db), 
+    current_user: User = Depends(get_current_user)
+):
+    """ดึงขั้นตอนวิธีทำและส่วนผสมเชิงลึกของเมนูที่เลือกมาแสดงผล (เปรียบเทียบตู้เย็นให้อัตโนมัติ)"""
+    return await recipe_service.check_recipe_inventory(current_user.id, recipe_id, db)
 
 @router.post("/saved", response_model=RecipeSavedResponse, status_code=status.HTTP_201_CREATED)
 async def save_user_recipe(payload: RecipeSaveRequest, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
