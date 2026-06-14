@@ -28,12 +28,13 @@ async def analyze_food_image(
     วิเคราะห์รูปภาพ ถ้า quota หมด → คืน list ว่าง ไม่ขึ้น error
     """
     prompt = (
-        "You are a food ingredient detector. "
-        "Look at this image and list all food ingredients or grocery items you can see. "
-        "Return ONLY a JSON array of ingredient names in English, lowercase. "
-        'Example: ["egg", "chicken", "garlic", "tomato"]. '
-        "If you cannot identify any food, return an empty array []."
-    )
+    "You are an expert food and grocery detector. "
+    "Carefully analyze this image and identify ALL food items, ingredients, drinks, condiments, and grocery products visible. "
+    "Be specific about brand names and product types when visible. "
+    "Return ONLY a JSON array of item names in English, lowercase, be as specific as possible. "
+    'Example: ["skippy peanut butter", "brown eggs", "whole milk", "yellow mustard"]. '
+    "If you cannot identify any food, return an empty array []."
+)
 
     image_part = types.Part.from_bytes(data=image_bytes, mime_type=mime_type)
 
