@@ -173,7 +173,11 @@ export interface RecipeDetail {
   readyInMinutes: number;
   servings: number;
   instructions: string | null;
-  extendedIngredients: { name: string; amount: number; unit: string }[];
+  extendedIngredients?: { name: string; amount: number; unit: string }[];
+  available_ingredients?: { name: string; amount: number; unit: string; lotus_search_url?: string }[];
+  missing_ingredients?: { name: string; amount: number; unit: string; lotus_search_url?: string }[];
+  line_share_url?: string | null;
+  shopping_list_ready?: boolean;
 }
 
 export interface RecipeSearchResult {

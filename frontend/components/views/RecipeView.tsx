@@ -154,19 +154,86 @@ export default function RecipeView() {
         </div>
 
         {/* Ingredients */}
-        {recipeDetail.extendedIngredients.length > 0 && (
-          <div className="rounded-2xl border-2 border-white bg-surface p-6 shadow-soft-blue">
-            <h3 className="mb-4 text-sm font-heading font-semibold text-foreground">🥘 ส่วนผสม</h3>
-            <div className="flex flex-col gap-2">
-              {recipeDetail.extendedIngredients.map((ing, i) => (
-                <div key={i} className="flex items-center gap-3 rounded-2xl bg-surface-alt px-4 py-2.5">
-                  <span className="text-sm">•</span>
-                  <span className="text-sm font-body text-foreground">
-                    {ing.name} — {ing.amount} {ing.unit}
-                  </span>
-                </div>
-              ))}
+        {((recipeDetail.available_ingredients && recipeDetail.available_ingredients.length > 0) ||
+          (recipeDetail.missing_ingredients && recipeDetail.missing_ingredients.length > 0) ||
+          (recipeDetail.extendedIngredients && recipeDetail.extendedIngredients.length > 0)) && (
+          <div className="rounded-2xl border-2 border-white bg-surface p-6 shadow-soft-blue flex flex-col gap-6">
+            <div>
+              <h3 className="text-sm font-heading font-semibold text-foreground">🥘 ส่วนผสม (Ingredients)</h3>
+              <p className="text-xs text-foreground-secondary mt-1">เปรียบเทียบกับวัตถุดิบในตู้เย็นของคุณโดยอัตโนมัติ</p>
             </div>
+
+            {/* Available Ingredients (Green) */}
+            {recipeDetail.available_ingredients && recipeDetail.available_ingredients.length > 0 && (
+              <div className="flex flex-col gap-3">
+                <h4 className="text-xs font-heading font-semibold text-emerald-600 flex items-center gap-1.5">
+                  <span>🎉</span> มีแล้วในตู้เย็น ({recipeDetail.available_ingredients.length})
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  {recipeDetail.available_ingredients.map((ing, i) => (
+                    <div key={i} className="flex items-center justify-between rounded-2xl bg-emerald-50/50 border border-emerald-100 px-4 py-3">
+                      <span className="text-sm font-body font-medium text-emerald-800">✅ {ing.name}</span>
+                      <span className="text-xs font-body text-emerald-600">{ing.amount} {ing.unit}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Missing Ingredients (Red / Shopping List) */}
+            {recipeDetail.missing_ingredients && recipeDetail.missing_ingredients.length > 0 && (
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <h4 className="text-xs font-heading font-semibold text-danger flex items-center gap-1.5">
+                    <span>🛒</span> ต้องซื้อเพิ่ม ({recipeDetail.missing_ingredients.length})
+                  </h4>
+                  {recipeDetail.line_share_url && (
+                    <a
+                      href={recipeDetail.line_share_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 rounded-full bg-[#06C755] px-3.5 py-1.5 text-xs font-heading font-bold text-white shadow-sm transition-airy hover:bg-[#05B34C] hover:scale-[1.02] active:scale-[0.98]"
+                    >
+                      💬 ส่งรายการซื้อเข้า LINE
+                    </a>
+                  )}
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  {recipeDetail.missing_ingredients.map((ing, i) => (
+                    <div key={i} className="flex items-center justify-between rounded-2xl bg-red-50/50 border border-red-100 px-4 py-3">
+                      <div className="flex flex-col">
+                        <span className="text-sm font-body font-medium text-red-800">⚠️ {ing.name}</span>
+                        {ing.lotus_search_url && (
+                          <a
+                            href={ing.lotus_search_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[10px] text-primary hover:underline mt-0.5"
+                          >
+                            🔍 ค้นหาใน Lotus's
+                          </a>
+                        )}
+                      </div>
+                      <span className="text-xs font-body text-red-600 font-semibold">{ing.amount} {ing.unit}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Fallback for extended ingredients (if no match) */}
+            {!recipeDetail.available_ingredients && !recipeDetail.missing_ingredients && recipeDetail.extendedIngredients && (
+              <div className="flex flex-col gap-2">
+                {recipeDetail.extendedIngredients.map((ing, i) => (
+                  <div key={i} className="flex items-center gap-3 rounded-2xl bg-surface-alt px-4 py-2.5">
+                    <span className="text-sm">•</span>
+                    <span className="text-sm font-body text-foreground">
+                      {ing.name} — {ing.amount} {ing.unit}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
