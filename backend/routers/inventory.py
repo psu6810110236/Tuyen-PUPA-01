@@ -22,6 +22,7 @@ class InventoryManualCreate(BaseModel):
     unit: str                  # "ฟอง", "กิโลกรัม"
     category: Optional[str] = "other"  # "protein", "veggie", "dairy" (ถ้าไม่ส่งมา ให้ใส่ 'other')
     expiry_date: Optional[date] = None # วันหมดอายุ (ใส่หรือไม่ใส่ก็ได้ YYYY-MM-DD)
+    added_by: Optional[str] = "manual" # แหล่งที่มา เช่น "manual" หรือ "scan"
 
 # 📋 2. Schema สำหรับตัวแทนข้อมูลที่ส่งกลับไปหาหน้าเว็บ (Response Model)
 class InventoryItemResponse(BaseModel):
@@ -53,7 +54,7 @@ def add_inventory_manual(
         unit=item_data.unit,
         category=item_data.category,
         expiry_date=item_data.expiry_date,
-        added_by="manual"              # ล็อกป้ายบอกระบบชัดเจนว่าคนพิมพ์เพิ่มเข้าตู้เย็นเอง
+        added_by=item_data.added_by
     )
     
     db.add(new_item)

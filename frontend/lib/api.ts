@@ -303,4 +303,31 @@ export const aiAPI = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ message, history }),
     }).then(res => res.json()),
+
+  scanAndAdd: async (image_base64: string, mime_type: string = "image/jpeg") => {
+    const token = typeof window !== "undefined" ? localStorage.getItem("tuyen_token") : null;
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+    };
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+    const res = await fetch(`${AI_BASE_URL}/ai/scan-and-add`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ image_base64, mime_type }),
+    });
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}));
+      throw new APIError(errorData.detail || "Scanning failed", res.status);
+    }
+    return res.json() as Promise<{
+      success: boolean;
+      message: string;
+      ingredients_found: string[];
+      added: string[];
+      failed: string[];
+      added_count: number;
+    }>;
+  },
 };

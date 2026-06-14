@@ -1,11 +1,21 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { inventoryAPI, type InventoryItem } from "@/lib/api";
+import { inventoryAPI, aiAPI, type InventoryItem } from "@/lib/api";
 
 export default function ScannerView() {
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // ─── AI Scan State ───
+  const [isScanning, setIsScanning] = useState(false);
+  const [scanResult, setScanResult] = useState<{
+    success: boolean;
+    message: string;
+    ingredients_found: string[];
+    added: string[];
+    failed: string[];
+  } | null>(null);
 
   // ─── Manual Add Form State ───
   const [showManualForm, setShowManualForm] = useState(false);
@@ -100,10 +110,61 @@ export default function ScannerView() {
     setIsDragging(false);
   };
 
+  const processFile = async (file: File) => {
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      setSubmitMessage("กรุณาเลือกไฟล์รูปภาพเท่านั้น ❌");
+      setTimeout(() => setSubmitMessage(""), 4000);
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      setSubmitMessage("ขนาดรูปภาพต้องไม่เกิน 10MB ❌");
+      setTimeout(() => setSubmitMessage(""), 4000);
+      return;
+    }
+
+    setIsScanning(true);
+    setSubmitMessage("");
+    setScanResult(null);
+
+    const reader = new FileReader();
+    reader.onload = async () => {
+      try {
+        const base64String = (reader.result as string).split(",")[1];
+        const res = await aiAPI.scanAndAdd(base64String, file.type);
+        setScanResult(res);
+        if (res.success && res.ingredients_found.length > 0) {
+          setSubmitMessage(`สแกนสำเร็จ! พบ ${res.ingredients_found.length} รายการ และเพิ่มเข้าตู้เย็นแล้ว 🎉`);
+          loadInventory();
+        } else {
+          setSubmitMessage("สแกนภาพสำเร็จ แต่ไม่พบวัตถุดิบ 🔍");
+        }
+      } catch (err: any) {
+        console.error("AI Scan failed:", err);
+        setSubmitMessage(`เกิดข้อผิดพลาดในการสแกน: ${err.message || "กรุณาลองใหม่"} ❌`);
+      } finally {
+        setIsScanning(false);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      processFile(file);
+    }
+  };
+
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
-    // Handle file drop - to be implemented with AI vision backend
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      processFile(file);
+    }
   };
 
   // ─── Category emoji mapping ───
@@ -139,14 +200,15 @@ export default function ScannerView() {
         </div>
       )}
 
-      {/* ─── Dropzone ─── */}
       <div
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        onClick={() => fileInputRef.current?.click()}
+        onClick={() => !isScanning && fileInputRef.current?.click()}
         className={`relative flex min-h-[200px] cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed p-8 transition-all duration-300 ${
-          isDragging
+          isScanning
+            ? "border-primary-light bg-surface-alt cursor-wait animate-pulse"
+            : isDragging
             ? "border-primary bg-primary-pale/50 shadow-glow-teal scale-[1.01]"
             : "border-outline hover:border-primary-light hover:bg-surface-alt"
         }`}
@@ -156,30 +218,74 @@ export default function ScannerView() {
           type="file"
           accept="image/jpeg,image/png,image/heic"
           className="hidden"
+          onChange={handleFileChange}
+          disabled={isScanning}
         />
 
-        {/* Upload Icon */}
-        <div className={`mb-4 rounded-2xl p-4 transition-all duration-300 ${isDragging ? "bg-primary-pale" : "bg-surface-alt"}`}>
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className={`h-12 w-12 transition-colors duration-300 ${isDragging ? "text-primary-dark" : "text-foreground-muted"}`}
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={1}
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
-            <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z" />
-          </svg>
-        </div>
+        {isScanning ? (
+          <div className="flex flex-col items-center justify-center gap-3">
+            <svg className="h-10 w-10 animate-spin text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+            </svg>
+            <p className="text-base font-heading font-semibold text-primary">SmartFood AI กำลังวิเคราะห์รูปภาพของคุณ...</p>
+            <p className="text-xs font-body text-foreground-muted">ระบบจะแสกนวัตถุดิบและนำเข้าตู้เย็นโดยอัตโนมัติ</p>
+          </div>
+        ) : (
+          <>
+            {/* Upload Icon */}
+            <div className={`mb-4 rounded-2xl p-4 transition-all duration-300 ${isDragging ? "bg-primary-pale" : "bg-surface-alt"}`}>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className={`h-12 w-12 transition-colors duration-300 ${isDragging ? "text-primary-dark" : "text-foreground-muted"}`}
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={1}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z" />
+              </svg>
+            </div>
 
-        <p className="text-base font-heading font-semibold text-foreground">
-          {isDragging ? "ปล่อยเพื่ออัปโหลด" : "ลากวางรูปภาพวัตถุดิบที่นี่"}
-        </p>
-        <p className="mt-1 text-sm font-body text-foreground-secondary">หรือคลิกเพื่อเลือกไฟล์</p>
-        <p className="mt-2 text-xs font-body text-foreground-muted">รองรับไฟล์ JPG, PNG, HEIC · ขนาดไม่เกิน 10MB</p>
-        <p className="mt-1 text-xs font-body text-accent-orange">⚠️ ระบบ AI สแกนภาพยังอยู่ระหว่างพัฒนา</p>
+            <p className="text-base font-heading font-semibold text-foreground">
+              {isDragging ? "ปล่อยเพื่ออัปโหลด" : "ลากวางรูปภาพวัตถุดิบที่นี่"}
+            </p>
+            <p className="mt-1 text-sm font-body text-foreground-secondary">หรือคลิกเพื่อเลือกไฟล์</p>
+            <p className="mt-2 text-xs font-body text-foreground-muted">รองรับไฟล์ JPG, PNG, HEIC · ขนาดไม่เกิน 10MB</p>
+            <p className="mt-1.5 text-xs font-body text-accent-green font-semibold">✨ วิเคราะห์ด้วยระบบ AI Vision ค้นหาวัตถุดิบและนำเข้าตู้เย็นทันที</p>
+          </>
+        )}
       </div>
+
+      {scanResult && (
+        <div className="rounded-2xl border-2 border-white bg-surface p-4 shadow-soft-blue animate-scale-in">
+          <p className="text-sm font-heading font-bold text-foreground">📊 ผลการสแกนด้วย AI:</p>
+          <div className="mt-2 flex flex-col gap-1.5">
+            {scanResult.ingredients_found.length > 0 ? (
+              <>
+                <p className="text-xs font-body text-foreground-secondary">
+                  🔍 ตรวจพบวัตถุดิบ: <span className="font-semibold text-primary">{scanResult.ingredients_found.join(", ")}</span>
+                </p>
+                {scanResult.added.length > 0 && (
+                  <p className="text-xs font-body text-success">
+                    ✅ เพิ่มเข้าตู้เย็นสำเร็จ: {scanResult.added.join(", ")}
+                  </p>
+                )}
+                {scanResult.failed.length > 0 && (
+                  <p className="text-xs font-body text-danger">
+                    ❌ ข้ามหรือเพิ่มไม่สำเร็จ: {scanResult.failed.join(", ")}
+                  </p>
+                )}
+              </>
+            ) : (
+              <p className="text-xs font-body text-foreground-muted">
+                ไม่พบวัตถุดิบที่สามารถระบุได้ในรูปภาพนี้
+              </p>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* ─── Or Divider ─── */}
       <div className="flex items-center gap-4">
