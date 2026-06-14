@@ -113,7 +113,7 @@ export default function DashboardPage() {
       </header>
 
       {/* ─── Main Two-Column Layout ─── */}
-      <div className="mx-auto flex max-w-7xl gap-6 px-6 py-6">
+      <div className="mx-auto flex max-w-7xl gap-6 px-6 py-6 pb-24 lg:pb-6">
         {/* ─── Left Column: Dynamic Content ─── */}
         <main className="flex-1 min-w-0 animate-fade-in">
           {renderView()}

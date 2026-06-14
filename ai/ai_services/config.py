@@ -2,7 +2,9 @@ import os
 from dotenv import load_dotenv
 from pathlib import Path
 
-# ระบุ path ตรงๆ
+# ระบุ path ตรงๆ ไปหาไฟล์ .env ที่โฟลเดอร์นอกสุดของโปรเจกต์
+load_dotenv(dotenv_path=Path(__file__).parent.parent.parent / ".env")
+# ค้นหาในโฟลเดอร์ ai เผื่อไว้ด้วย
 load_dotenv(dotenv_path=Path(__file__).parent.parent / ".env")
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
