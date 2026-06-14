@@ -1,5 +1,14 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from database import Base, engine
+from models.user import User
+from models.inventory import InventoryItem
+from models.recipe import RecipeSaved
+from models.nutrition import NutritionLog
+
+# 🛠️ ตรวจสอบและสร้างตารางฐานข้อมูลทั้งหมดตามโมเดล (เช่น users, inventory_items, recipes_saved, nutrition_logs)
+Base.metadata.create_all(bind=engine)
+
 from routers.auth import router as auth_router  # ดึง Router สำหรับ Authentication มาใช้งาน
 from routers.inventory import router as inventory_router  # ดึง Router สำหรับ Inventory มาใช้งาน
 from routers.recipe import router as recipe_router  # ดึง Router สำหรับ Recipe มาใช้งาน
