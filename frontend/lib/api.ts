@@ -6,6 +6,7 @@
  */
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const AI_BASE_URL = process.env.NEXT_PUBLIC_AI_URL || "http://localhost:8001";
 
 // ─── Generic Fetch Helper ───
 export async function fetchAPI<T>(
@@ -297,8 +298,9 @@ export const nutritionAPI = {
 
 export const aiAPI = {
   chat: (message: string, history: { role: string; content: string }[]) =>
-    fetchAPI<{ reply: string }>("/ai/chat", {
+    fetch(`${AI_BASE_URL}/ai/chat`, {
       method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ message, history }),
-    }),
+    }).then(res => res.json()),
 };
