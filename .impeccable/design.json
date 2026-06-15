@@ -1,0 +1,71 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-06-15T05:27:00Z",
+  "title": "Design System: TUYEN",
+  "extensions": {
+    "colorMeta": {
+      "primary": { "role": "primary", "displayName": "Cool Indigo-Blue", "canonical": "#5C7CFA", "tonalRamp": ["#2B4ACB", "#364FC7", "#4263EB", "#5C7CFA", "#748FFC", "#8DA4FC", "#BAC8FF", "#EDF2FF"] },
+      "secondary": { "role": "secondary", "displayName": "Slate Periwinkle", "canonical": "#748FFC", "tonalRamp": ["#1A1F36", "#2B3A67", "#4263EB", "#5C7CFA", "#748FFC", "#8DA4FC", "#BAC8FF", "#EDF2FF"] },
+      "neutral-bg": { "role": "neutral", "displayName": "Pantry Off-White", "canonical": "#F5F7FB", "tonalRamp": ["#1A1F36", "#2B3055", "#555E7E", "#8E95A9", "#C8CDD8", "#E5E8EE", "#F1F3F9", "#F5F7FB"] },
+      "surface": { "role": "neutral", "displayName": "Surface Pure White", "canonical": "#ffffff", "tonalRamp": ["#E9ECEF", "#F8F9FA", "#ffffff"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Hero stats, main dashboard values." },
+      "body": { "displayName": "Body", "purpose": "Ingredients lists, chat descriptions, recipes." }
+    },
+    "shadows": [
+      { "name": "shadow-soft-blue", "value": "0px 8px 32px rgba(92, 124, 250, 0.10), 0px 2px 8px rgba(26, 31, 54, 0.04)", "purpose": "Floating action buttons, primary dashboard cards." },
+      { "name": "shadow-elevated", "value": "0px 12px 24px -4px rgba(92, 124, 250, 0.12), 0px 4px 8px -4px rgba(26, 31, 54, 0.04)", "purpose": "Card hover lifts." }
+    ],
+    "motion": [
+      { "name": "transition-airy", "value": "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)", "purpose": "Buttons, active views, state transitions." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "1024px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Used for primary screen CTAs and main user triggers.",
+      "html": "<button class=\"ds-btn-primary\">สแกนวัตถุดิบ</button>",
+      "css": ".ds-btn-primary { background-color: #5C7CFA; color: #ffffff; padding: 12px 24px; font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 600; border-radius: 24px; border: none; box-shadow: 0px 8px 32px rgba(92, 124, 250, 0.10); transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; } .ds-btn-primary:hover { background-color: #4263EB; transform: translateY(-2px); box-shadow: 0px 12px 24px rgba(92, 124, 250, 0.12); }"
+    },
+    {
+      "name": "Standard Card",
+      "kind": "card",
+      "refersTo": "card-standard",
+      "description": "Standard dashboard container for lists, summaries, and modules.",
+      "html": "<div class=\"ds-card\"><h3 class=\"ds-card-title\">ไข่ไก่</h3><p class=\"ds-card-desc\">เหลืออยู่ 4 ฟอง (ใกล้หมดอายุ)</p></div>",
+      "css": ".ds-card { background-color: #ffffff; border: 2px solid #ffffff; border-radius: 16px; padding: 24px; box-shadow: 0px 8px 32px rgba(92, 124, 250, 0.10); transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); } .ds-card:hover { transform: translateY(-2px); box-shadow: 0px 12px 24px rgba(92, 124, 250, 0.12); } .ds-card-title { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.125rem; font-weight: 600; color: #1A1F36; margin: 0 0 8px 0; } .ds-card-desc { font-family: 'Inter', sans-serif; font-size: 0.875rem; color: #555E7E; margin: 0; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Clean Kitchen Sanctuary",
+    "overview": "TUYEN is designed to be a premium, home-friendly kitchen assistant that feels exceptionally clean, tactile, and responsive. Optimized strictly for mobile screens, it avoids the cold, clinical feel of SaaS tools by using a vibrant Indigo-Blue primary color paired with soft-tactile, white-surfaced cards that sport clean 2px borders and welcoming light blue shadows.",
+    "keyCharacteristics": [
+      "Soft-Tactile Warmth: Soft blue shadows and thick white borders that make elements pop.",
+      "Vibrant Blue Accent: Cool Indigo-Blue as the guiding interactive hue.",
+      "Airy Breathing Room: Generous paddings and margins for easy reading on mobile in busy kitchen settings."
+    ],
+    "rules": [
+      { "name": "The Tinted Neutral Rule", "body": "Every background or neutral tone must carry a subtle cool-indigo tint to feel premium. Never use pure, flat, un-tinted gray or clinical black.", "section": "colors" },
+      { "name": "The Soft-Tactile Layering Rule", "body": "Depth is created by layering a pure white surface over a pantry off-white background, bordered by a solid 2px white outline and cast with a soft blue shadow.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do wrap all major content cards with a border-2 border-white and apply shadow-soft-blue.",
+      "Do use IBM Plex Sans Thai for native Thai translations to keep typography clean and legible.",
+      "Do cap body text line lengths at 65ch to reduce reading strain in kitchen environments."
+    ],
+    "donts": [
+      "Don't use boring, cookie-cutter dashboard templates.",
+      "Don't build generic utility apps that require excessive clicks or complex menus.",
+      "Don't use side-stripe borders (border-left or border-right > 1px as accent) on list items or cards.",
+      "Don't use gradient text or glassmorphism as a default style."
+    ]
+  }
+}

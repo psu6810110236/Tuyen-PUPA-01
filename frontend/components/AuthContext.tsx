@@ -38,6 +38,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const savedToken = localStorage.getItem("tuyen_token");
     const savedUser = localStorage.getItem("tuyen_user");
     if (savedToken && savedUser) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setToken(savedToken);
       try {
         setUser(JSON.parse(savedUser));

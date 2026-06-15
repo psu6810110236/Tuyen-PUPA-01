@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { aiAPI } from "@/lib/api";
+import { BotMessageSquare, Sparkles, Send, Loader2 } from "lucide-react";
 
 const suggestions = [
   "วันนี้ฉันควรกินอะไร?",
@@ -61,11 +62,11 @@ export default function ChatView() {
         time: new Date().toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" }),
       };
       setMessages(prev => [...prev, aiReply]);
-    } catch (error: any) {
+    } catch (error: unknown) {
       const errorMsg: Message = {
         id: Date.now(),
         role: "ai",
-        content: `ขออภัยค่ะ เกิดข้อผิดพลาด: ${error.message || "ไม่สามารถเชื่อมต่อระบบ AI ได้"}`,
+        content: `ขออภัยค่ะ เกิดข้อผิดพลาด: ${(error as Error).message || "ไม่สามารถเชื่อมต่อระบบ AI ได้"}`,
         time: new Date().toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" }),
       };
       setMessages(prev => [...prev, errorMsg]);
@@ -89,8 +90,8 @@ export default function ChatView() {
     <div className="flex h-[calc(100vh-120px)] flex-col rounded-2xl border-2 border-white bg-surface shadow-soft-blue animate-fade-in">
       {/* ─── Chat Header ─── */}
       <div className="flex items-center gap-3 border-b border-outline px-5 py-4">
-        <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-secondary text-lg">
-          🤖
+        <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-secondary text-white shadow-soft-blue">
+          <BotMessageSquare className="h-5 w-5" />
         </div>
         <div>
           <h2 className="text-sm font-heading font-semibold text-foreground">TUYEN AI</h2>
@@ -104,8 +105,9 @@ export default function ChatView() {
           <button
             key={s}
             onClick={() => handleSuggestionClick(s)}
-            className="shrink-0 rounded-full border-2 border-white bg-primary-pale px-3.5 py-1.5 text-xs font-body font-medium text-primary-dark shadow-soft-blue transition-airy hover:bg-primary hover:text-white"
+            className="shrink-0 flex items-center gap-1.5 rounded-full border-2 border-white bg-primary-pale px-3.5 py-1.5 text-xs font-body font-medium text-primary-dark shadow-soft-blue transition-airy hover:bg-primary hover:text-white group"
           >
+            <Sparkles className="h-3 w-3 group-hover:animate-pulse" />
             {s}
           </button>
         ))}
@@ -171,14 +173,9 @@ export default function ChatView() {
             }`}
           >
             {isLoading ? (
-              <svg className="h-5 w-5 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-              </svg>
+              <Loader2 className="h-5 w-5 animate-spin" />
             ) : (
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
-              </svg>
+              <Send className="h-5 w-5 ml-0.5" />
             )}
           </button>
         </div>

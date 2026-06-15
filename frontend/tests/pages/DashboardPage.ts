@@ -24,7 +24,7 @@ export class DashboardPage {
   readonly recipeCard: (title: string) => Locator;
   readonly recipeDetailTitle: Locator;
   readonly lineShareBtn: Locator;
-  readonly lotusLink: (name: string) => Locator;
+  readonly lotusLink: () => Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -38,7 +38,7 @@ export class DashboardPage {
 
     // Scanner View elements
     this.uploadInput = page.locator("input[type='file']");
-    this.scanningIndicator = page.locator("text=SmartFood AI กำลังวิเคราะห์รูปภาพของคุณ...");
+    this.scanningIndicator = page.locator("text=กำลังวิเคราะห์รูปภาพ...");
     this.openManualFormBtn = page.locator("button:has-text('พิมพ์เพิ่มวัตถุดิบเอง')").first();
     this.manualNameInput = page.locator("#inv-name");
     this.manualQtyInput = page.locator("#inv-qty");
@@ -50,7 +50,7 @@ export class DashboardPage {
     this.recipeCard = (title: string) => page.locator(`h4:has-text('${title}')`).first();
     this.recipeDetailTitle = page.locator("h2.font-heading").first();
     this.lineShareBtn = page.locator("a:has-text('ส่งรายการซื้อเข้า LINE')").first();
-    this.lotusLink = (name: string) => page.locator(`a:has-text('ค้นหาใน Lotus\'s')`).first();
+    this.lotusLink = () => page.locator(`a:has-text('ค้นหาใน Lotus\\'s')`).first();
   }
 
   async goToScanner() {
