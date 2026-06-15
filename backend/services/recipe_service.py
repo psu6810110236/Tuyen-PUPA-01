@@ -1,14 +1,60 @@
 import os
+import json
 import httpx
 from urllib.parse import quote
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy import and_
-from models.recipe import RecipeSaved
+from datetime import datetime, timezone, timedelta
+
+from database import SessionLocal
+from models.recipe import RecipeSaved, CachedResponse
 from models.inventory import InventoryItem
 
 SPOONACULAR_KEY = os.getenv("SPOONACULAR_API_KEY")
 BASE_URL = "https://api.spoonacular.com/recipes"
+
+# 🚀 --- Caching Helpers (Enterprise Cache Layer) ---
+
+def get_cached_api_response(cache_key: str) -> dict | list | None:
+    db = SessionLocal()
+    try:
+        # กำหนดอายุแคชไว้ที่ 7 วัน เพื่อไม่ให้เก่าเกินไป
+        expiry_limit = datetime.now(timezone.utc) - timedelta(days=7)
+        cached = db.query(CachedResponse).filter(
+            CachedResponse.cache_key == cache_key,
+            CachedResponse.cached_at >= expiry_limit
+        ).first()
+        if cached:
+            print(f"⚡ [Cache HIT] ค้นพบแคชสำหรับคีย์: {cache_key}")
+            return json.loads(cached.response_json)
+        return None
+    except Exception as e:
+        print(f"⚠️ [Cache Read Error] อ่านแคชล้มเหลว: {e}")
+        return None
+    finally:
+        db.close()
+
+def set_cached_api_response(cache_key: str, response_data: dict | list):
+    db = SessionLocal()
+    try:
+        cached = db.query(CachedResponse).filter(CachedResponse.cache_key == cache_key).first()
+        if cached:
+            cached.response_json = json.dumps(response_data)
+            cached.cached_at = datetime.now(timezone.utc)
+        else:
+            new_cache = CachedResponse(
+                cache_key=cache_key,
+                response_json=json.dumps(response_data)
+            )
+            db.add(new_cache)
+        db.commit()
+        print(f"💾 [Cache Saved] บันทึกแคชสำเร็จสำหรับคีย์: {cache_key}")
+    except Exception as e:
+        db.rollback()
+        print(f"⚠️ [Cache Write Error] บันทึกแคชล้มเหลว: {e}")
+    finally:
+        db.close()
 
 # 🌟 High-Fidelity Mock Recipes for Fallback
 MOCK_RECIPES = {
@@ -84,6 +130,12 @@ async def _fetch_from_spoonacular(endpoint: str, params: dict = None) -> dict:
 
 # 📋 1. ค้นหาเมนูอาหารแนะนำจากวัตถุดิบที่ส่งเข้าไป
 async def suggest_recipes(ingredients: list[str]) -> list[dict]:
+    sorted_ingredients = sorted([i.strip().lower() for i in ingredients])
+    cache_key = f"suggest_recipes:{','.join(sorted_ingredients)}"
+    cached_data = get_cached_api_response(cache_key)
+    if cached_data is not None:
+        return cached_data
+
     try:
         if not SPOONACULAR_KEY or SPOONACULAR_KEY == "your_spoonacular_api_key_here":
             raise ValueError("Placeholder API Key detected")
@@ -101,6 +153,8 @@ async def suggest_recipes(ingredients: list[str]) -> list[dict]:
 
         ingredients_str = ",".join(translated_ingredients)
         data = await _fetch_from_spoonacular("findByIngredients", {"ingredients": ingredients_str, "number": 10, "ranking": 1})
+        
+        set_cached_api_response(cache_key, data)
         return data
     except Exception as e:
         print(f"[recipe_service] Suggest fallback triggered: {e}")
@@ -154,16 +208,20 @@ async def suggest_recipes(ingredients: list[str]) -> list[dict]:
 
 # 🔍 2. ดึงรายละเอียดเชิงลึกของเมนูอาหารรายตัว
 async def get_recipe_detail(recipe_id: int) -> dict:
-    try:
-        # หากส่ง ID ในกลุ่มจำลองมา ให้ดึงข้อมูลจำลองเลยโดยไม่ต้องยิง API
-        if recipe_id in MOCK_RECIPES:
-            return MOCK_RECIPES[recipe_id]
+    if recipe_id in MOCK_RECIPES:
+        return MOCK_RECIPES[recipe_id]
 
+    cache_key = f"recipe_detail:{recipe_id}"
+    cached_data = get_cached_api_response(cache_key)
+    if cached_data is not None:
+        return cached_data
+
+    try:
         if not SPOONACULAR_KEY or SPOONACULAR_KEY == "your_spoonacular_api_key_here":
             raise ValueError("Placeholder API Key detected")
 
         data = await _fetch_from_spoonacular(f"{recipe_id}/information")
-        return {
+        parsed_data = {
             "id": data["id"],
             "title": data["title"],
             "image": data.get("image"),
@@ -180,6 +238,8 @@ async def get_recipe_detail(recipe_id: int) -> dict:
                 for ing in data.get("extendedIngredients", [])
             ]
         }
+        set_cached_api_response(cache_key, parsed_data)
+        return parsed_data
     except Exception as e:
         print(f"[recipe_service] Detail fallback triggered for recipe {recipe_id}: {e}")
         # Default ไปที่ข้าวผัดอกไก่หากเรียกข้อมูลอื่นไม่สำเร็จ
@@ -187,18 +247,26 @@ async def get_recipe_detail(recipe_id: int) -> dict:
 
 # 🔎 3. ค้นหาเมนูอาหารผ่านการพิมพ์ชื่อค้นหาตรงๆ
 async def search_recipe_by_name(name: str) -> list[dict]:
+    cache_key = f"search_recipes:{name.strip().lower()}"
+    cached_data = get_cached_api_response(cache_key)
+    if cached_data is not None:
+        return cached_data
+
     try:
         if not SPOONACULAR_KEY or SPOONACULAR_KEY == "your_spoonacular_api_key_here":
             raise ValueError("Placeholder API Key detected")
         params = {"query": name, "number": 10}
         data = await _fetch_from_spoonacular("complexSearch", params)
         
-        return [{
+        parsed_data = [{
             "id": r["id"],
             "title": r["title"],
             "image": r.get("image"),
             "readyInMinutes": r.get("readyInMinutes", 0)
         } for r in data.get("results", [])]
+        
+        set_cached_api_response(cache_key, parsed_data)
+        return parsed_data
     except Exception as e:
         print(f"[recipe_service] Search fallback triggered for {name}: {e}")
         result = []

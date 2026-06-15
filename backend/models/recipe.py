@@ -17,3 +17,11 @@ class RecipeSaved(Base):
 
     # 🔗 ความสัมพันธ์ย้อนกลับไปยังตารางหลักของ User
     user = relationship("User", back_populates="saved_recipes")
+
+class CachedResponse(Base):
+    __tablename__ = "cached_responses"
+
+    id = Column(Integer, primary_key=True, index=True)
+    cache_key = Column(String, unique=True, index=True, nullable=False) # เช่น "recipe_detail:101"
+    response_json = Column(String, nullable=False) # ผลลัพธ์ดิบในรูป JSON String
+    cached_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
