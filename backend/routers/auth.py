@@ -1,4 +1,5 @@
 import os
+import secrets
 from datetime import datetime, timedelta, timezone
 import jwt
 import bcrypt  # ใช้ bcrypt ดิบโดยตรง ตัด passlib ทิ้งถาวร
@@ -20,7 +21,15 @@ router = APIRouter(
 )
 
 # ดึงค่าคอนฟิกจาก .env
-SECRET_KEY = os.getenv("SECRET_KEY", "super-secret-key-xyz-123456789")
+SECRET_KEY = os.getenv("SECRET_KEY")
+# รายการคีย์ตั้งต้นที่เป็นอันตรายในระดับโปรดักชัน
+WEAK_KEYS = {"super-secret-key-xyz-123456789", "your-super-secret-key-for-jwt", "Super-Very-Secret-Key"}
+
+if not SECRET_KEY or SECRET_KEY in WEAK_KEYS:
+    # 🔐 ความปลอดภัยระดับ Enterprise: สุ่มคีย์ลับขนาด 256 บิตขึ้นมาใน RAM เมื่อตรวจเจอบทบาทความปลอดภัยที่อ่อนแอ
+    SECRET_KEY = secrets.token_hex(32)
+    print("⚠️ [Security WARNING] JWT SECRET_KEY ว่างเปล่า หรือคีย์มีความปลอดภัยต่ำ ระบบจึงทำการสุ่มคีย์ลับตัวใหม่แบบไดนามิกใน RAM สำเร็จ")
+
 ALGORITHM = os.getenv("ALGORITHM", "HS256")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 30))
 
