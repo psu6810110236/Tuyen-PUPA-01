@@ -31,6 +31,7 @@ This log tracks architectural design decisions, the current project state, and t
 | **Jun 13, 2026** | **FastMCP SSE Transport Plan** | Inspected `fastmcp` capabilities. Verified it supports stdio, sse, and streamable-http. Proposed mounting the MCP's SSE app directly into the FastAPI backend to run within a single container. |
 | **Jun 13, 2026** | **AI Agent Implementation** | Implemented `POST /agent/chat` router using `google-genai` SDK and `gemini-2.5-flash`. Integrated 4 tools directly using Python closures bound to `current_user.id` for secure database operations (fridge matching, Lotus links, and LINE share generator). |
 | **Jun 15, 2026** | **Tooyen Core UI/UX Design** | Updated product specifications to focus on Mobile-first Tooyen Core guidelines (Tinted Neutrals, soft-tactile rounded-2xl cards with 2px white borders, soft blue shadows, and fluid layout). |
+| **Jun 16, 2026** | **Enterprise Optimization & E2E Green Build** | Resolved git pull merge conflicts in `recipe_service.py`. Corrected indentation syntax error in database caching fallback. Updated Playwright E2E test locators (navigation mapping) and resolved page redirect timings, achieving 100% green build across Chromium, Firefox, and Webkit. Successfully pushed dev1 consolidations to origin/dev. Created detailed [COMMIT_LOGS.md](file:///E:/PUPA-Tuyen/COMMIT_LOGS.md) (236). |
 
 ---
 
@@ -39,13 +40,13 @@ This log tracks architectural design decisions, the current project state, and t
 ### 🟩 Short-Term (Immediate Tasks)
 - [x] Scaffold the frontend boilerplate (Next.js + Tailwind CSS) in `/frontend` (Done by Frontend Developer using Next.js).
 - [x] Add credentials and API keys to the root `.env` file (Gemini API key added by developer).
-- [ ] Run `docker compose up --build` to test local PostgreSQL database and API connection.
-- [ ] Connect Next.js frontend recipe page to the `/recipes/{recipe_id}` endpoint and render the Lotus's shopping list buttons.
-- [ ] Integrate FastMCP SSE server into the FastAPI application and configure routing.
+- [x] Run `docker compose up --build` to test local PostgreSQL database and API connection (Done, healthy backend/database containers).
+- [x] Connect Next.js frontend recipe page to the `/recipes/{recipe_id}` endpoint and render the Lotus's shopping list buttons (Done, matching inventory comparison).
+- [x] Integrate FastMCP SSE server into the FastAPI application and configure routing (Done, vision MCP mounted at port 8001).
 
 ### 🟨 Medium-Term (Feature Development)
 - [x] Design Spoonacular/OpenFoodFacts API connections for food nutrition queries (API integrated in backend recipe/nutrition services).
-- [ ] Create frontend login/register pages with premium styling using Tailwind CSS.
+- [x] Create frontend login/register pages with premium styling using Tailwind CSS (Done, full security flow).
 - [x] Integrate Gemini API into the backend for smart nutrition chatting (Done via `/agent/chat` endpoint) and photo recognition.
 
 ### 🟦 Long-Term (Deployment & Production)
