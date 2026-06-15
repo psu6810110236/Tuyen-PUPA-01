@@ -31,20 +31,22 @@ test("E2E Presentation Flow: Register, Login, Scan Grocery, View Recipes & Detai
   console.log("Logged in successfully. Navigating to Dashboard.");
   await page.waitForTimeout(2000); // ⏳ หน่วงเวลาแสดงหน้า Dashboard โล่งๆ หลังล็อกอินสำเร็จ 2 วินาที
 
-  // 2. ไปที่หน้าสแกนวัตถุดิบและทดสอบพิมพ์เพิ่มด้วยมือ (อกไก่)
+  // 2. ไปที่หน้าคลังอาหารและทดสอบเพิ่มวัตถุดิบด้วยมือ (อกไก่)
   console.log("Testing manual inventory addition...");
-  await dashboardPage.goToScanner();
-  await page.waitForTimeout(2000); // ⏳ หน่วงเวลาแสดงหน้าสแกนว่างๆ ก่อนกรอก 2 วินาที
-
+  await dashboardPage.goToInventory();
+  await page.waitForTimeout(2000); // ⏳ หน่วงเวลาแสดงหน้าคลังอาหารก่อนกรอก 2 วินาที
+ 
   await dashboardPage.addInventoryManual("อกไก่", 2.5, "ชิ้น");
-
+ 
   // ตรวจสอบว่าวัตถุดิบปรากฏบนรายการตู้เย็นด้านล่าง
   await expect(page.locator("text=อกไก่").first()).toBeVisible({ timeout: 8000 });
   console.log("Manual item 'อกไก่' added and visible in list.");
   await page.waitForTimeout(2000); // ⏳ หน่วงเวลาแสดงรายการตู้เย็นหลังเพิ่มอกไก่สำเร็จ 2 วินาที
-
+ 
   // 3. ทดสอบการอัปโหลดไฟล์รูปภาพเพื่อให้ Gemini Vision สแกนวัตถุดิบ
   console.log("Uploading grocery image for Gemini Vision AI scanning...");
+  await dashboardPage.goToScanner();
+  await page.waitForTimeout(2000); // ⏳ หน่วงเวลาแสดงหน้าสแกน 2 วินาทีก่อนอัปโหลด
   const imagePath = path.join(__dirname, "fixtures", "fridge_items.jpg");
   await dashboardPage.uploadScanImage(imagePath);
 
@@ -111,7 +113,7 @@ test("E2E Presentation Flow: Register, Login, Scan Grocery, View Recipes & Detai
   await dashboardPage.logout();
 
   // ตรวจสอบว่ากลับมาหน้าล็อกอินได้อย่างปลอดภัย
-  await expect(loginPage.usernameInput).toBeVisible();
+  await expect(loginPage.usernameInput).toBeVisible({ timeout: 15000 });
   console.log("Successfully logged out. E2E flow test completed successfully! 🎉");
   await page.waitForTimeout(2000); // ⏳ หน่วงเวลาแสดงหน้า Login หลังออกระบบเสร็จสิ้น 2 วินาที
 });

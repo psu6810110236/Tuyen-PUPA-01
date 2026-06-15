@@ -140,16 +140,16 @@ async def suggest_recipes(ingredients: list[str]) -> list[dict]:
         if not SPOONACULAR_KEY or SPOONACULAR_KEY == "your_spoonacular_api_key_here":
             raise ValueError("Placeholder API Key detected")
 
-    translated_ingredients = []
-    for item in ingredients:
-        if "อกไก่" in item or "ไก่" in item:
-            translated_ingredients.append("chicken")
-        elif "ไข่" in item:
-            translated_ingredients.append("egg")
-        elif "ผักกาด" in item:
-            translated_ingredients.append("cabbage")
-        else:
-            translated_ingredients.append(item) # ถ้าเป็นอังกฤษอยู่แล้วปล่อยผ่าน
+        translated_ingredients = []
+        for item in ingredients:
+            if "อกไก่" in item or "ไก่" in item:
+                translated_ingredients.append("chicken")
+            elif "ไข่" in item:
+                translated_ingredients.append("egg")
+            elif "ผักกาด" in item:
+                translated_ingredients.append("cabbage")
+            else:
+                translated_ingredients.append(item) # ถ้าเป็นอังกฤษอยู่แล้วปล่อยผ่าน
 
         ingredients_str = ",".join(translated_ingredients)
         data = await _fetch_from_spoonacular("findByIngredients", {"ingredients": ingredients_str, "number": 10, "ranking": 1})
