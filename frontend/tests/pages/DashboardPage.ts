@@ -38,7 +38,7 @@ export class DashboardPage {
 
     // Scanner View elements
     this.uploadInput = page.locator("input[type='file']");
-    this.scanningIndicator = page.locator("text=SmartFood AI กำลังวิเคราะห์รูปภาพของคุณ...");
+    this.scanningIndicator = page.locator("text=กำลังวิเคราะห์รูปภาพ...");
     this.openManualFormBtn = page.locator("button:has-text('พิมพ์เพิ่มวัตถุดิบเอง')").first();
     this.manualNameInput = page.locator("#inv-name");
     this.manualQtyInput = page.locator("#inv-qty");

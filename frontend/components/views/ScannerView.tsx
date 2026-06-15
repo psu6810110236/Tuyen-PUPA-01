@@ -138,8 +138,8 @@ export default function ScannerView() {
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
             </svg>
-            <p className="text-base font-heading font-semibold text-primary">SmartFood AI กำลังวิเคราะห์รูปภาพของคุณ...</p>
-            <p className="text-xs font-body text-foreground-muted">ระบบจะแสกนวัตถุดิบและนำเข้าตู้เย็นโดยอัตโนมัติ</p>
+            <p className="text-sm font-heading font-semibold text-primary">กำลังวิเคราะห์รูปภาพ...</p>
+            <p className="text-xs font-body text-foreground-muted">ระบบกำลังระบุวัตถุดิบเพื่อนำเข้าตู้เย็น</p>
           </div>
         ) : (
           <>
@@ -153,7 +153,7 @@ export default function ScannerView() {
             </p>
             <p className="mt-1 text-sm font-body text-foreground-secondary">หรือคลิกเพื่อเลือกไฟล์</p>
             <p className="mt-2 text-xs font-body text-foreground-muted">รองรับไฟล์ JPG, PNG, HEIC · ขนาดไม่เกิน 10MB</p>
-            <p className="mt-1.5 text-xs font-body text-accent-green font-semibold">✨ วิเคราะห์ด้วยระบบ AI Vision ค้นหาวัตถุดิบและนำเข้าตู้เย็นทันที</p>
+            <p className="mt-1.5 text-xs font-body text-foreground-secondary font-medium">ระบบจะวิเคราะห์และเพิ่มวัตถุดิบอัตโนมัติ</p>
           </>
         )}
       </div>
@@ -161,7 +161,7 @@ export default function ScannerView() {
       {scanResult && (
         <div className="rounded-2xl border-2 border-white bg-surface p-4 shadow-soft-blue animate-scale-in">
           <p className="text-sm font-heading font-bold text-foreground flex items-center gap-2">
-            <CheckCircle className="h-4 w-4 text-success" /> ผลการสแกนด้วย AI:
+            <CheckCircle className="h-4 w-4 text-success" /> ผลการสแกน:
           </p>
           <div className="mt-2 flex flex-col gap-1.5">
             {scanResult.ingredients_found.length > 0 ? (

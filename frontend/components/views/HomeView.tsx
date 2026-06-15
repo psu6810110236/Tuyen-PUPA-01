@@ -1,31 +1,48 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AlertCircle, Clock, Leaf } from "lucide-react";
-
-// ─── Mock Inventory Data ───
-type InventoryItem = {
-  id: string;
-  name: string;
-  daysLeft: number;
-  icon: string;
-  category: string;
-};
-
-const mockExpiringSoon: InventoryItem[] = [
-  { id: "1", name: "นมสด", daysLeft: 2, icon: "🥛", category: "Dairy" },
-  { id: "2", name: "ผักโขม", daysLeft: 3, icon: "🥬", category: "Produce" },
-  { id: "3", name: "อกไก่", daysLeft: 4, icon: "🍗", category: "Meat" },
-];
-
-const mockFreshItems: InventoryItem[] = [
-  { id: "4", name: "แครอท", daysLeft: 14, icon: "🥕", category: "Produce" },
-  { id: "5", name: "ไข่ไก่", daysLeft: 21, icon: "🥚", category: "Dairy" },
-  { id: "6", name: "แอปเปิ้ล", daysLeft: 10, icon: "🍎", category: "Produce" },
-];
+import { inventoryAPI, type InventoryItem } from "@/lib/api";
 
 export default function HomeView() {
-  const [isLoading] = useState(false); // Can be tied to a real fetch later
+  const [items, setItems] = useState<InventoryItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchInventory = async () => {
+      try {
+        const data = await inventoryAPI.getAll();
+        setItems(data);
+      } catch (error) {
+        console.error("Failed to fetch inventory:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchInventory();
+  }, []);
+
+  const calculateDaysLeft = (expiryDateStr: string | null) => {
+    if (!expiryDateStr) return 999; // No expiry date -> Fresh
+    const expiry = new Date(expiryDateStr);
+    const today = new Date();
+    // Reset time to start of day for accurate day calculation
+    today.setHours(0, 0, 0, 0);
+    expiry.setHours(0, 0, 0, 0);
+    const diffTime = Math.ceil((expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    return diffTime;
+  };
+
+  const getCategoryIcon = (category: string | null) => {
+    switch (category?.toLowerCase()) {
+      case 'dairy': return '🥛';
+      case 'produce': return '🥬';
+      case 'meat': return '🍗';
+      case 'fruit': return '🍎';
+      case 'vegetable': return '🥕';
+      default: return '📦';
+    }
+  };
 
   // ─── Loading Skeleton ───
   if (isLoading) {
@@ -52,6 +69,16 @@ export default function HomeView() {
     );
   }
 
+  // Process items
+  const processedItems = items.map((item) => ({
+    ...item,
+    daysLeft: calculateDaysLeft(item.expiry_date),
+    icon: getCategoryIcon(item.category),
+  }));
+
+  const expiringSoon = processedItems.filter((item) => item.daysLeft <= 4).sort((a, b) => a.daysLeft - b.daysLeft);
+  const freshItems = processedItems.filter((item) => item.daysLeft > 4).sort((a, b) => a.daysLeft - b.daysLeft);
+
   // Get Thai date
   const today = new Date();
   const thaiDate = today.toLocaleDateString("th-TH", {
@@ -72,7 +99,7 @@ export default function HomeView() {
         <div className="flex items-center gap-2 rounded-xl bg-accent-yellow-light px-3 py-1.5 border border-white shadow-sm">
           <AlertCircle className="h-4 w-4 text-orange-500" />
           <span className="text-xs font-body font-medium text-orange-700">
-            {mockExpiringSoon.length} ใกล้หมดอายุ
+            {expiringSoon.length} ใกล้หมดอายุ
           </span>
         </div>
       </div>
@@ -81,16 +108,16 @@ export default function HomeView() {
       <section className="flex flex-col gap-3">
         <div className="flex items-center gap-2 px-1">
           <Clock className="h-5 w-5 text-danger" />
-          <h3 className="text-sm font-heading font-semibold text-foreground">ควรทานก่อน (1-4 วัน)</h3>
+          <h3 className="text-sm font-heading font-semibold text-foreground">ควรทานก่อน (1-4 วัน หรือหมดอายุแล้ว)</h3>
         </div>
         
-        {mockExpiringSoon.length === 0 ? (
+        {expiringSoon.length === 0 ? (
           <div className="rounded-2xl border-2 border-white bg-surface p-6 shadow-soft-blue text-center">
             <p className="text-sm font-body text-foreground-muted">ไม่มีอาหารใกล้หมดอายุ 🥳</p>
           </div>
         ) : (
           <div className="flex flex-col gap-3">
-            {mockExpiringSoon.map((item) => (
+            {expiringSoon.map((item) => (
               <div
                 key={item.id}
                 className="flex items-center gap-4 rounded-2xl border-2 border-white bg-surface p-4 shadow-soft-blue transition-airy hover:translate-y-[-2px] hover:shadow-md cursor-pointer"
@@ -100,11 +127,13 @@ export default function HomeView() {
                 </div>
                 <div className="flex flex-1 flex-col">
                   <span className="text-base font-heading font-semibold text-foreground">{item.name}</span>
-                  <span className="text-xs font-body text-foreground-secondary">{item.category}</span>
+                  <span className="text-xs font-body text-foreground-secondary">
+                    {item.quantity} {item.unit} {item.category ? `• ${item.category}` : ''}
+                  </span>
                 </div>
                 <div className="flex flex-col items-end">
-                  <span className="rounded-full bg-accent-red px-2.5 py-1 text-xs font-body font-medium text-danger">
-                    อีก {item.daysLeft} วัน
+                  <span className={`rounded-full px-2.5 py-1 text-xs font-body font-medium ${item.daysLeft < 0 ? 'bg-danger text-white' : 'bg-accent-red text-danger'}`}>
+                    {item.daysLeft < 0 ? `หมดอายุแล้ว ${Math.abs(item.daysLeft)} วัน` : `อีก ${item.daysLeft} วัน`}
                   </span>
                 </div>
               </div>
@@ -120,13 +149,13 @@ export default function HomeView() {
           <h3 className="text-sm font-heading font-semibold text-foreground">สดใหม่ (&gt; 5 วัน)</h3>
         </div>
 
-        {mockFreshItems.length === 0 ? (
+        {freshItems.length === 0 ? (
           <div className="rounded-2xl border-2 border-white bg-surface p-6 shadow-soft-blue text-center">
             <p className="text-sm font-body text-foreground-muted">ยังไม่มีอาหารสดใหม่</p>
           </div>
         ) : (
           <div className="flex flex-col gap-3">
-            {mockFreshItems.map((item) => (
+            {freshItems.map((item) => (
               <div
                 key={item.id}
                 className="flex items-center gap-4 rounded-2xl border-2 border-white bg-surface p-4 shadow-soft-blue transition-airy hover:translate-y-[-2px] hover:shadow-md cursor-pointer"
@@ -136,12 +165,20 @@ export default function HomeView() {
                 </div>
                 <div className="flex flex-1 flex-col">
                   <span className="text-base font-heading font-semibold text-foreground">{item.name}</span>
-                  <span className="text-xs font-body text-foreground-secondary">{item.category}</span>
+                  <span className="text-xs font-body text-foreground-secondary">
+                    {item.quantity} {item.unit} {item.category ? `• ${item.category}` : ''}
+                  </span>
                 </div>
                 <div className="flex flex-col items-end">
-                  <span className="text-sm font-body font-medium text-primary-dark">
-                    {item.daysLeft} วัน
-                  </span>
+                  {item.daysLeft === 999 ? (
+                    <span className="text-sm font-body font-medium text-primary-dark">
+                      สดใหม่
+                    </span>
+                  ) : (
+                    <span className="text-sm font-body font-medium text-primary-dark">
+                      {item.daysLeft} วัน
+                    </span>
+                  )}
                 </div>
               </div>
             ))}
@@ -150,7 +187,6 @@ export default function HomeView() {
       </section>
       
       {/* ─── Empty Spacer for Bottom Nav FAB ─── */}
-      {/* Give breathing room so the last items are not obscured by the bottom navigation FAB */}
       <div className="h-16 lg:hidden" />
     </div>
   );
