@@ -24,6 +24,9 @@ class InventoryManualCreate(BaseModel):
     expiry_date: Optional[date] = None # วันหมดอายุ (ใส่หรือไม่ใส่ก็ได้ YYYY-MM-DD)
     added_by: Optional[str] = "manual" # แหล่งที่มา เช่น "manual" หรือ "scan"
 
+class InventoryBulkCreate(BaseModel):
+    items: list[InventoryManualCreate]
+
 # 📋 2. Schema สำหรับตัวแทนข้อมูลที่ส่งกลับไปหาหน้าเว็บ (Response Model)
 class InventoryItemResponse(BaseModel):
     id: int
@@ -62,6 +65,33 @@ def add_inventory_manual(
     db.refresh(new_item) # อัปเดตเพื่อดึงเลข id ที่เบสเพิ่งรันออกมาให้
     
     return new_item
+
+# 🚀 [ เส้นทาง API: POST /inventory/bulk ]
+@router.post("/bulk", response_model=list[InventoryItemResponse], status_code=status.HTTP_201_CREATED)
+def add_inventory_bulk(
+    payload: InventoryBulkCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    new_items = []
+    for item_data in payload.items:
+        new_item = InventoryItem(
+            user_id=current_user.id,
+            name=item_data.name,
+            quantity=item_data.quantity,
+            unit=item_data.unit,
+            category=item_data.category,
+            expiry_date=item_data.expiry_date,
+            added_by=item_data.added_by
+        )
+        db.add(new_item)
+        new_items.append(new_item)
+    
+    db.commit()
+    for item in new_items:
+        db.refresh(item)
+        
+    return new_items
 
 class InventoryUpdateSchema(BaseModel):
     name: Optional[str] = None

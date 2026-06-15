@@ -22,32 +22,37 @@ async def detect_and_add_to_fridge(
             "added_count": 0,
         }
 
-    # ขั้น 2: เพิ่มเข้าตู้เย็นผ่าน backend
+    # ขั้น 2: เพิ่มเข้าตู้เย็นผ่าน backend แบบ Bulk (Enterprise standard)
     added = []
     failed = []
+    
+    bulk_items = [
+        {
+            "name": name,
+            "quantity": 1.0,
+            "unit": "ชิ้น",
+            "category": "other",
+            "added_by": "scan",
+        }
+        for name in ingredients
+    ]
 
     async with httpx.AsyncClient() as client:
-        for name in ingredients:
-            try:
-                res = await client.post(
-                    f"{BACKEND_URL}/inventory/manual",
-                    json={
-                        "name": name,
-                        "quantity": 1,
-                        "unit": "ชิ้น",
-                        "category": "other",
-                        "added_by": "scan",
-                    },
-                    headers={"Authorization": f"Bearer {token}"},
-                    timeout=10.0,
-                )
-                if res.status_code == 201:
-                    added.append(name)
-                else:
-                    failed.append(name)
-            except Exception as e:
-                print(f"Failed to add {name}: {e}")
-                failed.append(name)
+        try:
+            res = await client.post(
+                f"{BACKEND_URL}/inventory/bulk",
+                json={"items": bulk_items},
+                headers={"Authorization": f"Bearer {token}"},
+                timeout=15.0,
+            )
+            if res.status_code == 201:
+                added = ingredients
+            else:
+                print(f"Bulk add failed with status {res.status_code}: {res.text}")
+                failed = ingredients
+        except Exception as e:
+            print(f"Bulk add request exception: {e}")
+            failed = ingredients
 
     return {
         "success": True,
