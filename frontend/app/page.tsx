@@ -8,6 +8,7 @@ import ScannerView from "@/components/views/ScannerView";
 import RecipeView from "@/components/views/RecipeView";
 import ChatView from "@/components/views/ChatView";
 import { Home, Camera, ChefHat, MessageSquare, LogOut, Bell } from "lucide-react";
+import { nutritionAPI, type TodaySummary, type NutritionLog } from "@/lib/api";
 
 // ─── View Type ───
 type ViewType = "home" | "scanner" | "recipe" | "chat";
@@ -20,19 +21,37 @@ const navItems: { id: ViewType; label: string; icon: React.ReactNode }[] = [
   { id: "chat", label: "แชท AI", icon: <MessageSquare className="h-5 w-5" /> },
 ];
 
-// ─── Weekly Summary Stats ───
-const weeklyStats = [
-  { label: "แคลอรี่เฉลี่ย", value: "1,850", unit: "kcal", color: "bg-primary-pale text-primary-dark" },
-  { label: "โปรตีนเฉลี่ย", value: "82", unit: "g", color: "bg-accent-lavender text-purple-600" },
-  { label: "น้ำดื่ม", value: "2.1", unit: "ลิตร", color: "bg-secondary-light text-surface-tint" },
-  { label: "ออกกำลังกาย", value: "4", unit: "วัน", color: "bg-accent-green text-teal-700" },
-];
-
 export default function DashboardPage() {
   const { isAuthenticated, isLoading, user, logout } = useAuth();
   const [activeView, setActiveView] = useState<ViewType>("home");
 
-  // Load persisted view
+  // ─── Nutrition Stats State ───
+  const [todaySummary, setTodaySummary] = useState<TodaySummary | null>(null);
+  const [historyLogs, setHistoryLogs] = useState<NutritionLog[]>([]);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    let active = true;
+    const loadNutritionData = async () => {
+      try {
+        const [today, history] = await Promise.all([
+          nutritionAPI.getToday(),
+          nutritionAPI.getHistory(7),
+        ]);
+        if (active) {
+          setTodaySummary(today);
+          setHistoryLogs(history);
+        }
+      } catch (err) {
+        console.error("Failed to load nutrition summary:", err);
+      }
+    };
+    loadNutritionData();
+    return () => {
+      active = false;
+    };
+  }, [isAuthenticated]);
+
   useEffect(() => {
     const savedView = localStorage.getItem("tuyen_active_view") as ViewType;
     if (savedView && ["home", "scanner", "recipe", "chat"].includes(savedView)) {
@@ -75,6 +94,43 @@ export default function DashboardPage() {
   const hour = new Date().getHours();
   const greeting =
     hour < 12 ? "สวัสดีตอนเช้า" : hour < 17 ? "สวัสดีตอนบ่าย" : "สวัสดีตอนเย็น";
+
+  // ─── Calculate daily averages from 7 days history ───
+  const dailyTotals: Record<string, { calories: number; protein: number }> = {};
+  historyLogs.forEach((log) => {
+    const dateKey = new Date(log.logged_at).toISOString().split("T")[0];
+    if (!dailyTotals[dateKey]) {
+      dailyTotals[dateKey] = { calories: 0, protein: 0 };
+    }
+    dailyTotals[dateKey].calories += log.calories;
+    dailyTotals[dateKey].protein += log.protein;
+  });
+
+  const daysLogged = Object.keys(dailyTotals).length;
+  const avgCalories = daysLogged > 0
+    ? Math.round(Object.values(dailyTotals).reduce((sum, day) => sum + day.calories, 0) / daysLogged)
+    : todaySummary?.totals.calories || 0;
+
+  const avgProtein = daysLogged > 0
+    ? Math.round(Object.values(dailyTotals).reduce((sum, day) => sum + day.protein, 0) / daysLogged)
+    : todaySummary?.totals.protein || 0;
+
+  const weeklyStats = [
+    { label: "แคลอรี่เฉลี่ย", value: avgCalories > 0 ? avgCalories.toLocaleString() : "0", unit: "kcal", color: "bg-primary-pale text-primary-dark" },
+    { label: "โปรตีนเฉลี่ย", value: avgProtein > 0 ? avgProtein.toString() : "0", unit: "g", color: "bg-accent-lavender text-purple-600" },
+    { label: "มื้ออาหารวันนี้", value: todaySummary?.meals_count?.toString() || "0", unit: "มื้อ", color: "bg-secondary-light text-surface-tint" },
+    { label: "สำเร็จแล้ว", value: todaySummary ? Math.min(100, Math.round(todaySummary.progress_percentage.calories_pct)).toString() : "0", unit: "%", color: "bg-accent-green text-teal-700" },
+  ];
+
+  let greetingSubtext = "บันทึกและติดตามสารอาหารเพื่อเป้าหมายสุขภาพที่ดีของคุณ";
+  if (todaySummary) {
+    const remaining = todaySummary.goals.calories - todaySummary.totals.calories;
+    if (remaining > 0) {
+      greetingSubtext = `วันนี้ทานไปแล้ว ${Math.round(todaySummary.totals.calories)} kcal เหลืออีกแค่ ${Math.round(remaining)} kcal จะครบเป้าหมายประจำวัน!`;
+    } else if (todaySummary.totals.calories > 0) {
+      greetingSubtext = `ยินดีด้วย! วันนี้คุณทานอาหารครบเป้าหมายแคลอรี่เรียบร้อยแล้ว (${Math.round(todaySummary.totals.calories)} kcal)`;
+    }
+  }
 
   // ─── Render Active View ───
   const renderView = () => {
@@ -147,7 +203,7 @@ export default function DashboardPage() {
                 </div>
               </div>
               <p className="mt-3 text-sm font-body leading-relaxed text-white/70">
-                วันนี้คุณรับประทานอาหารได้ดีมาก! เหลืออีกแค่ 350 kcal ก็ครบเป้าหมาย
+                {greetingSubtext}
               </p>
             </div>
 
