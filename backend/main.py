@@ -6,8 +6,20 @@ from models.inventory import InventoryItem
 from models.recipe import RecipeSaved
 from models.nutrition import NutritionLog
 
-# 🛠️ ตรวจสอบและสร้างตารางฐานข้อมูลทั้งหมดตามโมเดล (เช่น users, inventory_items, recipes_saved, nutrition_logs)
-Base.metadata.create_all(bind=engine)
+# 🛠️ รันการทำ Database Migrations ผ่าน Alembic อัตโนมัติในตอนเริ่มเปิดระบบ (Enterprise Standard)
+from alembic.config import Config
+from alembic import command
+import os
+
+try:
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    ini_path = os.path.join(current_dir, "alembic.ini")
+    alembic_cfg = Config(ini_path)
+    alembic_cfg.set_main_option("script_location", os.path.join(current_dir, "alembic"))
+    command.upgrade(alembic_cfg, "head")
+    print("🚀 [Alembic] อัปเกรดโครงสร้างตารางฐานข้อมูลสำเร็จ (Upgraded to head)")
+except Exception as e:
+    print(f"⚠️ [Alembic] ไม่สามารถอัปเกรดฐานข้อมูลเมื่อเริ่มต้นระบบได้: {e}")
 
 from routers.auth import router as auth_router  # ดึง Router สำหรับ Authentication มาใช้งาน
 from routers.inventory import router as inventory_router  # ดึง Router สำหรับ Inventory มาใช้งาน
