@@ -7,15 +7,18 @@ import HomeView from "@/components/views/HomeView";
 import ScannerView from "@/components/views/ScannerView";
 import RecipeView from "@/components/views/RecipeView";
 import ChatView from "@/components/views/ChatView";
-import { Home, Camera, ChefHat, MessageSquare, LogOut, Bell } from "lucide-react";
+import InventoryView from "@/components/views/InventoryView";
+import { Home, Camera, ChefHat, MessageSquare, LogOut, Bell, Package } from "lucide-react";
 import { nutritionAPI, type TodaySummary, type NutritionLog } from "@/lib/api";
 
 // ─── View Type ───
-type ViewType = "home" | "scanner" | "recipe" | "chat";
+// ─── View Type ───
+type ViewType = "home" | "inventory" | "scanner" | "recipe" | "chat";
 
 // ─── Navigation Items ───
 const navItems: { id: ViewType; label: string; icon: React.ReactNode }[] = [
   { id: "home", label: "หน้าหลัก", icon: <Home className="h-5 w-5" /> },
+  { id: "inventory", label: "คลังอาหาร", icon: <Package className="h-5 w-5" /> },
   { id: "scanner", label: "สแกน", icon: <Camera className="h-5 w-5" /> },
   { id: "recipe", label: "สูตรอาหาร", icon: <ChefHat className="h-5 w-5" /> },
   { id: "chat", label: "แชท AI", icon: <MessageSquare className="h-5 w-5" /> },
@@ -54,7 +57,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const savedView = localStorage.getItem("tuyen_active_view") as ViewType;
-    if (savedView && ["home", "scanner", "recipe", "chat"].includes(savedView)) {
+    if (savedView && ["home", "inventory", "scanner", "recipe", "chat"].includes(savedView)) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setActiveView(savedView);
     }
@@ -137,6 +140,8 @@ export default function DashboardPage() {
     switch (activeView) {
       case "home":
         return <HomeView />;
+      case "inventory":
+        return <InventoryView />;
       case "scanner":
         return <ScannerView />;
       case "recipe":
