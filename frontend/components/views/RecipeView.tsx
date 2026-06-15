@@ -7,6 +7,7 @@ import {
   type RecipeSearchResult,
   type RecipeDetail,
 } from "@/lib/api";
+import { ChefHat, Clock, Users, Search, Sparkles, ChevronLeft, Save, CheckCircle, AlertTriangle, ShoppingCart, MessageCircle, Info } from "lucide-react";
 
 type ViewMode = "suggest" | "search" | "detail";
 
@@ -21,12 +22,7 @@ export default function RecipeView() {
   const [error, setError] = useState("");
   const [saveMessage, setSaveMessage] = useState("");
 
-  // ─── Load suggestions on mount ───
-  useEffect(() => {
-    loadSuggestions();
-  }, []);
-
-  const loadSuggestions = async () => {
+  const loadSuggestions = useCallback(async () => {
     setIsLoading(true);
     setError("");
     try {
@@ -47,7 +43,13 @@ export default function RecipeView() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
+
+  // ─── Load suggestions on mount ───
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadSuggestions();
+  }, [loadSuggestions]);
 
   // ─── Search recipes ───
   const handleSearch = useCallback(async () => {
@@ -121,9 +123,7 @@ export default function RecipeView() {
           onClick={goBack}
           className="flex items-center gap-2 self-start rounded-2xl px-4 py-2 text-sm font-body font-medium text-foreground-secondary transition-airy hover:bg-surface-alt hover:text-foreground"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
-          </svg>
+          <ChevronLeft className="h-4 w-4" />
           กลับไปรายการ
         </button>
 
@@ -136,10 +136,10 @@ export default function RecipeView() {
             <h2 className="text-xl font-heading font-bold text-foreground">{recipeDetail.title}</h2>
             <div className="mt-3 flex flex-wrap gap-3">
               <span className="flex items-center gap-1.5 rounded-full bg-primary-pale px-3 py-1.5 text-xs font-body font-medium text-primary-dark">
-                ⏱️ {recipeDetail.readyInMinutes} นาที
+                <Clock className="h-3 w-3" /> {recipeDetail.readyInMinutes} นาที
               </span>
               <span className="flex items-center gap-1.5 rounded-full bg-secondary-light px-3 py-1.5 text-xs font-body font-medium text-surface-tint">
-                👥 {recipeDetail.servings} ที่
+                <Users className="h-3 w-3" /> {recipeDetail.servings} ที่
               </span>
             </div>
 
@@ -148,7 +148,7 @@ export default function RecipeView() {
               onClick={() => handleSave(recipeDetail)}
               className="mt-4 flex items-center gap-2 rounded-full bg-gradient-to-r from-primary to-primary-dark px-5 py-2.5 text-sm font-heading font-semibold text-white shadow-soft-blue transition-airy hover:shadow-glow-teal hover:scale-[1.01] active:scale-[0.99]"
             >
-              💾 บันทึกเมนูนี้
+              <Save className="h-4 w-4" /> บันทึกเมนูนี้
             </button>
           </div>
         </div>
@@ -159,7 +159,9 @@ export default function RecipeView() {
           (recipeDetail.extendedIngredients && recipeDetail.extendedIngredients.length > 0)) && (
           <div className="rounded-2xl border-2 border-white bg-surface p-6 shadow-soft-blue flex flex-col gap-6">
             <div>
-              <h3 className="text-sm font-heading font-semibold text-foreground">🥘 ส่วนผสม (Ingredients)</h3>
+              <h3 className="text-sm font-heading font-semibold text-foreground flex items-center gap-2">
+                <ChefHat className="h-4 w-4 text-primary" /> ส่วนผสม (Ingredients)
+              </h3>
               <p className="text-xs text-foreground-secondary mt-1">เปรียบเทียบกับวัตถุดิบในตู้เย็นของคุณโดยอัตโนมัติ</p>
             </div>
 
@@ -167,12 +169,14 @@ export default function RecipeView() {
             {recipeDetail.available_ingredients && recipeDetail.available_ingredients.length > 0 && (
               <div className="flex flex-col gap-3">
                 <h4 className="text-xs font-heading font-semibold text-emerald-600 flex items-center gap-1.5">
-                  <span>🎉</span> มีแล้วในตู้เย็น ({recipeDetail.available_ingredients.length})
+                  <CheckCircle className="h-3 w-3" /> มีแล้วในตู้เย็น ({recipeDetail.available_ingredients.length})
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                   {recipeDetail.available_ingredients.map((ing, i) => (
                     <div key={i} className="flex items-center justify-between rounded-2xl bg-emerald-50/50 border border-emerald-100 px-4 py-3">
-                      <span className="text-sm font-body font-medium text-emerald-800">✅ {ing.name}</span>
+                      <span className="text-sm font-body font-medium text-emerald-800 flex items-center gap-2">
+                        <CheckCircle className="h-3 w-3 text-emerald-500" /> {ing.name}
+                      </span>
                       <span className="text-xs font-body text-emerald-600">{ing.amount} {ing.unit}</span>
                     </div>
                   ))}
@@ -185,7 +189,7 @@ export default function RecipeView() {
               <div className="flex flex-col gap-3">
                 <div className="flex items-center justify-between flex-wrap gap-2">
                   <h4 className="text-xs font-heading font-semibold text-danger flex items-center gap-1.5">
-                    <span>🛒</span> ต้องซื้อเพิ่ม ({recipeDetail.missing_ingredients.length})
+                    <ShoppingCart className="h-3 w-3" /> ต้องซื้อเพิ่ม ({recipeDetail.missing_ingredients.length})
                   </h4>
                   {recipeDetail.line_share_url && (
                     <a
@@ -194,7 +198,7 @@ export default function RecipeView() {
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-1.5 rounded-full bg-[#06C755] px-3.5 py-1.5 text-xs font-heading font-bold text-white shadow-sm transition-airy hover:bg-[#05B34C] hover:scale-[1.02] active:scale-[0.98]"
                     >
-                      💬 ส่งรายการซื้อเข้า LINE
+                      <MessageCircle className="h-3 w-3" /> ส่งรายการซื้อเข้า LINE
                     </a>
                   )}
                 </div>
@@ -202,7 +206,9 @@ export default function RecipeView() {
                   {recipeDetail.missing_ingredients.map((ing, i) => (
                     <div key={i} className="flex items-center justify-between rounded-2xl bg-red-50/50 border border-red-100 px-4 py-3">
                       <div className="flex flex-col">
-                        <span className="text-sm font-body font-medium text-red-800">⚠️ {ing.name}</span>
+                        <span className="text-sm font-body font-medium text-red-800 flex items-center gap-2">
+                          <AlertTriangle className="h-3 w-3 text-red-500" /> {ing.name}
+                        </span>
                         {ing.lotus_search_url && (
                           <a
                             href={ing.lotus_search_url}
@@ -210,7 +216,7 @@ export default function RecipeView() {
                             rel="noopener noreferrer"
                             className="text-[10px] text-primary hover:underline mt-0.5"
                           >
-                            🔍 ค้นหาใน Lotus's
+                            <Search className="h-2 w-2 mr-1" /> ค้นหาใน Lotus&apos;s
                           </a>
                         )}
                       </div>
@@ -239,8 +245,10 @@ export default function RecipeView() {
 
         {/* Instructions */}
         {recipeDetail.instructions && (
-          <div className="rounded-2xl border-2 border-white bg-surface p-6 shadow-soft-blue">
-            <h3 className="mb-4 text-sm font-heading font-semibold text-foreground">📝 วิธีทำ</h3>
+          <div className="rounded-2xl border-2 border-white bg-surface p-6 shadow-soft-blue mb-12">
+            <h3 className="mb-4 text-sm font-heading font-semibold text-foreground flex items-center gap-2">
+              <ChefHat className="h-4 w-4 text-primary" /> วิธีทำ
+            </h3>
             <div
               className="prose prose-sm max-w-none text-sm font-body leading-relaxed text-foreground-secondary"
               dangerouslySetInnerHTML={{ __html: recipeDetail.instructions }}
@@ -258,13 +266,16 @@ export default function RecipeView() {
   return (
     <div className="flex flex-col gap-6 animate-fade-in">
       {/* ─── Header ─── */}
-      <div>
-        <h2 className="text-2xl font-heading font-bold text-foreground">🍳 สูตรอาหาร</h2>
-        <p className="mt-1 text-sm font-body text-foreground-secondary">
-          {viewMode === "suggest"
-            ? "เมนูแนะนำจากวัตถุดิบในตู้เย็นของคุณ"
-            : `ผลการค้นหา "${searchQuery}"`}
-        </p>
+      <div className="flex items-center gap-3">
+        <ChefHat className="h-8 w-8 text-primary" />
+        <div>
+          <h2 className="text-2xl font-heading font-bold text-foreground">สูตรอาหาร</h2>
+          <p className="mt-1 text-sm font-body text-foreground-secondary">
+            {viewMode === "suggest"
+              ? "เมนูแนะนำจากวัตถุดิบในตู้เย็นของคุณ"
+              : `ผลการค้นหา "${searchQuery}"`}
+          </p>
+        </div>
       </div>
 
       {/* Save Notification */}
@@ -277,16 +288,7 @@ export default function RecipeView() {
       {/* ─── Search Bar ─── */}
       <div className="relative flex gap-2">
         <div className="relative flex-1">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-foreground-muted"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={1.5}
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-          </svg>
+          <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-foreground-muted" />
           <input
             type="text"
             placeholder="ค้นหาสูตรอาหาร... (ภาษาอังกฤษ เช่น chicken salad)"
@@ -309,24 +311,24 @@ export default function RecipeView() {
       <div className="flex gap-2">
         <button
           onClick={() => { setViewMode("suggest"); loadSuggestions(); }}
-          className={`rounded-full px-4 py-2 text-sm font-body font-medium transition-airy ${
+          className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-body font-medium transition-airy ${
             viewMode === "suggest"
               ? "bg-primary text-white shadow-soft-blue"
               : "border-2 border-white bg-surface text-foreground-secondary hover:bg-surface-alt shadow-soft-blue"
           }`}
         >
-          ✨ เมนูแนะนำ
+          <Sparkles className="h-4 w-4" /> เมนูแนะนำ
         </button>
         {searchQuery.trim() && (
           <button
             onClick={() => setViewMode("search")}
-            className={`rounded-full px-4 py-2 text-sm font-body font-medium transition-airy ${
+            className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-body font-medium transition-airy ${
               viewMode === "search"
                 ? "bg-primary text-white shadow-soft-blue"
                 : "border-2 border-white bg-surface text-foreground-secondary hover:bg-surface-alt shadow-soft-blue"
             }`}
           >
-            🔍 ผลค้นหา
+            <Search className="h-4 w-4" /> ผลค้นหา
           </button>
         )}
       </div>
@@ -334,7 +336,7 @@ export default function RecipeView() {
       {/* Error */}
       {error && (
         <div className="flex items-center gap-2 rounded-2xl border-2 border-accent-orange bg-accent-orange px-4 py-3">
-          <span>💡</span>
+          <Info className="h-4 w-4 text-warning" />
           <p className="text-sm font-body text-foreground-secondary">{error}</p>
         </div>
       )}
@@ -354,7 +356,7 @@ export default function RecipeView() {
         </div>
       ) : displayRecipes.length === 0 ? (
         <div className="flex flex-col items-center gap-3 rounded-2xl border-2 border-white bg-surface p-12 shadow-soft-blue">
-          <span className="text-5xl">🍳</span>
+          <ChefHat className="h-12 w-12 text-primary-light" />
           <p className="text-sm font-body font-medium text-foreground">
             {viewMode === "suggest" ? "ยังไม่มีเมนูแนะนำ" : "ไม่พบสูตรอาหารที่ค้นหา"}
           </p>
@@ -380,7 +382,7 @@ export default function RecipeView() {
                   />
                 ) : (
                   <div className="flex h-full items-center justify-center">
-                    <span className="text-5xl transition-transform duration-300 group-hover:scale-110">🍳</span>
+                    <ChefHat className="h-10 w-10 text-primary transition-transform duration-300 group-hover:scale-110" />
                   </div>
                 )}
                 {"usedIngredientCount" in recipe && (
@@ -397,15 +399,13 @@ export default function RecipeView() {
                 <div className="mt-2 flex items-center gap-4 text-xs font-body text-foreground-muted">
                   {"readyInMinutes" in recipe && (recipe as RecipeSearchResult).readyInMinutes > 0 && (
                     <span className="flex items-center gap-1">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
+                      <Clock className="h-3.5 w-3.5" />
                       {(recipe as RecipeSearchResult).readyInMinutes} นาที
                     </span>
                   )}
                   {"missedIngredientCount" in recipe && (
                     <span className="flex items-center gap-1 text-warning">
-                      ⚠️ ขาด {(recipe as RecipeSuggestion).missedIngredientCount} อย่าง
+                      <AlertTriangle className="h-3.5 w-3.5" /> ขาด {(recipe as RecipeSuggestion).missedIngredientCount} อย่าง
                     </span>
                   )}
                 </div>

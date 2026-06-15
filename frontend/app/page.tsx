@@ -1,22 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/components/AuthContext";
 import AuthPage from "@/components/views/AuthPage";
 import HomeView from "@/components/views/HomeView";
 import ScannerView from "@/components/views/ScannerView";
 import RecipeView from "@/components/views/RecipeView";
 import ChatView from "@/components/views/ChatView";
+import { Home, Camera, ChefHat, MessageSquare, LogOut, Bell } from "lucide-react";
 
 // ─── View Type ───
 type ViewType = "home" | "scanner" | "recipe" | "chat";
 
 // ─── Navigation Items ───
-const navItems: { id: ViewType; label: string; icon: string }[] = [
-  { id: "home", label: "หน้าหลัก", icon: "🏠" },
-  { id: "scanner", label: "สแกนวัตถุดิบ", icon: "📷" },
-  { id: "recipe", label: "สูตรอาหาร", icon: "🍳" },
-  { id: "chat", label: "แชทกับ AI", icon: "💬" },
+const navItems: { id: ViewType; label: string; icon: React.ReactNode }[] = [
+  { id: "home", label: "หน้าหลัก", icon: <Home className="h-5 w-5" /> },
+  { id: "scanner", label: "สแกน", icon: <Camera className="h-5 w-5" /> },
+  { id: "recipe", label: "สูตรอาหาร", icon: <ChefHat className="h-5 w-5" /> },
+  { id: "chat", label: "แชท AI", icon: <MessageSquare className="h-5 w-5" /> },
 ];
 
 // ─── Weekly Summary Stats ───
@@ -30,6 +31,20 @@ const weeklyStats = [
 export default function DashboardPage() {
   const { isAuthenticated, isLoading, user, logout } = useAuth();
   const [activeView, setActiveView] = useState<ViewType>("home");
+
+  // Load persisted view
+  useEffect(() => {
+    const savedView = localStorage.getItem("tuyen_active_view") as ViewType;
+    if (savedView && ["home", "scanner", "recipe", "chat"].includes(savedView)) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setActiveView(savedView);
+    }
+  }, []);
+
+  const handleViewChange = (view: ViewType) => {
+    setActiveView(view);
+    localStorage.setItem("tuyen_active_view", view);
+  };
 
   // ─── Loading State ───
   if (isLoading) {
@@ -91,21 +106,17 @@ export default function DashboardPage() {
             </h1>
           </div>
           <div className="flex items-center gap-3">
-            <button className="relative rounded-2xl p-2 text-foreground-secondary transition-airy hover:bg-surface-alt">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
-              </svg>
+            <button className="relative rounded-2xl p-2 text-foreground-secondary transition-airy hover:bg-surface-alt focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-pale">
+              <Bell className="h-5 w-5" />
               <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-danger"></span>
             </button>
             {/* Logout Button */}
             <button
               onClick={logout}
-              className="flex items-center gap-1.5 rounded-2xl px-3 py-2 text-sm font-body font-medium text-foreground-secondary transition-airy hover:bg-accent-red hover:text-danger"
+              className="flex items-center gap-1.5 rounded-2xl px-3 py-2 text-sm font-body font-medium text-foreground-secondary transition-airy hover:bg-accent-red hover:text-danger focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger/30"
               title="ออกจากระบบ"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
-              </svg>
+              <LogOut className="h-4 w-4" />
               <span className="hidden sm:inline">ออกจากระบบ</span>
             </button>
           </div>
@@ -166,14 +177,14 @@ export default function DashboardPage() {
                 {navItems.map((item) => (
                   <button
                     key={item.id}
-                    onClick={() => setActiveView(item.id)}
-                    className={`flex items-center gap-3 rounded-2xl px-4 py-3 text-left text-sm font-body font-medium transition-airy ${
+                    onClick={() => handleViewChange(item.id)}
+                    className={`flex items-center gap-3 rounded-2xl px-4 py-3 text-left text-sm font-body font-medium transition-airy focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-pale ${
                       activeView === item.id
                         ? "bg-primary-pale text-primary-dark shadow-soft-blue"
                         : "text-foreground-secondary hover:bg-surface-alt hover:text-foreground"
                     }`}
                   >
-                    <span className="text-base">{item.icon}</span>
+                    <span className="flex items-center justify-center w-6 h-6">{item.icon}</span>
                     {item.label}
                     {activeView === item.id && (
                       <span className="ml-auto h-1.5 w-1.5 rounded-full bg-primary"></span>
@@ -202,24 +213,41 @@ export default function DashboardPage() {
 
       {/* ─── Mobile Bottom Navigation ─── */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 border-t-2 border-white bg-surface/90 backdrop-blur-md shadow-soft-blue lg:hidden">
-        <div className="mx-auto flex max-w-md items-center justify-around py-2">
-          {navItems.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => setActiveView(item.id)}
-              className={`flex flex-col items-center gap-1 rounded-2xl px-4 py-2 transition-airy ${
-                activeView === item.id
-                  ? "text-primary-dark"
-                  : "text-foreground-muted"
-              }`}
-            >
-              <span className="text-xl">{item.icon}</span>
-              <span className="text-[10px] font-body font-medium">{item.label}</span>
-              {activeView === item.id && (
-                <span className="h-1 w-6 rounded-full bg-primary"></span>
-              )}
-            </button>
-          ))}
+        <div className="mx-auto flex max-w-md items-center justify-between px-6 py-2 relative">
+          {navItems.map((item) => {
+            // Render the massive FAB in the middle (scanner)
+            if (item.id === "scanner") {
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => handleViewChange(item.id)}
+                  aria-label={item.label}
+                  className="relative -top-6 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-primary to-secondary text-white shadow-soft-blue border-4 border-surface transition-transform hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-pale"
+                >
+                  <Camera className="h-7 w-7" />
+                </button>
+              );
+            }
+
+            return (
+              <button
+                key={item.id}
+                onClick={() => handleViewChange(item.id)}
+                aria-label={item.label}
+                className={`flex flex-col items-center gap-1 rounded-2xl px-2 py-2 transition-airy focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-pale ${
+                  activeView === item.id
+                    ? "text-primary-dark"
+                    : "text-foreground-muted hover:text-foreground-secondary"
+                }`}
+              >
+                <span className="flex items-center justify-center w-6 h-6">{item.icon}</span>
+                <span className="text-[10px] font-body font-medium">{item.label}</span>
+                {activeView === item.id && (
+                  <span className="absolute bottom-1 h-1 w-6 rounded-full bg-primary"></span>
+                )}
+              </button>
+            );
+          })}
         </div>
       </nav>
     </div>

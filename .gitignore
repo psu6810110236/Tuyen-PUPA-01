@@ -60,3 +60,7 @@ ai/.env
 ai/venv/
 ai/__pycache__/
 ai/**/__pycache__/
+
+# IDE and Agent configurations
+.gemini/
+.gemini*

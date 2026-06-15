@@ -30,6 +30,7 @@ This log tracks architectural design decisions, the current project state, and t
 | **Jun 13, 2026** | **Code Verification & Dev Push** | Verified backend & SQLite integration stability locally without errors. Pushed consolidated local changes (LINE share, Lotus's query fix, refactored recipe service) from branch `dev1` to remote `dev`. |
 | **Jun 13, 2026** | **FastMCP SSE Transport Plan** | Inspected `fastmcp` capabilities. Verified it supports stdio, sse, and streamable-http. Proposed mounting the MCP's SSE app directly into the FastAPI backend to run within a single container. |
 | **Jun 13, 2026** | **AI Agent Implementation** | Implemented `POST /agent/chat` router using `google-genai` SDK and `gemini-2.5-flash`. Integrated 4 tools directly using Python closures bound to `current_user.id` for secure database operations (fridge matching, Lotus links, and LINE share generator). |
+| **Jun 15, 2026** | **Tooyen Core UI/UX Design** | Updated product specifications to focus on Mobile-first Tooyen Core guidelines (Tinted Neutrals, soft-tactile rounded-2xl cards with 2px white borders, soft blue shadows, and fluid layout). |
 
 ---
 
