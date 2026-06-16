@@ -240,12 +240,12 @@ export default function ScannerView() {
 
       {/* Submit Notification */}
       {submitMessage && (
-        <div className={`flex items-center gap-2 rounded-2xl border-2 px-4 py-3 animate-scale-in ${
+        <div className={`flex items-center gap-2 rounded-xl border px-4 py-3 animate-scale-in ${
           submitMessage.includes("❌")
-            ? "border-accent-red/30 bg-accent-red/10 text-danger"
-            : "border-accent-green/30 bg-accent-green/10 text-success"
+            ? "border-red-200/50 bg-red-50 text-red-800"
+            : "border-emerald-200/50 bg-emerald-50 text-emerald-800"
         }`}>
-          <p className="text-sm font-body font-semibold">
+          <p className="text-sm font-body font-medium">
             {submitMessage}
           </p>
         </div>
@@ -257,12 +257,12 @@ export default function ScannerView() {
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
           onClick={() => !isScanning && !isSaving && fileInputRef.current?.click()}
-          className={`relative flex min-h-[220px] cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed p-8 transition-all duration-300 ${
+          className={`relative flex min-h-[220px] cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed p-8 transition-all duration-200 ${
             isScanning || isSaving
               ? "border-primary-light bg-surface-alt cursor-wait animate-pulse"
               : isDragging
-              ? "border-primary bg-primary-pale/50 shadow-glow-teal scale-[1.01]"
-              : "border-outline hover:border-primary-light hover:bg-surface-alt"
+              ? "border-primary bg-primary-pale/50 shadow-md scale-[1.01]"
+              : "border-outline hover:border-primary hover:bg-surface-alt"
           }`}
         >
           <input
@@ -306,7 +306,7 @@ export default function ScannerView() {
           {/* ─── Preview & Detections Overlay ─── */}
           <div
             onClick={() => !isScanning && setIsZoomed(true)}
-            className="relative mx-auto w-full max-w-2xl lg:max-w-4xl rounded-2xl border-4 border-white bg-surface shadow-soft-blue p-0 overflow-visible transition-all duration-300 cursor-zoom-in"
+            className="relative mx-auto w-full max-w-2xl lg:max-w-4xl rounded-2xl border border-outline bg-surface shadow-card p-0 overflow-visible transition-all duration-200 cursor-zoom-in"
           >
             <img
               src={previewUrl}
@@ -355,7 +355,7 @@ export default function ScannerView() {
 
           {/* Editable Items Area */}
           {!isScanning && detectedItems && detectedItems.length > 0 && (
-            <div className="rounded-2xl border-2 border-white/10 bg-surface p-6 shadow-soft-blue animate-scale-in flex flex-col gap-4">
+            <div className="rounded-2xl border border-outline bg-surface p-6 shadow-card animate-scale-in flex flex-col gap-4">
               <div className="flex items-center justify-between border-b border-white/5 pb-3">
                 <h3 className="text-lg font-heading font-bold text-foreground flex items-center gap-2">
                   <Package className="h-5 w-5 text-primary" /> ตรวจพบวัตถุดิบ {detectedItems.length} รายการ
@@ -462,7 +462,7 @@ export default function ScannerView() {
                   type="button"
                   disabled={isSaving}
                   onClick={saveToFridge}
-                  className="flex items-center gap-2 rounded-xl bg-primary hover:bg-primary-light disabled:bg-primary/50 disabled:cursor-not-allowed px-6 py-3 font-heading font-bold text-white shadow-glow-teal hover:shadow-glow-teal/80 transition-all duration-300 w-full justify-center"
+                  className="flex items-center gap-2 rounded-xl bg-primary hover:bg-primary-dark disabled:bg-primary/50 disabled:cursor-not-allowed px-6 py-2.5 font-heading font-semibold text-white shadow-sm transition-colors w-full justify-center"
                 >
                   {isSaving ? (
                     <>
@@ -486,7 +486,7 @@ export default function ScannerView() {
           {!isScanning && (
             <button
               onClick={() => { setPreviewUrl(null); setScanResult(null); setDetectedItems(null); }}
-              className="mx-auto flex items-center justify-center gap-2 rounded-full border-2 border-white bg-gradient-to-r from-primary to-primary-dark px-6 py-3 text-sm font-heading font-semibold text-white shadow-soft-blue transition-airy hover:shadow-glow-teal hover:scale-[1.01] active:scale-[0.99] max-w-xs"
+              className="mx-auto flex items-center justify-center gap-2 rounded-xl bg-primary px-6 py-2.5 text-sm font-heading font-semibold text-white shadow-sm transition-colors hover:bg-primary-dark max-w-xs"
             >
               สแกนรูปภาพใหม่
             </button>

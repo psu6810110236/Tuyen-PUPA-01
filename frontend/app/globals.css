@@ -12,62 +12,62 @@
   --font-thai: 'IBM Plex Sans Thai', 'Inter', system-ui, sans-serif;
   --font-sans: 'Inter', 'IBM Plex Sans Thai', system-ui, sans-serif;
 
-  /* ─── Primary (Cool Indigo-Blue — Elegant) ─── */
-  --color-primary: #5C7CFA;
-  --color-primary-foreground: #2B4ACB;
-  --color-primary-fixed: #8DA4FC;
-  --color-primary-light: #BAC8FF;
-  --color-primary-pale: #EDF2FF;
-  --color-primary-dark: #4263EB;
+  /* ─── Primary (Professional Blue - Stripe/Linear) ─── */
+  --color-primary: #2563EB;
+  --color-primary-foreground: #ffffff;
+  --color-primary-fixed: #60A5FA;
+  --color-primary-light: #93C5FD;
+  --color-primary-pale: #EFF6FF;
+  --color-primary-dark: #1D4ED8;
 
-  /* ─── Secondary (Slate Periwinkle) ─── */
-  --color-secondary: #748FFC;
+  /* ─── Secondary (Slate Blue) ─── */
+  --color-secondary: #3B82F6;
   --color-secondary-foreground: #ffffff;
-  --color-secondary-light: #DBE4FF;
-  --color-secondary-soft: #EDF2FF;
+  --color-secondary-light: #EFF6FF;
+  --color-secondary-soft: #F0F9FF;
 
-  /* ─── Surfaces (Cool Gray) ─── */
+  /* ─── Surfaces (Clean White/Gray) ─── */
   --color-surface: #ffffff;
-  --color-surface-dim: #E9ECEF;
-  --color-surface-bright: #F8F9FA;
-  --color-surface-tint: #364FC7;
-  --color-surface-alt: #F1F3F9;
+  --color-surface-dim: #F1F5F9;
+  --color-surface-bright: #FFFFFF;
+  --color-surface-tint: #2563EB;
+  --color-surface-alt: #F8FAFC;
 
-  /* ─── Backgrounds (Split-View — Cool Undertone) ─── */
-  --color-background: #F5F7FB;
-  --color-background-agent: #F0F2F8;
+  /* ─── Backgrounds (SaaS Flat Look) ─── */
+  --color-background: #F8FAFC;
+  --color-background-agent: #F1F5F9;
 
-  /* ─── Text (Deeper Slate) ─── */
-  --color-foreground: #1A1F36;
-  --color-foreground-secondary: #555E7E;
-  --color-foreground-muted: #8E95A9;
+  /* ─── Text (Dark Slate & Muted Gray) ─── */
+  --color-foreground: #0F172A;
+  --color-foreground-secondary: #64748B;
+  --color-foreground-muted: #94A3B8;
 
-  /* ─── Outlines & Borders (Cool Gray) ─── */
-  --color-outline: #E5E8EE;
-  --color-outline-variant: #C8CDD8;
-  --color-border: #E5E8EE;
-  --color-border-light: #F0F1F5;
+  /* ─── Outlines & Borders (Soft Gray) ─── */
+  --color-outline: #E2E8F0;
+  --color-outline-variant: #CBD5E1;
+  --color-border: #E2E8F0;
+  --color-border-light: #F1F5F9;
 
-  /* ─── Accents (Muted Elegant Pastels) ─── */
-  --color-accent-green: #D3F9F0;
-  --color-accent-orange: #FFF4E6;
-  --color-accent-red: #FFF0F0;
-  --color-accent-blush: #FFE0E8;
-  --color-accent-lavender: #E8E0FF;
-  --color-accent-yellow: #FFE066;
-  --color-accent-yellow-light: #FFFBEB;
+  /* ─── Accents ─── */
+  --color-accent-green: #E6F4EA;
+  --color-accent-orange: #FEF3C7;
+  --color-accent-red: #FEE2E2;
+  --color-accent-blush: #FCE7F3;
+  --color-accent-lavender: #EEF2FF;
+  --color-accent-yellow: #FEF08A;
+  --color-accent-yellow-light: #FEFCE8;
 
-  /* ─── Status (Muted Elegant) ─── */
-  --color-success: #20C997;
-  --color-warning: #FAB005;
-  --color-danger: #FA5252;
+  /* ─── Status (Standard Tailwind) ─── */
+  --color-success: #10B981;
+  --color-warning: #F59E0B;
+  --color-danger: #EF4444;
 
-  /* ─── Shadows (Indigo-Tinted Soft-Tactile) ─── */
-  --shadow-soft: 0 1px 3px 0 rgba(26, 31, 54, 0.04), 0 1px 2px -1px rgba(26, 31, 54, 0.03);
-  --shadow-card: 0 4px 12px -2px rgba(92, 124, 250, 0.06), 0 2px 4px -2px rgba(26, 31, 54, 0.03);
-  --shadow-soft-blue: 0px 8px 32px rgba(92, 124, 250, 0.10), 0px 2px 8px rgba(26, 31, 54, 0.04);
-  --shadow-elevated: 0 12px 24px -4px rgba(92, 124, 250, 0.12), 0 4px 8px -4px rgba(26, 31, 54, 0.04);
-  --shadow-glow-teal: 0 0 24px rgba(92, 124, 250, 0.18);
+  /* ─── Shadows (Subtle, Clean) ─── */
+  --shadow-soft: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+  --shadow-soft-blue: 0 4px 6px -1px rgba(37, 99, 235, 0.05), 0 2px 4px -2px rgba(37, 99, 235, 0.05);
+  --shadow-elevated: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
+  --shadow-glow-teal: 0 0 12px rgba(37, 99, 235, 0.1);
 
   /* ─── Spacing (Tooyen Core) ─── */
   --spacing-base: 8px;
@@ -133,7 +133,7 @@ body {
 }
 
 .hover-lift:hover {
-  transform: translateY(-2px);
+  transform: translateY(-1px);
   box-shadow: var(--shadow-elevated);
 }
 
@@ -181,74 +181,74 @@ body {
 }
 
 :root {
-  /* ─── Tooyen Core — Cool Indigo-Blue (Light) ─── */
-  --background: #F5F7FB;
-  --foreground: #1A1F36;
+  /* ─── Stripe/Linear Palette (Light) ─── */
+  --background: #F8FAFC;
+  --foreground: #0F172A;
   --card: #ffffff;
-  --card-foreground: #1A1F36;
+  --card-foreground: #0F172A;
   --popover: #ffffff;
-  --popover-foreground: #1A1F36;
-  --primary: #5C7CFA;
+  --popover-foreground: #0F172A;
+  --primary: #2563EB;
   --primary-foreground: #ffffff;
-  --secondary: #748FFC;
+  --secondary: #3B82F6;
   --secondary-foreground: #ffffff;
-  --muted: #F1F3F9;
-  --muted-foreground: #8E95A9;
-  --accent: #EDF2FF;
-  --accent-foreground: #2B4ACB;
-  --destructive: #FA5252;
-  --border: #E5E8EE;
-  --input: #E5E8EE;
-  --ring: #BAC8FF;
-  --chart-1: #5C7CFA;
-  --chart-2: #748FFC;
-  --chart-3: #8DA4FC;
-  --chart-4: #4263EB;
-  --chart-5: #2B4ACB;
-  --radius: 0.625rem;
-  --sidebar: #F8F9FA;
-  --sidebar-foreground: #1A1F36;
-  --sidebar-primary: #5C7CFA;
+  --muted: #F8FAFC;
+  --muted-foreground: #64748B;
+  --accent: #EFF6FF;
+  --accent-foreground: #1D4ED8;
+  --destructive: #EF4444;
+  --border: #E2E8F0;
+  --input: #E2E8F0;
+  --ring: #93C5FD;
+  --chart-1: #2563EB;
+  --chart-2: #3B82F6;
+  --chart-3: #60A5FA;
+  --chart-4: #1D4ED8;
+  --chart-5: #1E3A8A;
+  --radius: 0.5rem;
+  --sidebar: #FFFFFF;
+  --sidebar-foreground: #0F172A;
+  --sidebar-primary: #2563EB;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #EDF2FF;
-  --sidebar-accent-foreground: #2B4ACB;
-  --sidebar-border: #E5E8EE;
-  --sidebar-ring: #BAC8FF;
+  --sidebar-accent: #EFF6FF;
+  --sidebar-accent-foreground: #1D4ED8;
+  --sidebar-border: #E2E8F0;
+  --sidebar-ring: #93C5FD;
 }
 
 .dark {
-  /* ─── Tooyen Core — Cool Indigo-Blue (Dark) ─── */
-  --background: #0F1225;
-  --foreground: #E8EAF0;
-  --card: #1A1D35;
-  --card-foreground: #E8EAF0;
-  --popover: #1A1D35;
-  --popover-foreground: #E8EAF0;
-  --primary: #748FFC;
-  --primary-foreground: #0F1225;
-  --secondary: #2B3A67;
-  --secondary-foreground: #BAC8FF;
-  --muted: #1F2340;
-  --muted-foreground: #8E95A9;
-  --accent: #2B3A67;
-  --accent-foreground: #BAC8FF;
-  --destructive: #FA5252;
-  --border: #2B3055;
-  --input: #2B3055;
-  --ring: #5C7CFA;
-  --chart-1: #748FFC;
-  --chart-2: #8DA4FC;
-  --chart-3: #BAC8FF;
-  --chart-4: #5C7CFA;
-  --chart-5: #4263EB;
-  --sidebar: #151830;
-  --sidebar-foreground: #E8EAF0;
-  --sidebar-primary: #748FFC;
-  --sidebar-primary-foreground: #0F1225;
-  --sidebar-accent: #2B3A67;
-  --sidebar-accent-foreground: #BAC8FF;
-  --sidebar-border: #2B3055;
-  --sidebar-ring: #5C7CFA;
+  /* ─── Clean Professional Dark Blue ─── */
+  --background: #0F172A;
+  --foreground: #F8FAFC;
+  --card: #1E293B;
+  --card-foreground: #F8FAFC;
+  --popover: #1E293B;
+  --popover-foreground: #F8FAFC;
+  --primary: #3B82F6;
+  --primary-foreground: #0F172A;
+  --secondary: #1E3A8A;
+  --secondary-foreground: #93C5FD;
+  --muted: #1E293B;
+  --muted-foreground: #94A3B8;
+  --accent: #1E3A8A;
+  --accent-foreground: #93C5FD;
+  --destructive: #EF4444;
+  --border: #334155;
+  --input: #334155;
+  --ring: #2563EB;
+  --chart-1: #3B82F6;
+  --chart-2: #60A5FA;
+  --chart-3: #93C5FD;
+  --chart-4: #2563EB;
+  --chart-5: #1D4ED8;
+  --sidebar: #1E293B;
+  --sidebar-foreground: #F8FAFC;
+  --sidebar-primary: #3B82F6;
+  --sidebar-primary-foreground: #0F172A;
+  --sidebar-accent: #1E3A8A;
+  --sidebar-accent-foreground: #93C5FD;
+  --sidebar-border: #334155;
+  --sidebar-ring: #2563EB;
 }
 
 @layer base {

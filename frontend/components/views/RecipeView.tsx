@@ -163,13 +163,13 @@ export default function RecipeView() {
 
         {/* Notification Message */}
         {saveMessage && (
-          <div className="flex items-center gap-2 rounded-2xl border-2 border-emerald-500 bg-emerald-50 px-4 py-3 animate-scale-in">
+          <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 animate-scale-in">
             <p className="text-sm font-body font-medium text-emerald-800">{saveMessage}</p>
           </div>
         )}
 
         {/* Recipe Header */}
-        <div className="rounded-2xl border-2 border-white bg-surface overflow-hidden shadow-soft-blue">
+        <div className="rounded-2xl border border-outline bg-surface overflow-hidden shadow-card">
           {recipeDetail.image && (
             <img src={recipeDetail.image} alt={recipeDetail.title} className="h-56 w-full object-cover" />
           )}
@@ -188,7 +188,7 @@ export default function RecipeView() {
               {/* Save Button */}
               <button
                 onClick={() => handleSave(recipeDetail)}
-                className="flex items-center gap-2 rounded-full bg-gradient-to-r from-primary to-primary-dark px-5 py-2.5 text-sm font-heading font-semibold text-white shadow-soft-blue transition-airy hover:shadow-glow-teal hover:scale-[1.01] active:scale-[0.99]"
+                className="flex items-center gap-2 rounded-xl bg-primary px-5 py-2 text-sm font-heading font-semibold text-white shadow-sm transition-colors hover:bg-primary-dark"
               >
                 <Save className="h-4 w-4" /> บันทึกเมนูนี้
               </button>
@@ -196,7 +196,7 @@ export default function RecipeView() {
               {/* Cook Button */}
               <button
                 onClick={() => handleCook(recipeDetail.id)}
-                className="flex items-center gap-2 rounded-full bg-gradient-to-r from-emerald-500 to-teal-600 px-5 py-2.5 text-sm font-heading font-semibold text-white shadow-soft-blue transition-airy hover:shadow-glow-teal hover:scale-[1.01] active:scale-[0.99]"
+                className="flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2 text-sm font-heading font-semibold text-white shadow-sm transition-colors hover:bg-emerald-700"
               >
                 <ChefHat className="h-4 w-4" /> ลงมือทำอาหาร (ตัดสต็อก)
               </button>
@@ -208,7 +208,7 @@ export default function RecipeView() {
         {((recipeDetail.available_ingredients && recipeDetail.available_ingredients.length > 0) ||
           (recipeDetail.missing_ingredients && recipeDetail.missing_ingredients.length > 0) ||
           (recipeDetail.extendedIngredients && recipeDetail.extendedIngredients.length > 0)) && (
-          <div className="rounded-2xl border-2 border-white bg-surface p-6 shadow-soft-blue flex flex-col gap-6">
+          <div className="rounded-2xl border border-outline bg-surface p-6 shadow-card flex flex-col gap-6">
             <div>
               <h3 className="text-sm font-heading font-semibold text-foreground flex items-center gap-2">
                 <ChefHat className="h-4 w-4 text-primary" /> ส่วนผสม (Ingredients)
@@ -296,7 +296,7 @@ export default function RecipeView() {
 
         {/* Instructions */}
         {recipeDetail.instructions && (
-          <div className="rounded-2xl border-2 border-white bg-surface p-6 shadow-soft-blue mb-12">
+          <div className="rounded-2xl border border-outline bg-surface p-6 shadow-card mb-12">
             <h3 className="mb-4 text-sm font-heading font-semibold text-foreground flex items-center gap-2">
               <ChefHat className="h-4 w-4 text-primary" /> วิธีทำ
             </h3>
@@ -346,13 +346,13 @@ export default function RecipeView() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyDown={handleKeyDown}
-            className="w-full rounded-full border-2 border-white bg-surface py-3.5 pl-12 pr-4 text-sm font-body text-foreground placeholder-foreground-muted shadow-soft-blue transition-airy focus:border-primary-light focus:outline-none focus:ring-2 focus:ring-primary-pale"
+            className="w-full rounded-xl border border-outline bg-surface py-3 pl-12 pr-4 text-sm font-body text-foreground placeholder-foreground-muted transition-colors focus:border-primary focus:outline-none"
           />
         </div>
         <button
           onClick={handleSearch}
           disabled={!searchQuery.trim() || isSearching}
-          className="shrink-0 rounded-full bg-primary px-5 py-3.5 text-sm font-heading font-semibold text-white shadow-soft-blue transition-airy hover:bg-primary-dark disabled:opacity-50"
+          className="shrink-0 rounded-xl bg-primary px-5 py-3 text-sm font-heading font-semibold text-white shadow-sm transition-colors hover:bg-primary-dark disabled:opacity-50"
         >
           ค้นหา
         </button>
@@ -362,10 +362,10 @@ export default function RecipeView() {
       <div className="flex gap-2">
         <button
           onClick={() => { setViewMode("suggest"); loadSuggestions(); }}
-          className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-body font-medium transition-airy ${
+          className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-body font-medium transition-colors ${
             viewMode === "suggest"
-              ? "bg-primary text-white shadow-soft-blue"
-              : "border-2 border-white bg-surface text-foreground-secondary hover:bg-surface-alt shadow-soft-blue"
+              ? "bg-primary text-white shadow-sm"
+              : "border border-outline bg-surface text-foreground-secondary hover:bg-surface-alt"
           }`}
         >
           <Sparkles className="h-4 w-4" /> เมนูแนะนำ
@@ -373,10 +373,10 @@ export default function RecipeView() {
         {searchQuery.trim() && (
           <button
             onClick={() => setViewMode("search")}
-            className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-body font-medium transition-airy ${
+            className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-body font-medium transition-colors ${
               viewMode === "search"
-                ? "bg-primary text-white shadow-soft-blue"
-                : "border-2 border-white bg-surface text-foreground-secondary hover:bg-surface-alt shadow-soft-blue"
+                ? "bg-primary text-white shadow-sm"
+                : "border border-outline bg-surface text-foreground-secondary hover:bg-surface-alt"
             }`}
           >
             <Search className="h-4 w-4" /> ผลค้นหา
@@ -386,9 +386,9 @@ export default function RecipeView() {
 
       {/* Error */}
       {error && (
-        <div className="flex items-center gap-2 rounded-2xl border-2 border-accent-orange bg-accent-orange px-4 py-3">
-          <Info className="h-4 w-4 text-warning" />
-          <p className="text-sm font-body text-foreground-secondary">{error}</p>
+        <div className="flex items-center gap-2 rounded-xl border border-amber-200/50 bg-amber-50 px-4 py-3">
+          <Info className="h-4 w-4 text-amber-500" />
+          <p className="text-sm font-body text-amber-800">{error}</p>
         </div>
       )}
 
@@ -396,7 +396,7 @@ export default function RecipeView() {
       {isListLoading ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className="overflow-hidden rounded-2xl border-2 border-white bg-surface shadow-soft-blue">
+            <div key={i} className="overflow-hidden rounded-2xl border border-outline bg-surface shadow-card">
               <div className="h-40 bg-surface-alt animate-pulse" />
               <div className="p-4">
                 <div className="h-4 w-3/4 rounded-full bg-surface-alt animate-pulse" />
@@ -406,7 +406,7 @@ export default function RecipeView() {
           ))}
         </div>
       ) : displayRecipes.length === 0 ? (
-        <div className="flex flex-col items-center gap-3 rounded-2xl border-2 border-white bg-surface p-12 shadow-soft-blue">
+        <div className="flex flex-col items-center gap-3 rounded-2xl border border-outline bg-surface p-12 shadow-card">
           <ChefHat className="h-12 w-12 text-primary-light" />
           <p className="text-sm font-body font-medium text-foreground">
             {viewMode === "suggest" ? "ยังไม่มีเมนูแนะนำ" : "ไม่พบสูตรอาหารที่ค้นหา"}
@@ -421,7 +421,7 @@ export default function RecipeView() {
             <div
               key={recipe.id}
               onClick={() => openDetail(recipe.id)}
-              className="group cursor-pointer overflow-hidden rounded-2xl border-2 border-white bg-surface shadow-soft-blue transition-airy hover-lift"
+              className="group cursor-pointer overflow-hidden rounded-2xl border border-outline bg-surface shadow-card transition-all duration-200 hover:translate-y-[-2px] hover:shadow-md"
             >
               {/* Recipe Image */}
               <div className="relative h-40 bg-gradient-to-br from-primary-pale to-secondary-light">

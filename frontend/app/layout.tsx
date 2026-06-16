@@ -17,7 +17,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "TUYEN - ผู้ช่วยโภชนาการอัจฉริยะ",
+  title: "SmartFood AI - ผู้ช่วยโภชนาการอัจฉริยะ",
   description:
     "แอปพลิเคชันวิเคราะห์โภชนาการด้วย AI สำหรับการดูแลสุขภาพอย่างชาญฉลาด",
 };

@@ -87,33 +87,34 @@ export default function ChatView() {
   };
 
   return (
-    <div className="flex h-[calc(100vh-120px)] flex-col rounded-2xl border-2 border-white bg-surface shadow-soft-blue animate-fade-in">
+    <div className="flex h-[calc(100vh-120px)] flex-col rounded-xl border border-outline bg-surface shadow-card animate-fade-in">
       {/* ─── Chat Header ─── */}
       <div className="flex items-center gap-3 border-b border-outline px-5 py-4">
-        <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-secondary text-white shadow-soft-blue">
-          <BotMessageSquare className="h-5 w-5" />
-        </div>
+        <img src="/g2.png" alt="TUYEN AI Logo" className="h-10 w-10 rounded-lg object-contain bg-surface-alt border border-outline/50 p-1" />
         <div>
-          <h2 className="text-sm font-heading font-semibold text-foreground">TUYEN AI</h2>
-          <p className="text-xs font-body text-success">● ออนไลน์</p>
+          
+          <p className="text-[11px] font-body text-success flex items-center gap-1">
+            <span className="h-1.5 w-1.5 rounded-full bg-success inline-block"></span>
+            ออนไลน์
+          </p>
         </div>
       </div>
 
-      {/* ─── Suggestion Chips (Pill-shaped — rounded-full) ─── */}
-      <div className="flex gap-2 overflow-x-auto border-b border-outline px-5 py-3">
+      {/* ─── Suggestion Chips (Pill-shaped — rounded-lg) ─── */}
+      <div className="flex gap-2 overflow-x-auto border-b border-outline px-5 py-3 select-none">
         {suggestions.map((s) => (
           <button
             key={s}
             onClick={() => handleSuggestionClick(s)}
-            className="shrink-0 flex items-center gap-1.5 rounded-full border-2 border-white bg-primary-pale px-3.5 py-1.5 text-xs font-body font-medium text-primary-dark shadow-soft-blue transition-airy hover:bg-primary hover:text-white group"
+            className="shrink-0 flex items-center gap-1.5 rounded-lg border border-outline bg-surface px-3 py-1.5 text-xs font-body font-medium text-foreground transition-airy hover:bg-surface-alt hover:border-outline-variant group"
           >
-            <Sparkles className="h-3 w-3 group-hover:animate-pulse" />
+            <Sparkles className="h-3 w-3 text-primary group-hover:animate-pulse" />
             {s}
           </button>
         ))}
       </div>
 
-      {/* ─── Messages Area (Split-View: user bg-background, AI bg-background-agent) ─── */}
+      {/* ─── Messages Area ─── */}
       <div className="flex-1 overflow-y-auto bg-background px-5 py-4">
         <div className="flex flex-col gap-4">
           {messages.map((msg) => (
@@ -124,10 +125,10 @@ export default function ChatView() {
               }`}
             >
               <div
-                className={`max-w-[80%] rounded-2xl px-4 py-3 ${
+                className={`max-w-[80%] rounded-xl px-4 py-3 border ${
                   msg.role === "user"
-                    ? "bg-primary text-white rounded-br-md border-2 border-white shadow-soft-blue"
-                    : "bg-background-agent text-foreground rounded-bl-md border-2 border-white shadow-soft-blue"
+                    ? "bg-primary text-white rounded-tr-none border-primary-dark/50"
+                    : "bg-background-agent text-foreground rounded-tl-none border-outline shadow-sm"
                 }`}
               >
                 <p className="whitespace-pre-line text-sm font-body leading-relaxed">{msg.content}</p>
@@ -145,28 +146,28 @@ export default function ChatView() {
       </div>
 
       {/* ─── Input Area ─── */}
-      <div className="border-t border-outline px-4 py-3">
+      <div className="border-t border-outline px-4 py-3 bg-surface">
         <div className="flex items-center gap-2">
-          <button className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl text-foreground-muted transition-airy hover:bg-surface-alt hover:text-primary-dark">
+          <button className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-foreground-muted transition-airy hover:bg-surface-alt hover:text-primary-dark">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
               <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z" />
             </svg>
           </button>
-          {/* Chat Input (Pill-shaped — rounded-full) */}
+          {/* Chat Input */}
           <input
             type="text"
             placeholder="พิมพ์ข้อความ..."
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={handleKeyDown}
-            className="flex-1 rounded-full border-2 border-white bg-background px-4 py-2.5 text-sm font-body text-foreground placeholder-foreground-muted shadow-soft-blue transition-airy focus:border-primary-light focus:outline-none focus:ring-2 focus:ring-primary-pale"
+            className="flex-1 rounded-lg border border-outline bg-background px-4 py-2 text-sm font-body text-foreground placeholder-foreground-muted transition-airy focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20"
           />
-          {/* Send Button (FAB — rounded-full) */}
+          {/* Send Button */}
           <button
             onClick={handleSend}
             disabled={!inputValue.trim() || isLoading}
-            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-white shadow-soft-blue transition-airy ${
+            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-white transition-airy ${
               !inputValue.trim() || isLoading
                 ? "bg-outline text-foreground-muted"
                 : "bg-primary hover:bg-primary-dark"

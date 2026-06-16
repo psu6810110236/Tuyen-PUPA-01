@@ -68,10 +68,10 @@ export default function HomeView() {
           <div className="mt-2 h-7 w-36 rounded-full bg-surface-alt animate-pulse" />
         </div>
         <div className="grid gap-6">
-          <div className="flex flex-col gap-4 rounded-2xl border-2 border-white bg-surface p-6 shadow-soft-blue">
+          <div className="flex flex-col gap-4 rounded-xl border border-outline bg-surface p-6 shadow-card">
             {[1, 2, 3].map((i) => (
               <div key={i} className="flex gap-4 items-center">
-                <div className="h-12 w-12 rounded-2xl bg-surface-alt animate-pulse" />
+                <div className="h-12 w-12 rounded-xl bg-surface-alt animate-pulse" />
                 <div className="flex flex-col gap-2 flex-1">
                   <div className="h-4 w-24 rounded-full bg-surface-alt animate-pulse" />
                   <div className="h-3 w-16 rounded-full bg-surface-alt animate-pulse" />
@@ -111,9 +111,9 @@ export default function HomeView() {
           <p className="text-sm font-body text-foreground-muted">{thaiDate}</p>
           <h2 className="mt-1 text-2xl font-heading font-bold text-foreground">ตู้เย็นของคุณ</h2>
         </div>
-        <div className="flex items-center gap-2 rounded-xl bg-accent-yellow-light px-3 py-1.5 border border-white shadow-sm">
-          <AlertCircle className="h-4 w-4 text-orange-500" />
-          <span className="text-xs font-body font-medium text-orange-700">
+        <div className="flex items-center gap-2 rounded-xl bg-amber-50 px-3 py-1.5 border border-amber-200/50 shadow-sm">
+          <AlertCircle className="h-4 w-4 text-amber-500" />
+          <span className="text-xs font-body font-medium text-amber-700">
             {expiringSoon.length} ใกล้หมดอายุ
           </span>
         </div>
@@ -121,7 +121,7 @@ export default function HomeView() {
 
       {/* ─── Nutrition Summary Widget ─── */}
       {nutritionSummary && (
-        <section className="rounded-2xl border-2 border-white bg-surface p-5 shadow-soft-blue animate-fade-in">
+        <section className="rounded-2xl border border-outline bg-surface p-5 shadow-card animate-fade-in">
           <div className="flex items-center gap-2 mb-4">
             <Activity className="h-5 w-5 text-primary" />
             <h3 className="text-sm font-heading font-semibold text-foreground">การบริโภคอาหารวันนี้</h3>
@@ -179,7 +179,7 @@ export default function HomeView() {
               {/* Protein */}
               <div className="flex flex-col gap-1">
                 <div className="flex items-center justify-between text-xs font-body font-medium">
-                  <span className="text-foreground-secondary">🍗 โปรตีน</span>
+                  <span className="text-foreground-secondary">โปรตีน</span>
                   <span className="text-foreground font-bold">
                     {Math.round(nutritionSummary.totals.protein)}g <span className="text-[10px] font-normal text-foreground-muted">/ {Math.round(nutritionSummary.goals.protein)}g</span>
                   </span>
@@ -195,7 +195,7 @@ export default function HomeView() {
               {/* Carbs */}
               <div className="flex flex-col gap-1">
                 <div className="flex items-center justify-between text-xs font-body font-medium">
-                  <span className="text-foreground-secondary">🍞 คาร์โบไฮเดรต</span>
+                  <span className="text-foreground-secondary">คาร์โบไฮเดรต</span>
                   <span className="text-foreground font-bold">
                     {Math.round(nutritionSummary.totals.carb)}g <span className="text-[10px] font-normal text-foreground-muted">/ {Math.round(nutritionSummary.goals.carb)}g</span>
                   </span>
@@ -211,7 +211,7 @@ export default function HomeView() {
               {/* Fat */}
               <div className="flex flex-col gap-1">
                 <div className="flex items-center justify-between text-xs font-body font-medium">
-                  <span className="text-foreground-secondary">🥑 ไขมัน</span>
+                  <span className="text-foreground-secondary">ไขมัน</span>
                   <span className="text-foreground font-bold">
                     {Math.round(nutritionSummary.totals.fat)}g <span className="text-[10px] font-normal text-foreground-muted">/ {Math.round(nutritionSummary.goals.fat)}g</span>
                   </span>
@@ -236,7 +236,7 @@ export default function HomeView() {
         </div>
         
         {expiringSoon.length === 0 ? (
-          <div className="rounded-2xl border-2 border-white bg-surface p-6 shadow-soft-blue text-center">
+          <div className="rounded-2xl border border-outline bg-surface p-6 shadow-card text-center">
             <p className="text-sm font-body text-foreground-muted">ไม่มีอาหารใกล้หมดอายุ 🥳</p>
           </div>
         ) : (
@@ -244,9 +244,9 @@ export default function HomeView() {
             {expiringSoon.map((item) => (
               <div
                 key={item.id}
-                className="flex items-center gap-4 rounded-2xl border-2 border-white bg-surface p-4 shadow-soft-blue transition-airy hover:translate-y-[-2px] hover:shadow-md cursor-pointer"
+                className="flex items-center gap-4 rounded-2xl border border-outline bg-surface p-4 shadow-card transition-all duration-200 hover:translate-y-[-1px] hover:shadow-md cursor-pointer"
               >
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-accent-red-light text-2xl border border-white">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-accent-red-light text-2xl">
                   {item.icon}
                 </div>
                 <div className="flex flex-1 flex-col">
@@ -274,7 +274,7 @@ export default function HomeView() {
         </div>
 
         {freshItems.length === 0 ? (
-          <div className="rounded-2xl border-2 border-white bg-surface p-6 shadow-soft-blue text-center">
+          <div className="rounded-2xl border border-outline bg-surface p-6 shadow-card text-center">
             <p className="text-sm font-body text-foreground-muted">ยังไม่มีอาหารสดใหม่</p>
           </div>
         ) : (
@@ -282,9 +282,9 @@ export default function HomeView() {
             {freshItems.map((item) => (
               <div
                 key={item.id}
-                className="flex items-center gap-4 rounded-2xl border-2 border-white bg-surface p-4 shadow-soft-blue transition-airy hover:translate-y-[-2px] hover:shadow-md cursor-pointer"
+                className="flex items-center gap-4 rounded-2xl border border-outline bg-surface p-4 shadow-card transition-all duration-200 hover:translate-y-[-1px] hover:shadow-md cursor-pointer"
               >
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary-pale text-2xl border border-white">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary-pale text-2xl">
                   {item.icon}
                 </div>
                 <div className="flex flex-1 flex-col">
