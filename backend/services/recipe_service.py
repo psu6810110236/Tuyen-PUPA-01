@@ -381,6 +381,7 @@ async def check_recipe_inventory(user_id: int, recipe_id: int, db: Session) -> d
         "onion": ["หอมใหญ่", "หัวหอม"],
         "cabbage": ["กะหล่ำปลี", "ผักกาด"],
         "rice": ["ข้าว", "ข้าวสวย", "ข้าวสาร"],
+        "soy sauce": ["ซีอิ๊ว", "ซีอิ๊วขาว", "ซอส"],
     }
 
     for ing in recipe_ingredients:
@@ -449,6 +450,12 @@ async def cook_recipe(user_id: int, recipe_id: int, db: Session) -> dict:
     recipe = await get_recipe_detail(recipe_id)
     recipe_ingredients = recipe.get("extendedIngredients", [])
     
+    # 1.5 เช็กของขาดก่อนทำอาหาร เพื่อความถูกต้องและป้องกันการทำข้ามขั้นตอน
+    inventory_check = await check_recipe_inventory(user_id, recipe_id, db)
+    if inventory_check["missing_ingredients"]:
+        missing_names = ", ".join([i["name"] for i in inventory_check["missing_ingredients"]])
+        raise ValueError(f"วัตถุดิบไม่ครบ ไม่สามารถทำอาหารได้ (ขาด: {missing_names})")
+        
     # 2. ดึงของกินทั้งหมดในตู้เย็นปัจจุบันของผู้ใช้งาน
     inventory_items = db.query(InventoryItem).filter(InventoryItem.user_id == user_id).all()
     
@@ -564,10 +571,22 @@ async def cook_recipe(user_id: int, recipe_id: int, db: Session) -> dict:
     except Exception as e:
         print(f"⚠️ [AI Nutrition Fallback] ใช้ค่าวิเคราะห์ฐานข้อมูลจำลองเนื่องจากติดต่อ AI Service ไม่ได้: {e}")
         
+    # คำนวณประเภทมื้อตามเวลาในประเทศไทย (UTC+7)
+    from datetime import timedelta, timezone
+    thai_hour = (datetime.now(timezone.utc) + timedelta(hours=7)).hour
+    if 5 <= thai_hour < 11:
+        meal_type = "breakfast"
+    elif 11 <= thai_hour < 16:
+        meal_type = "lunch"
+    elif 16 <= thai_hour < 22:
+        meal_type = "dinner"
+    else:
+        meal_type = "snack"
+
     # 5. บันทึกมื้ออาหารลงตารางประวัติโภชนาการ (Nutrition Log)
     log_entry = NutritionLog(
         user_id=user_id,
-        meal_type="lunch",
+        meal_type=meal_type,
         food_name=recipe["title"],
         calories=calories,
         protein=protein,

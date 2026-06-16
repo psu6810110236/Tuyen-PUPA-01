@@ -25,10 +25,11 @@ async def log_meal(user_id: int, data: dict, db: Session) -> NutritionLog:
 
 # 2. รวมพลังงานและสารอาหารวันนี้ + คำนวณความคืบหน้า (Progress) เทียบกับเป้าหมาย
 async def get_today_summary(user_id: int, db: Session) -> dict:
-    # หาช่วงเวลา 00:00 น. ถึง 23:59 น. ของวันปัจจุบัน (UTC)
-    now = datetime.now(timezone.utc)
-    start_of_day = datetime.combine(now.date(), time.min, tzinfo=timezone.utc)
-    end_of_day = datetime.combine(now.date(), time.max, tzinfo=timezone.utc)
+    # คำนวณวันนี้ตามเวลาประเทศไทย (UTC+7) เพื่อให้การสรุปโภชนาการประจำวันถูกต้องตามเขตเวลาของผู้ใช้
+    from datetime import timedelta
+    th_now = datetime.now(timezone.utc) + timedelta(hours=7)
+    start_of_day = datetime.combine(th_now.date(), time.min, tzinfo=timezone.utc) - timedelta(hours=7)
+    end_of_day = datetime.combine(th_now.date(), time.max, tzinfo=timezone.utc) - timedelta(hours=7)
 
     logs = db.query(NutritionLog).filter(
         NutritionLog.user_id == user_id,
@@ -55,7 +56,7 @@ async def get_today_summary(user_id: int, db: Session) -> dict:
     }
 
     return {
-        "date": now.date().isoformat(),
+        "date": th_now.date().isoformat(),
         "totals": summary,
         "goals": goals,
         "progress_percentage": progress,
