@@ -36,6 +36,10 @@ To support the team effectively, AI Assistants are designated based on their dom
   - [x] Implemented refrigerator inventory stock deduction (ตัดสต็อก) and integrated recipe cooking endpoint (`POST /recipes/{recipe_id}/cook`).
   - [x] Connected backend calorie estimator (`GET /nutrition/estimate`) to host-level Gemini AI Service over Docker network.
   - [x] Added "ไข่เจียวทรงเครื่อง" (Mock Recipe 104) for developer staging and testing.
+  - [x] Fixed local timezone offset mismatch (UTC+7) for daily nutrition summary calculations.
+  - [x] Resolved recipe ingredient matching mismatch and implemented frontend/backend cooking validation block.
+  - [x] Implemented automated Thai recipe translations using optimized `gemini-3.1-flash-lite` (low latency, zero daily quota limitations).
+  - [x] Successfully pushed clean git commits to remote `dev` branch.
 
 ### 🔍 2.2 Research & Documentation Agent
 - **Status**: Standby ⚪
