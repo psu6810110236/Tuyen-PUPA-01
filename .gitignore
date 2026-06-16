@@ -64,3 +64,9 @@ ai/**/__pycache__/
 # IDE and Agent configurations
 .gemini/
 .gemini*
+
+# ==========================================
+# 📂 UPLOADS & MEDIA
+# ==========================================
+uploads/
+backend/uploads/
