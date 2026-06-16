@@ -643,8 +643,9 @@ async def translate_recipe_list(recipes: list[dict]) -> list[dict]:
     )
     
     try:
+        model_name = os.getenv("GEMINI_MODEL", "gemini-3.1-flash-lite")
         response = await client.aio.models.generate_content(
-            model="gemini-2.5-flash",
+            model=model_name,
             contents=prompt,
             config=types.GenerateContentConfig(
                 response_mime_type="application/json",
@@ -693,8 +694,9 @@ async def translate_recipe_to_thai(recipe_data: dict) -> dict:
     )
     
     try:
+        model_name = os.getenv("GEMINI_MODEL", "gemini-3.1-flash-lite")
         response = await client.aio.models.generate_content(
-            model="gemini-2.5-flash",
+            model=model_name,
             contents=prompt,
             config=types.GenerateContentConfig(
                 response_mime_type="application/json",
