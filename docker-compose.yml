@@ -34,6 +34,7 @@ services:
       - ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES:-30}
       - GEMINI_API_KEY=${GEMINI_API_KEY}
       - SPOONACULAR_API_KEY=${SPOONACULAR_API_KEY}
+      - PYTHONUNBUFFERED=1
     volumes:
       - ./backend:/app
     depends_on:

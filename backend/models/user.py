@@ -12,3 +12,4 @@ class User(Base):
     inventory_items = relationship("InventoryItem", back_populates="owner", cascade="all, delete-orphan")
     saved_recipes = relationship("RecipeSaved", back_populates="user", cascade="all, delete-orphan")
     nutrition_logs = relationship("NutritionLog", back_populates="user", cascade="all, delete-orphan")
+    chat_history = relationship("ChatHistory", back_populates="user", cascade="all, delete-orphan")

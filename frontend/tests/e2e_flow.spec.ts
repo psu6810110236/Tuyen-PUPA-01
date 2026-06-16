@@ -50,8 +50,16 @@ test("E2E Presentation Flow: Register, Login, Scan Grocery, View Recipes & Detai
   const imagePath = path.join(__dirname, "fixtures", "fridge_items.jpg");
   await dashboardPage.uploadScanImage(imagePath);
 
-  // คอยดูตัวประมวลผลสแกนและผลการสแกน (Gemini API + Backend DB Insert จะใช้เวลาสักครู่)
-  await expect(page.locator("text=สแกนสำเร็จ!")).toBeVisible({ timeout: 50000 });
+  // คอยดูตัวประมวลผลสแกนและผลการวิเคราะห์ภาพ (Gemini API จะใช้เวลาสักครู่)
+  await expect(page.locator("text=วิเคราะห์ภาพสำเร็จ!")).toBeVisible({ timeout: 50000 });
+  await page.waitForTimeout(2000); // ⏳ หน่วงเวลาแสดงรายการวัตถุดิบและฟิลด์ที่สามารถแก้ไขได้
+
+  // คลิกปุ่มเพื่อยืนยันและบันทึกข้อมูลเข้าฐานข้อมูลจริง
+  console.log("Clicking save to fridge button...");
+  await page.click("button:has-text('ยืนยันและบันทึกเข้าตู้เย็น')");
+
+  // คอยดูผลลัพธ์การบันทึกฐานข้อมูลสำเร็จ
+  await expect(page.locator("text=สแกนสำเร็จ!")).toBeVisible({ timeout: 15000 });
   console.log("AI Scanner successfully scanned image and added items to inventory.");
   await page.waitForTimeout(6000); // ⏳ หน่วงเวลาแสดงรายการตู้เย็นที่งอกของใหม่มาจากการสแกน 6 วินาที
 

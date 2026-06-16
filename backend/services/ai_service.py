@@ -32,3 +32,14 @@ async def chat_with_gemini(message: str, history: list) -> str:
         return response.text
     except Exception as e:
         return f"เกิดข้อผิดพลาดในการเชื่อมต่อกับ AI: {str(e)}"
+
+async def generate_text(prompt: str) -> str:
+    if not client:
+        raise ValueError("GEMINI_API_KEY is missing")
+    model_name = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+    response = client.models.generate_content(
+        model=model_name,
+        contents=prompt,
+    )
+    return response.text
+

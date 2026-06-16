@@ -50,28 +50,32 @@ def add_inventory_manual(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user) # 🔒 บังคับล็อกอิน! ส่องตั๋ว JWT เอาข้อมูลผู้ใช้ปัจจุบันมาใช้งานทันที
 ):
-    name_clean = item_data.name.strip()
+    from sqlalchemy import func
+    name_stripped = item_data.name.strip()
+    unit_stripped = item_data.unit.strip()
+    
+    # 🔍 ตรวจสอบว่ามีวัตถุดิบชื่อเดียวกันอยู่แล้วหรือไม่ (ไม่สนใจหน่วย เพื่อยุบรวมชื่อที่สะกดเหมือนกัน)
     existing_item = db.query(InventoryItem).filter(
         InventoryItem.user_id == current_user.id,
-        func.lower(InventoryItem.name) == name_clean.lower(),
-        InventoryItem.unit == item_data.unit
+        func.lower(InventoryItem.name) == func.lower(name_stripped)
     ).first()
-
+    
     if existing_item:
         existing_item.quantity += item_data.quantity
+        if item_data.category and item_data.category != "other":
+            existing_item.category = item_data.category
         if item_data.expiry_date:
-            if not existing_item.expiry_date or item_data.expiry_date < existing_item.expiry_date:
-                existing_item.expiry_date = item_data.expiry_date
+            existing_item.expiry_date = item_data.expiry_date
         db.commit()
         db.refresh(existing_item)
         return existing_item
-
+        
     # สร้างก้อนข้อมูลเตรียมยัดลงตาราง inventory_items
     new_item = InventoryItem(
         user_id=current_user.id,       # ผูกมัดติดกับไอดีผู้ใช้ที่ล็อกอินอยู่ ณ ตอนนั้นอัตโนมัติ
-        name=name_clean,
+        name=name_stripped,
         quantity=item_data.quantity,
-        unit=item_data.unit,
+        unit=unit_stripped,
         category=item_data.category,
         expiry_date=item_data.expiry_date,
         added_by=item_data.added_by
@@ -90,56 +94,45 @@ def add_inventory_bulk(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    processed_items = []
+    from sqlalchemy import func
+    new_items = []
     for item_data in payload.items:
-        name_clean = item_data.name.strip()
+        name_stripped = item_data.name.strip()
+        unit_stripped = item_data.unit.strip()
         
-        # Check if we already have it in the processed list for the current transaction
-        temp_item = None
-        for p_item in processed_items:
-            if p_item.name.lower() == name_clean.lower() and p_item.unit == item_data.unit:
-                temp_item = p_item
-                break
-                
-        if temp_item:
-            temp_item.quantity += item_data.quantity
-            if item_data.expiry_date:
-                if not temp_item.expiry_date or item_data.expiry_date < temp_item.expiry_date:
-                    temp_item.expiry_date = item_data.expiry_date
-            continue
-            
-        # Check if exists in db
+        # 🔍 ตรวจสอบว่ามีวัตถุดิบชื่อเดียวกันอยู่แล้วหรือไม่ (ไม่สนใจหน่วย เพื่อยุบรวมชื่อที่สะกดเหมือนกัน)
         existing_item = db.query(InventoryItem).filter(
             InventoryItem.user_id == current_user.id,
-            func.lower(InventoryItem.name) == name_clean.lower(),
-            InventoryItem.unit == item_data.unit
+            func.lower(InventoryItem.name) == func.lower(name_stripped)
         ).first()
-
+        
         if existing_item:
             existing_item.quantity += item_data.quantity
+            if item_data.category and item_data.category != "other":
+                existing_item.category = item_data.category
             if item_data.expiry_date:
-                if not existing_item.expiry_date or item_data.expiry_date < existing_item.expiry_date:
-                    existing_item.expiry_date = item_data.expiry_date
-            db.add(existing_item)
-            processed_items.append(existing_item)
+                existing_item.expiry_date = item_data.expiry_date
+            db.flush()  # ทำการ flush เพื่อให้การลูปเช็กรอบถัดไปมองเห็นการแก้ไข
+            new_items.append(existing_item)
         else:
             new_item = InventoryItem(
                 user_id=current_user.id,
-                name=name_clean,
+                name=name_stripped,
                 quantity=item_data.quantity,
-                unit=item_data.unit,
+                unit=unit_stripped,
                 category=item_data.category,
                 expiry_date=item_data.expiry_date,
                 added_by=item_data.added_by
             )
             db.add(new_item)
-            processed_items.append(new_item)
+            db.flush()  # ทำการ flush เพื่อให้การลูปเช็กรอบถัดไปมองเห็นวัตถุดิบใหม่
+            new_items.append(new_item)
     
     db.commit()
-    for item in processed_items:
+    for item in new_items:
         db.refresh(item)
         
-    return processed_items
+    return new_items
 
 class InventoryUpdateSchema(BaseModel):
     name: Optional[str] = None

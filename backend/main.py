@@ -1,17 +1,32 @@
+import sys
+import os
+
+# 🛠️ ปรับแต่ง Encoding ของ Console บน Windows เพื่อรองรับการพิมพ์ภาษาไทยและ Emoji
+if sys.platform.startswith("win"):
+    try:
+        sys.stdout.reconfigure(encoding='utf-8')
+        sys.stderr.reconfigure(encoding='utf-8')
+    except AttributeError:
+        pass
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from database import Base, engine
 from models.user import User
 from models.inventory import InventoryItem
-from models.recipe import RecipeSaved
+from models.recipe import RecipeSaved, CachedResponse
 from models.nutrition import NutritionLog
+from models.recipe_cache import RecipeCache
+from models.translation import Translation
+from models.chat import ChatHistory
+
 
 # 🛠️ รันการทำ Database Migrations ผ่าน Alembic อัตโนมัติในตอนเริ่มเปิดระบบ (Enterprise Standard)
 from alembic.config import Config
 from alembic import command
-import os
 
 try:
+
     current_dir = os.path.dirname(os.path.abspath(__file__))
     ini_path = os.path.join(current_dir, "alembic.ini")
     alembic_cfg = Config(ini_path)
