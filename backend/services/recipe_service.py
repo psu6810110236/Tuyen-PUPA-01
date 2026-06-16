@@ -650,6 +650,8 @@ async def translate_recipe_list(recipes: list[dict]) -> list[dict]:
             config=types.GenerateContentConfig(
                 response_mime_type="application/json",
                 response_schema=TranslatedTitles,
+                temperature=0.0,
+                max_output_tokens=500
             )
         )
         
@@ -701,6 +703,8 @@ async def translate_recipe_to_thai(recipe_data: dict) -> dict:
             config=types.GenerateContentConfig(
                 response_mime_type="application/json",
                 response_schema=TranslatedRecipe,
+                temperature=0.0,
+                max_output_tokens=1500
             )
         )
         
