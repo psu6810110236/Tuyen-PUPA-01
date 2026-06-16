@@ -196,10 +196,21 @@ export default function RecipeView() {
               {/* Cook Button */}
               <button
                 onClick={() => handleCook(recipeDetail.id)}
-                className="flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2 text-sm font-heading font-semibold text-white shadow-sm transition-colors hover:bg-emerald-700"
+                disabled={recipeDetail.missing_ingredients && recipeDetail.missing_ingredients.length > 0}
+                className={`flex items-center gap-2 rounded-xl px-5 py-2 text-sm font-heading font-semibold text-white transition-colors ${
+                  recipeDetail.missing_ingredients && recipeDetail.missing_ingredients.length > 0
+                    ? "bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200"
+                    : "bg-emerald-600 hover:bg-emerald-700 shadow-sm"
+                }`}
               >
                 <ChefHat className="h-4 w-4" /> ลงมือทำอาหาร (ตัดสต็อก)
               </button>
+
+              {recipeDetail.missing_ingredients && recipeDetail.missing_ingredients.length > 0 && (
+                <span className="text-xs text-danger font-body flex items-center gap-1.5 bg-red-50 border border-red-200 px-3 py-1.5 rounded-xl">
+                  <AlertTriangle className="h-3.5 w-3.5 text-red-500" /> วัตถุดิบไม่ครบ ไม่สามารถปรุงได้
+                </span>
+              )}
             </div>
           </div>
         </div>
