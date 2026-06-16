@@ -152,6 +152,11 @@ export const inventoryAPI = {
     fetchAPI<{ status: string; message: string }>(`/inventory/${id}`, {
       method: "DELETE",
     }),
+
+  deleteAll: () =>
+    fetchAPI<{ status: string; message: string }>("/inventory/", {
+      method: "DELETE",
+    }),
 };
 
 // ═══════════════════════════════════════════
@@ -223,6 +228,27 @@ export const recipeAPI = {
   deleteSaved: (recipeId: number) =>
     fetchAPI<{ status: string; message: string }>(`/recipes/saved/${recipeId}`, {
       method: "DELETE",
+    }),
+
+  cook: (id: number) =>
+    fetchAPI<{
+      success: boolean;
+      recipe_title: string;
+      deducted_ingredients: Array<{
+        name: string;
+        deducted_amount: number;
+        unit: string;
+        remaining_amount: number;
+      }>;
+      logged_nutrition: {
+        food_name: string;
+        calories: number;
+        protein: number;
+        carb: number;
+        fat: number;
+      };
+    }>(`/recipes/${id}/cook`, {
+      method: "POST",
     }),
 };
 
@@ -331,6 +357,7 @@ export const aiAPI = {
       added: string[];
       failed: string[];
       added_count: number;
+      detections?: Array<{ name: string; quantity: number; unit: string; box_2d: number[] }>;
     }>;
   },
 };

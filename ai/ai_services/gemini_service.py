@@ -1,10 +1,19 @@
 import json
 import time
+from pydantic import BaseModel
 from google import genai
 from google.genai import types
 from ai_services.config import GEMINI_API_KEY, GEMINI_MODEL, GEMINI_VISION_MODEL
 
 client = genai.Client(api_key=GEMINI_API_KEY)
+
+
+class DetectedItem(BaseModel):
+    name: str
+    quantity: float
+    unit: str
+    category: str
+    box_2d: list[int]
 
 
 def _call_with_retry(func, max_retries: int = 3):
@@ -23,24 +32,35 @@ def _call_with_retry(func, max_retries: int = 3):
 
 async def analyze_food_image(
     image_bytes: bytes, mime_type: str = "image/jpeg"
-) -> list[str]:
+) -> list[dict]:
     """
-    วิเคราะห์รูปภาพ ถ้า quota หมด → คืน list ว่าง ไม่ขึ้น error
+    วิเคราะห์รูปภาพเพื่อหาวัตถุดิบและจำนวน/หน่วย/หมวดหมู่
     """
     prompt = (
-    "You are an expert food and grocery detector. "
-    "Carefully analyze this image and identify ALL food items, ingredients, drinks, condiments, and grocery products visible. "
-    "Be specific about brand names and product types when visible. "
-    "Return ONLY a JSON array of item names in English, lowercase, be as specific as possible. "
-    'Example: ["skippy peanut butter", "brown eggs", "whole milk", "yellow mustard"]. '
-    "If you cannot identify any food, return an empty array []."
-)
+        "You are an expert food and grocery detector.\n"
+        "Carefully analyze this image and identify ALL food items, ingredients, drinks, condiments, and grocery products visible.\n"
+        "For each detected item, determine its location in the image as a 2D bounding box `[ymin, xmin, ymax, xmax]` normalized to [0, 1000] (0 is top/left, 1000 is bottom/right).\n"
+        "Also estimate the visible quantity/count and determine the appropriate Thai unit and category.\n\n"
+        "Fields description:\n"
+        "- name: Thai name of the ingredient (e.g., 'ไข่ไก่', 'นมสด', 'อกไก่', 'มะเขือเทศ', 'แอปเปิ้ล')\n"
+        "- quantity: A float or integer representing the count/amount of the item visible\n"
+        "- unit: The Thai unit (e.g., 'ฟอง', 'ขวด', 'ชิ้น', 'กล่อง', 'ลูก', 'หัว', 'กรัม', 'ถุง')\n"
+        "- category: One of 'protein', 'veggie', 'fruit', 'dairy', 'grain', 'other'\n"
+        "- box_2d: Bounding box `[ymin, xmin, ymax, xmax]` normalized to [0, 1000]\n"
+    )
 
     image_part = types.Part.from_bytes(data=image_bytes, mime_type=mime_type)
 
+    config = types.GenerateContentConfig(
+        response_mime_type="application/json",
+        response_schema=list[DetectedItem],
+    )
+
     result = _call_with_retry(
         lambda: client.models.generate_content(
-            model=GEMINI_VISION_MODEL, contents=[image_part, prompt]
+            model=GEMINI_VISION_MODEL, 
+            contents=[image_part, prompt],
+            config=config
         )
     )
 

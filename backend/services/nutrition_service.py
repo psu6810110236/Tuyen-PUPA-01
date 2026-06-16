@@ -80,28 +80,32 @@ async def delete_log(user_id: int, log_id: int, db: Session) -> bool:
     db.commit()
     return True
 
-# 5. ประมาณค่าสารอาหารจากชื่อเมนูทั่วไป (ยิงถาม Spoonacular แบบด่วน)
+# 5. ประมาณค่าสารอาหารจากชื่อเมนูทั่วไป (เรียกถามผ่าน Gemini AI Service โฮสต์ที่พอร์ต 8001)
 async def estimate_calories(food_name: str) -> dict:
-    if not SPOONACULAR_KEY:
-        return {"error": "SPOONACULAR_API_KEY Missing"}
-    
-    # ยิงฟังก์ชันค้นหาด่วนของฝรั่งเพื่อเดาแคลอรีจาก String ทั่วไป
-    url = "https://api.spoonacular.com/recipes/guessNutrition"
-    params = {"apiKey": SPOONACULAR_KEY, "title": food_name}
+    url = "http://host.docker.internal:8001/ai/nutrition"
     
     async with httpx.AsyncClient() as client:
         try:
-            response = await client.get(url, params=params, timeout=10.0)
+            response = await client.post(url, json={"food_name": food_name}, timeout=15.0)
             if response.status_code == 200:
                 data = response.json()
                 return {
-                    "food_name": food_name,
-                    "calories": data.get("calories", {}).get("value", 0.0),
-                    "protein": data.get("protein", {}).get("value", 0.0),
-                    "carb": data.get("carbs", {}).get("value", 0.0),
-                    "fat": data.get("fat", {}).get("value", 0.0),
-                    "note": "Estimated values by AI"
+                    "food_name": data.get("food_name", food_name),
+                    "calories": float(data.get("calories", 0.0)),
+                    "protein": float(data.get("protein", 0.0)),
+                    "carb": float(data.get("carbs", 0.0)),
+                    "fat": float(data.get("fat", 0.0)),
+                    "note": data.get("summary", "วิเคราะห์คุณค่าโภชนาการโดย Gemini AI")
                 }
-        except Exception:
-            pass
-    return {"food_name": food_name, "calories": 0.0, "protein": 0.0, "carb": 0.0, "fat": 0.0, "note": "Failed to estimate"}
+        except Exception as e:
+            print(f"⚠️ [Estimate Calories AI Fallback] ไม่สามารถเชื่อมต่อ AI Service ได้: {e}")
+            
+    # ค่าประมาณการเบื้องต้นหากติดต่อระบบ AI ไม่สำเร็จ
+    return {
+        "food_name": food_name, 
+        "calories": 0.0, 
+        "protein": 0.0, 
+        "carb": 0.0, 
+        "fat": 0.0, 
+        "note": "ไม่สามารถประมาณค่าสารอาหารได้ชั่วคราว"
+    }

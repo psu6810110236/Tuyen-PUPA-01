@@ -101,6 +101,18 @@ MOCK_RECIPES = {
             {"name": "basil", "amount": 1.0, "unit": "handful", "lotus_search_url": "https://www.lotuss.com/th/search/basil?sort=relevance:DESC"},
             {"name": "soy sauce", "amount": 1.0, "unit": "tablespoon", "lotus_search_url": "https://www.lotuss.com/th/search/soy%20sauce?sort=relevance:DESC"}
         ]
+    },
+    104: {
+        "id": 104,
+        "title": "ไข่เจียวทรงเครื่อง (Thai Omelet)",
+        "image": "https://images.unsplash.com/photo-1598103442097-8b74394b95c6?auto=format&fit=crop&w=600&q=80",
+        "readyInMinutes": 10,
+        "servings": 1,
+        "instructions": "1. ตอกไข่ใส่ชาม ปรุงรสด้วยซีอิ๊วขาวและพริกไทย ตีให้เข้ากัน\n2. ตั้งกระทะใส่น้ำมัน รอจนร้อนจัด\n3. เทไข่ลงไปเจียวจนขึ้นฟูและเหลืองกรอบทั้งสองด้าน\n4. ตักขึ้นสะเด็ดน้ำมัน เสิร์ฟพร้อมข้าวสวยร้อนๆ",
+        "extendedIngredients": [
+            {"name": "egg", "amount": 2.0, "unit": "piece", "lotus_search_url": "https://www.lotuss.com/th/search/egg?sort=relevance:DESC"},
+            {"name": "soy sauce", "amount": 1.0, "unit": "tablespoon", "lotus_search_url": "https://www.lotuss.com/th/search/soy%20sauce?sort=relevance:DESC"}
+        ]
     }
 }
 
@@ -136,6 +148,58 @@ async def suggest_recipes(ingredients: list[str]) -> list[dict]:
     if cached_data is not None:
         return cached_data
 
+    # 1. คำนวณหา Mock Recipes ที่ผู้ใช้มีส่วนผสมหลักอยู่ด้วย (จะได้แสดงผลเมนูไทยจำลองที่เหมาะสม)
+    mock_results = []
+    user_ings_lower = [i.lower() for i in ingredients]
+    thai_translations = {
+        "egg": ["ไข่", "ไข่ไก่", "ไข่เป็ด"],
+        "chicken": ["ไก่", "อกไก่", "เนื้อไก่"],
+        "pork": ["หมู", "หมูสับ", "เนื้อหมู"],
+        "garlic": ["กระเทียม"],
+        "cabbage": ["กะหล่ำปลี", "ผักกาด"],
+        "rice": ["ข้าว", "ข้าวสวย"],
+        "soy sauce": ["ซีอิ๊ว", "ซีอิ๊วขาว", "ซอส"],
+    }
+    for r_id, r in MOCK_RECIPES.items():
+        used_count = 0
+        missed_count = 0
+        for ing in r["extendedIngredients"]:
+            ing_name = ing["name"].lower()
+            matched = False
+            for u_ing in user_ings_lower:
+                if u_ing in ing_name or ing_name in u_ing:
+                    matched = True
+                    break
+            if not matched:
+                for eng_key, th_list in thai_translations.items():
+                    if eng_key in ing_name:
+                        for th_word in th_list:
+                            for u_ing in user_ings_lower:
+                                if th_word in u_ing:
+                                    matched = True
+                                    break
+                            if matched:
+                                break
+                    if matched:
+                        break
+            if matched:
+                used_count += 1
+            else:
+                missed_count += 1
+        
+        # แนบเข้าผลลัพธ์ถ้าพบว่ามีวัตถุดิบตรงกันอย่างน้อย 1 รายการ
+        if used_count > 0:
+            mock_results.append({
+                "id": r["id"],
+                "title": r["title"],
+                "image": r["image"],
+                "usedIngredientCount": used_count,
+                "missedIngredientCount": missed_count
+            })
+
+    # เรียงให้สูตรที่มีวัตถุดิบครบถ้วนที่สุดอยู่ด้านบน
+    mock_results.sort(key=lambda x: x["usedIngredientCount"], reverse=True)
+
     try:
         if not SPOONACULAR_KEY or SPOONACULAR_KEY == "your_spoonacular_api_key_here":
             raise ValueError("Placeholder API Key detected")
@@ -149,62 +213,29 @@ async def suggest_recipes(ingredients: list[str]) -> list[dict]:
             elif "ผักกาด" in item:
                 translated_ingredients.append("cabbage")
             else:
-                translated_ingredients.append(item) # ถ้าเป็นอังกฤษอยู่แล้วปล่อยผ่าน
+                translated_ingredients.append(item)
 
         ingredients_str = ",".join(translated_ingredients)
         data = await _fetch_from_spoonacular("findByIngredients", {"ingredients": ingredients_str, "number": 10, "ranking": 1})
         
-        set_cached_api_response(cache_key, data)
-        return data
+        # นำรายการสูตรอาหาร Mock มาผสมร่วมและขึ้นก่อนสำหรับการสาธิตเทส
+        combined_data = mock_results + data
+        set_cached_api_response(cache_key, combined_data)
+        return combined_data
     except Exception as e:
         print(f"[recipe_service] Suggest fallback triggered: {e}")
-        # สร้างรายการสูตรอาหารจำลองพร้อมคำนวณวัตถุดิบที่มีและขาด
-        result = []
-        user_ings_lower = [i.lower() for i in ingredients]
-        thai_translations = {
-            "egg": ["ไข่", "ไข่ไก่", "ไข่เป็ด"],
-            "chicken": ["ไก่", "อกไก่", "เนื้อไก่"],
-            "pork": ["หมู", "หมูสับ", "เนื้อหมู"],
-            "garlic": ["กระเทียม"],
-            "cabbage": ["กะหล่ำปลี", "ผักกาด"],
-            "rice": ["ข้าว", "ข้าวสวย"],
-        }
-        for r_id, r in MOCK_RECIPES.items():
-            used_count = 0
-            missed_count = 0
-            for ing in r["extendedIngredients"]:
-                ing_name = ing["name"].lower()
-                matched = False
-                for u_ing in user_ings_lower:
-                    if u_ing in ing_name or ing_name in u_ing:
-                        matched = True
-                        break
-                if not matched:
-                    # ลองเช็กภาษาไทยแปล
-                    for eng_key, th_list in thai_translations.items():
-                        if eng_key in ing_name:
-                            for th_word in th_list:
-                                for u_ing in user_ings_lower:
-                                    if th_word in u_ing:
-                                        matched = True
-                                        break
-                                if matched:
-                                    break
-                        if matched:
-                            break
-                if matched:
-                    used_count += 1
-                else:
-                    missed_count += 1
-            
-            result.append({
-                "id": r["id"],
-                "title": r["title"],
-                "image": r["image"],
-                "usedIngredientCount": used_count,
-                "missedIngredientCount": missed_count
-            })
-        return result
+        # หากต่อ API ไม่ได้หรือข้อมูลเป็นศูนย์ ให้ใช้ผลลัพธ์ Mock ทั้งหมดที่มี
+        if not mock_results:
+            mock_results = []
+            for r_id, r in MOCK_RECIPES.items():
+                mock_results.append({
+                    "id": r["id"],
+                    "title": r["title"],
+                    "image": r["image"],
+                    "usedIngredientCount": 0,
+                    "missedIngredientCount": len(r["extendedIngredients"])
+                })
+        return mock_results
 
 # 🔍 2. ดึงรายละเอียดเชิงลึกของเมนูอาหารรายตัว
 async def get_recipe_detail(recipe_id: int) -> dict:
@@ -252,6 +283,18 @@ async def search_recipe_by_name(name: str) -> list[dict]:
     if cached_data is not None:
         return cached_data
 
+    # ค้นหาใน Mock Recipes ก่อนเป็นอันดับแรก (หากคำค้นหาตรงกับภาษาไทย)
+    mock_results = []
+    name_lower = name.lower()
+    for r_id, r in MOCK_RECIPES.items():
+        if name_lower in r["title"].lower() or name_lower in r["instructions"].lower():
+            mock_results.append({
+                "id": r["id"],
+                "title": r["title"],
+                "image": r["image"],
+                "readyInMinutes": r["readyInMinutes"]
+            })
+
     try:
         if not SPOONACULAR_KEY or SPOONACULAR_KEY == "your_spoonacular_api_key_here":
             raise ValueError("Placeholder API Key detected")
@@ -265,28 +308,21 @@ async def search_recipe_by_name(name: str) -> list[dict]:
             "readyInMinutes": r.get("readyInMinutes", 0)
         } for r in data.get("results", [])]
         
-        set_cached_api_response(cache_key, parsed_data)
-        return parsed_data
+        # ผสมผลลัพธ์: เอา Mock Recipes ภาษาไทยขึ้นก่อน เพื่อให้แสดงเมนูไทยตรงใจผู้ใช้งาน
+        combined_data = mock_results + parsed_data
+        set_cached_api_response(cache_key, combined_data)
+        return combined_data
     except Exception as e:
         print(f"[recipe_service] Search fallback triggered for {name}: {e}")
-        result = []
-        name_lower = name.lower()
-        for r_id, r in MOCK_RECIPES.items():
-            if name_lower in r["title"].lower():
-                result.append({
-                    "id": r["id"],
-                    "title": r["title"],
-                    "image": r["image"],
-                    "readyInMinutes": r["readyInMinutes"]
-                })
-        if not result:
-            result = [{
+        # หากต่อ API ไม่ได้ ให้คืนค่า Mock Recipes ที่ค้นพบ (ถ้าไม่มีเลย คืน Mock ทั้งหมด)
+        if not mock_results:
+            mock_results = [{
                 "id": r["id"],
                 "title": r["title"],
                 "image": r["image"],
                 "readyInMinutes": r["readyInMinutes"]
             } for r in MOCK_RECIPES.values()]
-        return result
+        return mock_results
 
 # 💾 4. บันทึกเมนูอาหารลงฐานข้อมูลจริง
 async def save_recipe(user_id: int, recipe_data: dict, db: Session) -> RecipeSaved:
@@ -403,4 +439,154 @@ async def check_recipe_inventory(user_id: int, recipe_id: int, db: Session) -> d
         "missing_ingredients": missing,
         "line_share_url": line_share_url,
         "shopping_list_ready": len(missing) > 0
+    }
+
+# 🍳 8. ทำอาหาร (ตัดสต็อกตู้เย็น และบันทึกแคลอรี่สารอาหารเข้าประวัติแคลอรี่โดยอัตโนมัติ)
+async def cook_recipe(user_id: int, recipe_id: int, db: Session) -> dict:
+    from models.nutrition import NutritionLog
+    
+    # 1. ดึงรายละเอียดสูตรอาหาร
+    recipe = await get_recipe_detail(recipe_id)
+    recipe_ingredients = recipe.get("extendedIngredients", [])
+    
+    # 2. ดึงของกินทั้งหมดในตู้เย็นปัจจุบันของผู้ใช้งาน
+    inventory_items = db.query(InventoryItem).filter(InventoryItem.user_id == user_id).all()
+    
+    deducted_items = []
+    
+    thai_translations = {
+        "egg": ["ไข่", "ไข่ไก่", "ไข่เป็ด"],
+        "chicken": ["ไก่", "อกไก่", "เนื้อไก่"],
+        "pork": ["หมู", "หมูสับ", "เนื้อหมู"],
+        "garlic": ["กระเทียม"],
+        "onion": ["หอมใหญ่", "หัวหอม"],
+        "cabbage": ["กะหล่ำปลี", "ผักกาด"],
+        "rice": ["ข้าว", "ข้าวสวย", "ข้าวสาร"],
+        "soy sauce": ["ซีอิ๊ว", "ซีอิ๊วขาว", "ซอส"],
+    }
+    
+    # 3. ตรวจเช็คและตัดสต็อกสินค้าทีละรายการ
+    for ing in recipe_ingredients:
+        ing_name = ing["name"].lower()
+        ing_amount = ing.get("amount", 0.0)
+        
+        # มองหาวัตถุดิบที่ตรงกันในตู้เย็น
+        matched_item = None
+        for item in inventory_items:
+            # เช็กความสอดคล้องของชื่อวัตถุดิบภาษาอังกฤษและภาษาไทย
+            name_matched = False
+            if ing_name in item.name.lower() or item.name.lower() in ing_name:
+                name_matched = True
+            else:
+                for eng_key, translation_list in thai_translations.items():
+                    if eng_key in ing_name:
+                        for translation in translation_list:
+                            if translation in item.name.lower():
+                                name_matched = True
+                                break
+                        if name_matched:
+                            break
+            
+            if name_matched:
+                matched_item = item
+                break
+                
+        if matched_item:
+            # ตรวจเช็คเครื่องปรุงหรือซอสเพื่อข้ามการตัดสต็อก
+            is_seasoning = False
+            seasoning_keywords = [
+                "ซอส", "ซีอิ๊ว", "น้ำปลา", "เกลือ", "พริกไทย", "น้ำตาล", "น้ำมัน", "ผงปรุงรส", 
+                "รสดี", "ซอสหอย", "น้ำมันหอย", "ซอสปรุงรส", "เครื่องปรุง", "ผงชูรส", "เนย",
+                "sauce", "soy sauce", "fish sauce", "salt", "pepper", "sugar", "oil", "seasoning", 
+                "ketchup", "vinegar", "mayonnaise", "butter", "dressing", "syrup", "paste", "condiment"
+            ]
+            for kw in seasoning_keywords:
+                if kw in ing_name or kw in matched_item.name.lower():
+                    is_seasoning = True
+                    break
+            
+            if is_seasoning:
+                # ข้ามการหักสต็อกสำหรับเครื่องปรุง/ซอส
+                deducted_items.append({
+                    "name": matched_item.name,
+                    "deducted_amount": 0.0,
+                    "unit": matched_item.unit,
+                    "remaining_amount": matched_item.quantity
+                })
+                continue
+
+            # คำนวณจำนวนคงเหลือหลังหักลบ
+            old_qty = matched_item.quantity
+            new_qty = old_qty - ing_amount
+            
+            if new_qty <= 0:
+                db.delete(matched_item)
+                deducted_qty = old_qty
+            else:
+                matched_item.quantity = new_qty
+                db.add(matched_item)
+                deducted_qty = ing_amount
+            
+            deducted_items.append({
+                "name": matched_item.name,
+                "deducted_amount": deducted_qty,
+                "unit": matched_item.unit,
+                "remaining_amount": max(0.0, new_qty)
+            })
+            
+    # 4. ประมาณค่าแคลอรี่และสารอาหารของเมนูนี้ โดยส่งไปประมวลผลที่ AI Service (หรือค่าตั้งต้น)
+    calories = 300.0
+    protein = 15.0
+    carb = 30.0
+    fat = 10.0
+    
+    # ปรับแต่งค่าตั้งต้นแยกรายเมนูจำลองเพื่อความแม่นยำสูงสุด
+    if recipe_id == 101 or "fried rice" in recipe["title"].lower():
+        calories, protein, carb, fat = 550.0, 28.0, 65.0, 15.0
+    elif recipe_id == 102 or "soup" in recipe["title"].lower():
+        calories, protein, carb, fat = 220.0, 18.0, 10.0, 12.0
+    elif recipe_id == 103 or "kra pao" in recipe["title"].lower():
+        calories, protein, carb, fat = 580.0, 30.0, 60.0, 20.0
+    elif recipe_id == 104 or "omelet" in recipe["title"].lower() or "ไข่เจียว" in recipe["title"]:
+        calories, protein, carb, fat = 280.0, 12.0, 2.0, 24.0
+        
+    # พยายามยิงวิเคราะห์ละเอียดกับ AI Service พอร์ต 8001
+    url = "http://host.docker.internal:8001/ai/nutrition"
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(url, json={"food_name": recipe["title"]}, timeout=3.0)
+            if response.status_code == 200:
+                ai_data = response.json()
+                calories = float(ai_data.get("calories", calories))
+                protein = float(ai_data.get("protein", protein))
+                carb = float(ai_data.get("carbs", carb))
+                fat = float(ai_data.get("fat", fat))
+    except Exception as e:
+        print(f"⚠️ [AI Nutrition Fallback] ใช้ค่าวิเคราะห์ฐานข้อมูลจำลองเนื่องจากติดต่อ AI Service ไม่ได้: {e}")
+        
+    # 5. บันทึกมื้ออาหารลงตารางประวัติโภชนาการ (Nutrition Log)
+    log_entry = NutritionLog(
+        user_id=user_id,
+        meal_type="lunch",
+        food_name=recipe["title"],
+        calories=calories,
+        protein=protein,
+        carb=carb,
+        fat=fat,
+        source="cook"
+    )
+    db.add(log_entry)
+    db.commit()
+    
+    return {
+        "success": True,
+        "recipe_title": recipe["title"],
+        "deducted_ingredients": deducted_items,
+        "logged_nutrition": {
+            "food_name": recipe["title"],
+            "calories": calories,
+            "protein": protein,
+            "carb": carb,
+            "fat": fat
+        }
     }

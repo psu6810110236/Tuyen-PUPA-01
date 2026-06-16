@@ -25,7 +25,7 @@ async def chat_with_gemini(message: str, history: list) -> str:
 
     try:
         # ใช้ gemini-2.5-flash (โมเดลตัวล่าสุดและเร็วที่สุดของเวอร์ชัน flash) หรือใช้ 1.5-flash ได้เช่นกัน
-        response = client.models.generate_content(
+        response = await client.aio.models.generate_content(
             model='gemini-2.5-flash',
             contents=prompt,
         )

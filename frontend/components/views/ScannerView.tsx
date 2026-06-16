@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 import { inventoryAPI, aiAPI } from "@/lib/api";
-import { Camera, UploadCloud, CheckCircle, XCircle, Package } from "lucide-react";
+import { Camera, UploadCloud, CheckCircle, XCircle, Package, X } from "lucide-react";
 
 export default function ScannerView() {
   const [isDragging, setIsDragging] = useState(false);
@@ -10,14 +10,17 @@ export default function ScannerView() {
 
   // ─── AI Scan State ───
   const [isScanning, setIsScanning] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [scanResult, setScanResult] = useState<{
     success: boolean;
     message: string;
     ingredients_found: string[];
     added: string[];
     failed: string[];
+    detections?: Array<{ name: string; quantity: number; unit: string; box_2d: number[] }>;
   } | null>(null);
   const [submitMessage, setSubmitMessage] = useState("");
+  const [isZoomed, setIsZoomed] = useState(false);
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -49,6 +52,7 @@ export default function ScannerView() {
 
     const reader = new FileReader();
     reader.onload = async () => {
+      setPreviewUrl(reader.result as string);
       try {
         const base64String = (reader.result as string).split(",")[1];
         const res = await aiAPI.scanAndAdd(base64String, file.type);
@@ -110,85 +114,168 @@ export default function ScannerView() {
         </div>
       )}
 
-      <div
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
-        onClick={() => !isScanning && fileInputRef.current?.click()}
-        className={`relative flex min-h-[200px] cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed p-8 transition-all duration-300 ${
-          isScanning
-            ? "border-primary-light bg-surface-alt cursor-wait animate-pulse"
-            : isDragging
-            ? "border-primary bg-primary-pale/50 shadow-glow-teal scale-[1.01]"
-            : "border-outline hover:border-primary-light hover:bg-surface-alt"
-        }`}
-      >
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/jpeg,image/png,image/heic"
-          className="hidden"
-          onChange={handleFileChange}
-          disabled={isScanning}
-        />
-
-        {isScanning ? (
-          <div className="flex flex-col items-center justify-center gap-3">
-            <svg className="h-10 w-10 animate-spin text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-            </svg>
-            <p className="text-sm font-heading font-semibold text-primary">กำลังวิเคราะห์รูปภาพ...</p>
-            <p className="text-xs font-body text-foreground-muted">ระบบกำลังระบุวัตถุดิบเพื่อนำเข้าตู้เย็น</p>
+      {!previewUrl ? (
+        <div
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+          onClick={() => !isScanning && fileInputRef.current?.click()}
+          className={`relative flex min-h-[220px] cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed p-8 transition-all duration-300 ${
+            isDragging
+              ? "border-primary bg-primary-pale/50 shadow-glow-teal scale-[1.01]"
+              : "border-outline hover:border-primary-light hover:bg-surface-alt"
+          }`}
+        >
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/heic"
+            className="hidden"
+            onChange={handleFileChange}
+            disabled={isScanning}
+          />
+          {/* Upload Icon */}
+          <div className={`mb-4 rounded-2xl p-4 transition-all duration-300 ${isDragging ? "bg-primary-pale" : "bg-surface-alt"}`}>
+            <UploadCloud className={`h-12 w-12 transition-colors duration-300 ${isDragging ? "text-primary-dark" : "text-foreground-muted"}`} />
           </div>
-        ) : (
-          <>
-            {/* Upload Icon */}
-            <div className={`mb-4 rounded-2xl p-4 transition-all duration-300 ${isDragging ? "bg-primary-pale" : "bg-surface-alt"}`}>
-              <UploadCloud className={`h-12 w-12 transition-colors duration-300 ${isDragging ? "text-primary-dark" : "text-foreground-muted"}`} />
-            </div>
 
-            <p className="text-base font-heading font-semibold text-foreground">
-              {isDragging ? "ปล่อยเพื่ออัปโหลด" : "ลากวางหรือแตะเพื่อถ่ายรูป"}
-            </p>
-            <p className="mt-1 text-sm font-body text-foreground-secondary">หรือคลิกเพื่อเลือกไฟล์</p>
-            <p className="mt-2 text-xs font-body text-foreground-muted">รองรับไฟล์ JPG, PNG, HEIC · ขนาดไม่เกิน 10MB</p>
-            <p className="mt-1.5 text-xs font-body text-foreground-secondary font-medium">ระบบจะวิเคราะห์และเพิ่มวัตถุดิบอัตโนมัติ</p>
-          </>
-        )}
-      </div>
-
-      {scanResult && (
-        <div className="rounded-2xl border-2 border-white bg-surface p-4 shadow-soft-blue animate-scale-in">
-          <p className="text-sm font-heading font-bold text-foreground flex items-center gap-2">
-            <CheckCircle className="h-4 w-4 text-success" /> ผลการสแกน:
+          <p className="text-base font-heading font-semibold text-foreground">
+            {isDragging ? "ปล่อยเพื่ออัปโหลด" : "ลากวางหรือแตะเพื่อถ่ายรูป"}
           </p>
-          <div className="mt-2 flex flex-col gap-1.5">
-            {scanResult.ingredients_found.length > 0 ? (
-              <>
-                <p className="text-xs font-body text-foreground-secondary flex items-center gap-1.5">
-                  <Package className="h-3 w-3" /> ตรวจพบวัตถุดิบ: <span className="font-semibold text-primary">{scanResult.ingredients_found.join(", ")}</span>
-                </p>
-                {scanResult.added.length > 0 && (
-                  <p className="text-xs font-body text-success flex items-center gap-1.5">
-                    <CheckCircle className="h-3 w-3" /> เพิ่มเข้าตู้เย็นสำเร็จ: {scanResult.added.join(", ")}
-                  </p>
-                )}
-                {scanResult.failed.length > 0 && (
-                  <p className="text-xs font-body text-danger flex items-center gap-1.5">
-                    <XCircle className="h-3 w-3" /> ข้ามหรือเพิ่มไม่สำเร็จ: {scanResult.failed.join(", ")}
-                  </p>
-                )}
-              </>
-            ) : (
-              <p className="text-xs font-body text-foreground-muted">
-                ไม่พบวัตถุดิบที่สามารถระบุได้ในรูปภาพนี้
-              </p>
+          <p className="mt-1 text-sm font-body text-foreground-secondary">หรือคลิกเพื่อเลือกไฟล์</p>
+          <p className="mt-2 text-xs font-body text-foreground-muted">รองรับไฟล์ JPG, PNG, HEIC · ขนาดไม่เกิน 10MB</p>
+          <p className="mt-1.5 text-xs font-body text-foreground-secondary font-medium">ระบบจะวิเคราะห์และเพิ่มวัตถุดิบอัตโนมัติ</p>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-5">
+          <style dangerouslySetInnerHTML={{__html: `
+            @keyframes laserScan {
+              0% { top: 0%; }
+              50% { top: 100%; }
+              100% { top: 0%; }
+            }
+            .animate-laser {
+              position: absolute;
+              left: 0;
+              right: 0;
+              height: 3px;
+              background: linear-gradient(90deg, transparent, #06b6d4, transparent);
+              box-shadow: 0 0 10px #06b6d4;
+              animation: laserScan 2.5s linear infinite;
+            }
+          `}} />
+
+          {/* ─── Preview & Detections Overlay ─── */}
+          <div
+            onClick={() => !isScanning && setIsZoomed(true)}
+            className="relative mx-auto w-full max-w-2xl lg:max-w-4xl rounded-2xl border-4 border-white bg-surface shadow-soft-blue p-0 overflow-visible transition-all duration-300 cursor-zoom-in"
+          >
+            <img
+              src={previewUrl}
+              alt="Scanned item preview"
+              className="w-full h-auto block rounded-xl"
+            />
+            
+            {/* Laser scanning line overlay while scanning */}
+            {isScanning && (
+              <div className="absolute inset-0 bg-black/40 rounded-xl overflow-hidden flex flex-col items-center justify-center gap-3 backdrop-blur-xs">
+                <div className="animate-laser" />
+                <svg className="h-10 w-10 animate-spin text-cyan-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                </svg>
+                <p className="text-sm font-heading font-semibold text-white drop-shadow-md">กำลังวิเคราะห์ด้วย AI...</p>
+              </div>
             )}
+
+            {/* Bounding boxes overlay */}
+            {!isScanning && scanResult?.detections?.map((det, idx) => {
+              const [ymin, xmin, ymax, xmax] = det.box_2d;
+              const top = `${ymin}%`;
+              const left = `${xmin}%`;
+              const height = `${ymax - ymin}%`;
+              const width = `${xmax - xmin}%`;
+              const isNearTop = ymin < 8;
+              
+              return (
+                <div
+                  key={idx}
+                  style={{ top, left, width, height }}
+                  className="absolute border-2 border-emerald-500 bg-transparent rounded-lg group hover:border-emerald-600 hover:bg-transparent transition-all duration-200"
+                >
+                  <span className={
+                    isNearTop
+                      ? "absolute top-1.5 left-1.5 rounded-md bg-emerald-600/90 backdrop-blur-sm px-2.5 py-0.5 text-[10px] font-heading font-bold text-white shadow-md whitespace-nowrap transition-all duration-200"
+                      : "absolute -top-6 left-0 rounded-md bg-emerald-600/90 backdrop-blur-sm px-2.5 py-0.5 text-[10px] font-heading font-bold text-white shadow-md whitespace-nowrap transition-all duration-200"
+                  }>
+                    {det.name} ({det.quantity} {det.unit})
+                  </span>
+                </div>
+              );
+            })}
           </div>
+
+          {/* Action buttons */}
+          {!isScanning && (
+            <button
+              onClick={() => { setPreviewUrl(null); setScanResult(null); }}
+              className="mx-auto flex items-center justify-center gap-2 rounded-full border-2 border-white bg-gradient-to-r from-primary to-primary-dark px-6 py-3 text-sm font-heading font-semibold text-white shadow-soft-blue transition-airy hover:shadow-glow-teal hover:scale-[1.01] active:scale-[0.99] max-w-xs"
+            >
+              สแกนรูปภาพใหม่
+            </button>
+          )}
         </div>
       )}
 
+      {/* ─── Lightbox Zoom Modal ─── */}
+      {isZoomed && previewUrl && (
+        <div
+          onClick={() => setIsZoomed(false)}
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 p-4 cursor-zoom-out animate-fade-in"
+        >
+          <div 
+            onClick={(e) => e.stopPropagation()} 
+            className="relative max-w-5xl w-full rounded-2xl bg-surface p-1 shadow-2xl overflow-visible border border-outline/20"
+          >
+            <button
+              onClick={() => setIsZoomed(false)}
+              className="absolute -top-10 right-0 text-white hover:text-primary-light transition-colors text-sm font-heading font-semibold flex items-center gap-1"
+            >
+              <X className="h-4 w-4" /> ปิดหน้าต่างขยาย
+            </button>
+            <img
+              src={previewUrl}
+              alt="Zoomed scan preview"
+              className="w-full h-auto block rounded-xl max-h-[85vh] object-contain"
+            />
+            {/* Bounding boxes overlay on zoomed image */}
+            {scanResult?.detections?.map((det, idx) => {
+              const [ymin, xmin, ymax, xmax] = det.box_2d;
+              const top = `${ymin}%`;
+              const left = `${xmin}%`;
+              const height = `${ymax - ymin}%`;
+              const width = `${xmax - xmin}%`;
+              const isNearTop = ymin < 8;
+              
+              return (
+                <div
+                  key={idx}
+                  style={{ top, left, width, height }}
+                  className="absolute border-2 border-emerald-500 bg-transparent rounded-lg"
+                >
+                  <span className={
+                    isNearTop
+                      ? "absolute top-1.5 left-1.5 rounded-md bg-emerald-600/90 backdrop-blur-sm px-2.5 py-0.5 text-[10px] font-heading font-bold text-white shadow-md whitespace-nowrap"
+                      : "absolute -top-6 left-0 rounded-md bg-emerald-600/90 backdrop-blur-sm px-2.5 py-0.5 text-[10px] font-heading font-bold text-white shadow-md whitespace-nowrap"
+                  }>
+                    {det.name} ({det.quantity} {det.unit})
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
     </div>
   );

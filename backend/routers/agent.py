@@ -46,7 +46,7 @@ async def chat_with_agent(
     user_id = current_user.id
 
     # 🛠️ 1. สร้างเครื่องมือ (Tools) ครอบ Closure ของ User ID เพื่อความปลอดภัย
-    def suggest_recipes_from_fridge() -> list:
+    async def suggest_recipes_from_fridge() -> list:
         """
         Suggests delicious recipes based on the ingredients currently available in the user's refrigerator.
         Call this tool when the user wants menu recommendations from their fridge.
@@ -57,26 +57,26 @@ async def chat_with_agent(
             ingredients = [item.name for item in user_items]
             if not ingredients:
                 return [{"message": "ตู้เย็นว่างเปล่า กรุณาเพิ่มของก่อน"}]
-            # รัน async function ใน sync context
-            return asyncio.run(recipe_service.suggest_recipes(ingredients))
+            # เรียกใช้งาน async function
+            return await recipe_service.suggest_recipes(ingredients)
         finally:
             db.close()
 
-    def search_recipe_by_name(name: str) -> list:
+    async def search_recipe_by_name(name: str) -> list:
         """
         Search for recipes by their name.
         Call this tool when the user specifically mentions a dish name they want to cook.
         """
-        return asyncio.run(recipe_service.search_recipe_by_name(name))
+        return await recipe_service.search_recipe_by_name(name)
 
-    def get_recipe_detail(recipe_id: int) -> dict:
+    async def get_recipe_detail(recipe_id: int) -> dict:
         """
         Get detailed instructions, preparation time, servings, and ingredients list for a specific recipe ID.
         Call this tool when the user wants to see how to cook a specific recipe.
         """
-        return asyncio.run(recipe_service.get_recipe_detail(recipe_id))
+        return await recipe_service.get_recipe_detail(recipe_id)
 
-    def check_missing_ingredients_and_get_links(recipe_id: int) -> dict:
+    async def check_missing_ingredients_and_get_links(recipe_id: int) -> dict:
         """
         Compares the user's refrigerator items against the required ingredients of a recipe.
         Identifies which ingredients are missing, and generates Lotus's search URLs and LINE share link.
@@ -84,7 +84,7 @@ async def chat_with_agent(
         """
         db = SessionLocal()
         try:
-            return asyncio.run(recipe_service.check_recipe_inventory(user_id, recipe_id, db))
+            return await recipe_service.check_recipe_inventory(user_id, recipe_id, db)
         finally:
             db.close()
 
@@ -106,7 +106,7 @@ async def chat_with_agent(
         # โมเดลแนะนำหลักคือ gemini-3.1-flash-lite
         model_name = os.getenv("GEMINI_MODEL", "gemini-3.1-flash-lite")
         
-        response = client.models.generate_content(
+        response = await client.aio.models.generate_content(
             model=model_name,
             contents=gemini_contents,
             config=types.GenerateContentConfig(

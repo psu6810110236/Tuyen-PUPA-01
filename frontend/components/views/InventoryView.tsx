@@ -84,8 +84,9 @@ export default function InventoryView() {
     fetchInventory();
   }, []);
 
-  // ─── Handle quantity update ───
+  // ─── Handle update quantity ───
   const handleUpdateQuantity = async (item: InventoryItem, newQuantity: number) => {
+    if (newQuantity < 0) return;
     setItems(prev => prev.map(i => i.id === item.id ? { ...i, quantity: newQuantity } : i));
     try {
       await inventoryAPI.update(item.id, { quantity: newQuantity });
@@ -104,6 +105,22 @@ export default function InventoryView() {
     } catch (err) {
       console.error(err);
       fetchInventory();
+    }
+  };
+
+  // ─── Handle delete all ───
+  const handleDeleteAll = async () => {
+    if (!window.confirm("⚠️ คุณต้องการลบวัตถุดิบทั้งหมดในตู้เย็นใช่หรือไม่? การกระทำนี้ไม่สามารถย้อนกลับได้")) return;
+    setItems([]);
+    try {
+      await inventoryAPI.deleteAll();
+      setSubmitMessage("ลบวัตถุดิบทั้งหมดออกจากตู้เย็นสำเร็จ! 🧹");
+      setTimeout(() => setSubmitMessage(""), 3000);
+    } catch (err) {
+      console.error(err);
+      fetchInventory();
+      setSubmitMessage("ลบวัตถุดิบล้มเหลว ❌");
+      setTimeout(() => setSubmitMessage(""), 3000);
     }
   };
 
@@ -175,14 +192,25 @@ export default function InventoryView() {
         </div>
       )}
 
-      {/* ─── Manual Add Toggle Button ─── */}
-      <button
-        onClick={() => setShowManualForm(!showManualForm)}
-        className="flex items-center justify-center gap-3 rounded-full border-2 border-white bg-gradient-to-r from-primary to-primary-dark py-4 text-base font-heading font-semibold text-white shadow-soft-blue transition-airy hover:shadow-glow-teal hover:scale-[1.01] active:scale-[0.99]"
-      >
-        {showManualForm ? <X className="h-5 w-5" /> : <Edit2 className="h-5 w-5" />}
-        {showManualForm ? "ยกเลิก" : "เพิ่มวัตถุดิบด้วยมือ"}
-      </button>
+      {/* ─── Add/Delete All Buttons ─── */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <button
+          onClick={() => setShowManualForm(!showManualForm)}
+          className="flex-1 flex items-center justify-center gap-3 rounded-full border-2 border-white bg-gradient-to-r from-primary to-primary-dark py-4 text-base font-heading font-semibold text-white shadow-soft-blue transition-airy hover:shadow-glow-teal hover:scale-[1.01] active:scale-[0.99]"
+        >
+          {showManualForm ? <X className="h-5 w-5" /> : <Edit2 className="h-5 w-5" />}
+          {showManualForm ? "ยกเลิก" : "เพิ่มวัตถุดิบด้วยมือ"}
+        </button>
+        {items.length > 0 && (
+          <button
+            onClick={handleDeleteAll}
+            className="flex-1 flex items-center justify-center gap-3 rounded-full border-2 border-white bg-gradient-to-r from-red-500 to-rose-600 py-4 text-base font-heading font-semibold text-white shadow-soft-blue transition-airy hover:shadow-glow-red hover:scale-[1.01] active:scale-[0.99]"
+          >
+            <Trash2 className="h-5 w-5" />
+            ลบวัตถุดิบทั้งหมด
+          </button>
+        )}
+      </div>
 
       {/* ─── Manual Add Form ─── */}
       {showManualForm && (

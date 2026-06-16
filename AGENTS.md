@@ -31,6 +31,11 @@ To support the team effectively, AI Assistants are designated based on their dom
   - [x] Initialized Alembic database migrations and integrated startup auto-upgrade flow.
   - [x] Setup and resolved automated Playwright E2E testing architecture (100% green build).
   - [x] Resolved remote pull merge conflicts and Python indentation syntax errors on dev branch.
+- **Completed Actions / Deliverables (June 17, 2026)**:
+  - [x] Resolved runtime event loop exception in AI Chat Agent by migrating to async Gemini client and tools.
+  - [x] Implemented refrigerator inventory stock deduction (ตัดสต็อก) and integrated recipe cooking endpoint (`POST /recipes/{recipe_id}/cook`).
+  - [x] Connected backend calorie estimator (`GET /nutrition/estimate`) to host-level Gemini AI Service over Docker network.
+  - [x] Added "ไข่เจียวทรงเครื่อง" (Mock Recipe 104) for developer staging and testing.
 
 ### 🔍 2.2 Research & Documentation Agent
 - **Status**: Standby ⚪

@@ -8,7 +8,7 @@ import ScannerView from "@/components/views/ScannerView";
 import RecipeView from "@/components/views/RecipeView";
 import ChatView from "@/components/views/ChatView";
 import InventoryView from "@/components/views/InventoryView";
-import { Home, Camera, ChefHat, MessageSquare, LogOut, Bell, Package } from "lucide-react";
+import { Home, Camera, ChefHat, MessageSquare, LogOut, Package } from "lucide-react";
 import { nutritionAPI, type TodaySummary, type NutritionLog } from "@/lib/api";
 
 // ─── View Type ───
@@ -50,8 +50,16 @@ export default function DashboardPage() {
       }
     };
     loadNutritionData();
+
+    // Listen to nutrition update events
+    const handleNutritionUpdate = () => {
+      loadNutritionData();
+    };
+    window.addEventListener("nutrition-update", handleNutritionUpdate);
+
     return () => {
       active = false;
+      window.removeEventListener("nutrition-update", handleNutritionUpdate);
     };
   }, [isAuthenticated]);
 
@@ -167,10 +175,6 @@ export default function DashboardPage() {
             </h1>
           </div>
           <div className="flex items-center gap-3">
-            <button className="relative rounded-2xl p-2 text-foreground-secondary transition-airy hover:bg-surface-alt focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-pale">
-              <Bell className="h-5 w-5" />
-              <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-danger"></span>
-            </button>
             {/* Logout Button */}
             <button
               onClick={logout}

@@ -29,10 +29,22 @@ export default function RecipeView() {
       const data = await recipeAPI.suggest();
       // handle both array response and {message, recipes} response
       if (Array.isArray(data)) {
-        setSuggestions(data);
+        const sorted = [...data].sort((a, b) => {
+          if (a.missedIngredientCount !== b.missedIngredientCount) {
+            return a.missedIngredientCount - b.missedIngredientCount;
+          }
+          return b.usedIngredientCount - a.usedIngredientCount;
+        });
+        setSuggestions(sorted);
       } else {
         const obj = data as unknown as { recipes?: RecipeSuggestion[]; message?: string };
-        setSuggestions(obj.recipes || []);
+        const sorted = [...(obj.recipes || [])].sort((a, b) => {
+          if (a.missedIngredientCount !== b.missedIngredientCount) {
+            return a.missedIngredientCount - b.missedIngredientCount;
+          }
+          return b.usedIngredientCount - a.usedIngredientCount;
+        });
+        setSuggestions(sorted);
         if (obj.message && (!obj.recipes || obj.recipes.length === 0)) {
           setError(obj.message);
         }
@@ -103,6 +115,28 @@ export default function RecipeView() {
     }
   };
 
+  // ─── Cook recipe ───
+  const handleCook = async (recipeId: number) => {
+    try {
+      const res = await recipeAPI.cook(recipeId);
+      if (res.success) {
+        setSaveMessage(`🍳 ทำอาหารสำเร็จ! ตัดสต็อกตู้เย็นและบันทึก ${res.logged_nutrition.calories} kcal ลงประวัติคุณแล้ว!`);
+        setTimeout(() => setSaveMessage(""), 5000);
+        // ส่ง event แจ้งเตือนหน้าอื่นให้ดึงข้อมูลสารอาหารใหม่
+        window.dispatchEvent(new Event("nutrition-update"));
+        // รีโหลดเมนูแนะนำเพราะของในตู้เย็นลดลงไปแล้ว
+        loadSuggestions();
+      } else {
+        setSaveMessage("ไม่สามารถดำเนินการทำอาหารได้ ❌");
+        setTimeout(() => setSaveMessage(""), 3000);
+      }
+    } catch (err) {
+      console.error("Failed to cook recipe:", err);
+      setSaveMessage("ไม่สามารถหักลบวัตถุดิบได้ ❌");
+      setTimeout(() => setSaveMessage(""), 3000);
+    }
+  };
+
   // ─── Back to list ───
   const goBack = () => {
     setRecipeDetail(null);
@@ -127,6 +161,13 @@ export default function RecipeView() {
           กลับไปรายการ
         </button>
 
+        {/* Notification Message */}
+        {saveMessage && (
+          <div className="flex items-center gap-2 rounded-2xl border-2 border-emerald-500 bg-emerald-50 px-4 py-3 animate-scale-in">
+            <p className="text-sm font-body font-medium text-emerald-800">{saveMessage}</p>
+          </div>
+        )}
+
         {/* Recipe Header */}
         <div className="rounded-2xl border-2 border-white bg-surface overflow-hidden shadow-soft-blue">
           {recipeDetail.image && (
@@ -143,13 +184,23 @@ export default function RecipeView() {
               </span>
             </div>
 
-            {/* Save Button */}
-            <button
-              onClick={() => handleSave(recipeDetail)}
-              className="mt-4 flex items-center gap-2 rounded-full bg-gradient-to-r from-primary to-primary-dark px-5 py-2.5 text-sm font-heading font-semibold text-white shadow-soft-blue transition-airy hover:shadow-glow-teal hover:scale-[1.01] active:scale-[0.99]"
-            >
-              <Save className="h-4 w-4" /> บันทึกเมนูนี้
-            </button>
+            <div className="mt-4 flex flex-wrap gap-3">
+              {/* Save Button */}
+              <button
+                onClick={() => handleSave(recipeDetail)}
+                className="flex items-center gap-2 rounded-full bg-gradient-to-r from-primary to-primary-dark px-5 py-2.5 text-sm font-heading font-semibold text-white shadow-soft-blue transition-airy hover:shadow-glow-teal hover:scale-[1.01] active:scale-[0.99]"
+              >
+                <Save className="h-4 w-4" /> บันทึกเมนูนี้
+              </button>
+
+              {/* Cook Button */}
+              <button
+                onClick={() => handleCook(recipeDetail.id)}
+                className="flex items-center gap-2 rounded-full bg-gradient-to-r from-emerald-500 to-teal-600 px-5 py-2.5 text-sm font-heading font-semibold text-white shadow-soft-blue transition-airy hover:shadow-glow-teal hover:scale-[1.01] active:scale-[0.99]"
+              >
+                <ChefHat className="h-4 w-4" /> ลงมือทำอาหาร (ตัดสต็อก)
+              </button>
+            </div>
           </div>
         </div>
 
