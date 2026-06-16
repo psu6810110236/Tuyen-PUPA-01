@@ -218,8 +218,9 @@ async def suggest_recipes(ingredients: list[str]) -> list[dict]:
         ingredients_str = ",".join(translated_ingredients)
         data = await _fetch_from_spoonacular("findByIngredients", {"ingredients": ingredients_str, "number": 10, "ranking": 1})
         
-        # นำรายการสูตรอาหาร Mock มาผสมร่วมและขึ้นก่อนสำหรับการสาธิตเทส
-        combined_data = mock_results + data
+        # แปลเป็นไทยสำหรับส่วนที่เป็นผลลัพธ์จาก Spoonacular (data) ก่อนนำมาเก็บและส่งออก
+        translated_spoonacular = await translate_recipe_list(data)
+        combined_data = mock_results + translated_spoonacular
         set_cached_api_response(cache_key, combined_data)
         return combined_data
     except Exception as e:
@@ -269,8 +270,10 @@ async def get_recipe_detail(recipe_id: int) -> dict:
                 for ing in data.get("extendedIngredients", [])
             ]
         }
-        set_cached_api_response(cache_key, parsed_data)
-        return parsed_data
+        # แปลข้อมูลจาก Spoonacular ทั้งหมดให้เป็นภาษาไทยด้วย AI
+        translated_data = await translate_recipe_to_thai(parsed_data)
+        set_cached_api_response(cache_key, translated_data)
+        return translated_data
     except Exception as e:
         print(f"[recipe_service] Detail fallback triggered for recipe {recipe_id}: {e}")
         # Default ไปที่ข้าวผัดอกไก่หากเรียกข้อมูลอื่นไม่สำเร็จ
@@ -308,8 +311,9 @@ async def search_recipe_by_name(name: str) -> list[dict]:
             "readyInMinutes": r.get("readyInMinutes", 0)
         } for r in data.get("results", [])]
         
-        # ผสมผลลัพธ์: เอา Mock Recipes ภาษาไทยขึ้นก่อน เพื่อให้แสดงเมนูไทยตรงใจผู้ใช้งาน
-        combined_data = mock_results + parsed_data
+        # แปลเฉพาะ parsed_data เป็นภาษาไทย ก่อนที่จะนำมารวมกับ mock และเซฟแคช
+        translated_parsed = await translate_recipe_list(parsed_data)
+        combined_data = mock_results + translated_parsed
         set_cached_api_response(cache_key, combined_data)
         return combined_data
     except Exception as e:
@@ -609,3 +613,119 @@ async def cook_recipe(user_id: int, recipe_id: int, db: Session) -> dict:
             "fat": fat
         }
     }
+
+
+# ═══════════════════════════════════════════
+# 🌐 AI RECIPE TRANSLATION SERVICES
+# ═══════════════════════════════════════════
+
+async def translate_recipe_list(recipes: list[dict]) -> list[dict]:
+    """แปลรายชื่อเมนูอาหารทั้งหมดในลิสต์เป็นภาษาไทยผ่านการยิงเรียก Gemini ครั้งเดียวเพื่อความประหยัดและรวดเร็ว"""
+    from google import genai
+    from google.genai import types
+    from pydantic import BaseModel
+    import os
+    import json
+    
+    api_key = os.getenv("GEMINI_API_KEY")
+    if not api_key or not recipes:
+        return recipes
+        
+    class TranslatedTitles(BaseModel):
+        titles: list[str]
+        
+    client = genai.Client(api_key=api_key)
+    titles_to_translate = [r["title"] for r in recipes]
+    
+    prompt = (
+        "Translate the following list of recipe titles into short, natural, appetizing Thai dish names.\n"
+        f"Titles: {', '.join(titles_to_translate)}"
+    )
+    
+    try:
+        response = await client.aio.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                response_mime_type="application/json",
+                response_schema=TranslatedTitles,
+            )
+        )
+        
+        result_json = json.loads(response.text)
+        translated_titles = result_json.get("titles", [])
+        
+        for i, r in enumerate(recipes):
+            if i < len(translated_titles):
+                r["title"] = translated_titles[i]
+        return recipes
+    except Exception as e:
+        print(f"⚠️ [Translation List Error] Failed to translate recipe list: {e}")
+        return recipes
+
+
+async def translate_recipe_to_thai(recipe_data: dict) -> dict:
+    """แปลเนื้อหารายละเอียดของสูตรอาหาร (หัวข้อ ขั้นตอนวิธีปรุง และส่วนผสม) ให้เป็นภาษาไทยด้วย AI"""
+    from google import genai
+    from google.genai import types
+    from pydantic import BaseModel
+    import os
+    import json
+    
+    api_key = os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        return recipe_data
+        
+    class TranslatedRecipe(BaseModel):
+        title: str
+        instructions: str
+        ingredients: list[str]
+        
+    client = genai.Client(api_key=api_key)
+    ing_names = [ing["name"] for ing in recipe_data["extendedIngredients"]]
+    
+    prompt = (
+        "Translate the following recipe title, instructions, and ingredients into natural, appetizing Thai language.\n\n"
+        f"Title: {recipe_data['title']}\n"
+        f"Instructions: {recipe_data['instructions']}\n"
+        f"Ingredients to translate: {', '.join(ing_names)}\n\n"
+        "Ensure the ingredient translations are common Thai grocery terms (e.g. 'chicken breast' -> 'อกไก่', 'olive oil' -> 'น้ำมันมะกอก')."
+    )
+    
+    try:
+        response = await client.aio.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                response_mime_type="application/json",
+                response_schema=TranslatedRecipe,
+            )
+        )
+        
+        result_json = json.loads(response.text)
+        
+        translated_ingredients = []
+        for i, ing in enumerate(recipe_data["extendedIngredients"]):
+            translated_name = ing["name"]
+            if i < len(result_json["ingredients"]):
+                translated_name = result_json["ingredients"][i]
+                
+            translated_ingredients.append({
+                "name": translated_name,
+                "amount": ing["amount"],
+                "unit": ing["unit"],
+                "lotus_search_url": f"https://www.lotuss.com/th/search/{quote(translated_name)}?sort=relevance:DESC"
+            })
+            
+        return {
+            "id": recipe_data["id"],
+            "title": result_json["title"],
+            "image": recipe_data.get("image"),
+            "readyInMinutes": recipe_data.get("readyInMinutes"),
+            "servings": recipe_data.get("servings"),
+            "instructions": result_json["instructions"],
+            "extendedIngredients": translated_ingredients
+        }
+    except Exception as e:
+        print(f"⚠️ [Translation Error] Failed to translate recipe {recipe_data['id']}: {e}")
+        return recipe_data
