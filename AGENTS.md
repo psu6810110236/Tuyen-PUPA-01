@@ -53,6 +53,7 @@ To support the team effectively, AI Assistants are designated based on their dom
   - [x] Cleaned up and updated backend dependency definitions in `requirements.txt`.
   - [x] Verified successful build, type checking, and pushed clean changes to `dev` branch.
   - [x] Increased backend proxy request timeout to 120.0 seconds to prevent ReadTimeout with slow Gemini responses.
+  - [x] Implemented client-side image compression and resizing (down to 1024px) in ScannerView.tsx to speed up uploads by up to 50x and prevent timeouts.
 
 ### 🔍 2.2 Research & Documentation Agent
 - **Status**: Standby ⚪

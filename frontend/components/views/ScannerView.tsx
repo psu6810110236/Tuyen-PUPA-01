@@ -114,6 +114,43 @@ export default function ScannerView() {
     setIsDragging(false);
   };
 
+  const compressImage = (file: File, maxW = 1024, maxH = 1024): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new window.Image();
+        img.src = event.target?.result as string;
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > maxW) {
+              height = Math.round((height * maxW) / width);
+              width = maxW;
+            }
+          } else {
+            if (height > maxH) {
+              width = Math.round((width * maxH) / height);
+              height = maxH;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          ctx?.drawImage(img, 0, 0, width, height);
+          const dataUrl = canvas.toDataURL("image/jpeg", 0.8);
+          resolve(dataUrl.split(",")[1]);
+        };
+        img.onerror = (err) => reject(err);
+      };
+      reader.onerror = (err) => reject(err);
+    });
+  };
+
   const processFile = async (file: File) => {
     if (!file) return;
 
@@ -123,37 +160,37 @@ export default function ScannerView() {
       return;
     }
 
-    if (file.size > 10 * 1024 * 1024) {
-      setSubmitMessage("ขนาดรูปภาพต้องไม่เกิน 10MB ❌");
-      setTimeout(() => setSubmitMessage(""), 4000);
-      return;
-    }
-
     setIsScanning(true);
     setSubmitMessage("");
     setScanResult(null);
 
-    const reader = new FileReader();
-    reader.onload = async () => {
-      setPreviewUrl(reader.result as string);
-      try {
-        const base64String = (reader.result as string).split(",")[1];
-        const res = await aiAPI.scanAndAdd(base64String, file.type);
-        setScanResult(res);
-        if (res.success && res.ingredients_found.length > 0) {
-          setSubmitMessage(`สแกนสำเร็จ! พบ ${res.ingredients_found.length} รายการ และเพิ่มเข้าตู้เย็นแล้ว 🎉`);
-          loadInventory();
-        } else {
-          setSubmitMessage("สแกนภาพสำเร็จ แต่ไม่พบวัตถุดิบ 🔍");
-        }
-      } catch (err: unknown) {
-        console.error("AI Scan failed:", err);
-        setSubmitMessage(`เกิดข้อผิดพลาดในการสแกน: ${(err as Error).message || "กรุณาลองใหม่"} ❌`);
-      } finally {
-        setIsScanning(false);
-      }
+    // 1. Show raw file preview immediately for premium UX (no waiting)
+    const previewReader = new FileReader();
+    previewReader.onload = () => {
+      setPreviewUrl(previewReader.result as string);
     };
-    reader.readAsDataURL(file);
+    previewReader.readAsDataURL(file);
+
+    try {
+      // 2. Compress and resize image in browser background (scales down large camera photos)
+      const compressedBase64 = await compressImage(file, 1024, 1024);
+      
+      // 3. Scan and add items via API (sending a much smaller payload, e.g. 100KB instead of 5MB)
+      const res = await aiAPI.scanAndAdd(compressedBase64, "image/jpeg");
+      setScanResult(res);
+      
+      if (res.success && res.ingredients_found.length > 0) {
+        setSubmitMessage(`สแกนสำเร็จ! พบ ${res.ingredients_found.length} รายการ และเพิ่มเข้าตู้เย็นแล้ว 🎉`);
+        loadInventory();
+      } else {
+        setSubmitMessage("สแกนภาพสำเร็จ แต่ไม่พบวัตถุดิบ 🔍");
+      }
+    } catch (err: unknown) {
+      console.error("AI Scan failed:", err);
+      setSubmitMessage(`เกิดข้อผิดพลาดในการสแกน: ${(err as Error).message || "กรุณาลองใหม่"} ❌`);
+    } finally {
+      setIsScanning(false);
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
