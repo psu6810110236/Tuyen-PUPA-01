@@ -29,6 +29,7 @@ services:
       - SPOONACULAR_API_KEY=${SPOONACULAR_API_KEY}
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - CORS_ORIGINS=${CORS_ORIGINS}
 
     depends_on:
       - postgres_db
