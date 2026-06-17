@@ -27,10 +27,14 @@ def _call_with_retry(func, max_retries: int = 3):
                     print("[gemini_service] Daily quota exhausted. Failing fast.")
                     return None
                 wait = (attempt + 1) * 2
+                print(f"[gemini_service] Rate limited. Waiting {wait}s... (Attempt {attempt + 1}/{max_retries})")
                 time.sleep(wait)
             else:
-                print(f"[gemini_service] Call failed: {e}")
-                return None
+                wait = (attempt + 1) * 2
+                print(f"[gemini_service] Call failed: {e}. Waiting {wait}s and retrying... (Attempt {attempt + 1}/{max_retries})")
+                if attempt == max_retries - 1:
+                    return None
+                time.sleep(wait)
     return None
 
 
@@ -42,26 +46,25 @@ async def analyze_food_image(image_bytes: bytes, mime_type: str = "image/jpeg") 
         "drinks/beverages, condiments (sauces, ketchup, mustard, mayonnaise), leftovers, tofu, and packaged food. "
         "DO NOT detect: people, hands, furniture, kitchen appliances, utensils, plates, bowls, bags, boxes that are clearly NOT food, "
         "walls, floors, or any non-food items. "
-        "BE PRECISE with bounding boxes — each box must tightly fit around only that specific item. "
-        "DO NOT overlap boxes. DO NOT group multiple items into one box. "
-        "For each item found, return a JSON array with: name (in Thai if possible), x, y, width, height as percentage (0-100) of image dimensions. "
-        "Example: ["
-        '{"name": "ไข่ไก่", "x": 60, "y": 5, "width": 30, "height": 20}, '
-        '{"name": "นมสด", "x": 5, "y": 5, "width": 15, "height": 25}'
-        "]. "
-        "Return ONLY the JSON array, no explanation. If no refrigerator items found, return []."
+        "For each detected item, determine its precise location in the image as a 2D bounding box [ymin, xmin, ymax, xmax] "
+        "normalized to [0, 1000] (0 is top/left, 1000 is bottom/right) tightly wrapping that specific object. "
+        "Estimate the visible quantity (typically 1.0 for a single physical instance) and determine the appropriate Thai unit and category."
     )
 
     image_part = types.Part.from_bytes(data=image_bytes, mime_type=mime_type)
+
+    config = types.GenerateContentConfig(
+        response_mime_type="application/json",
+        response_schema=list[DetectedItem],
+        temperature=0.1,
+        top_p=0.8,
+    )
 
     result = _call_with_retry(
         lambda: client.models.generate_content(
             model=GEMINI_VISION_MODEL,
             contents=[image_part, prompt],
-            config=types.GenerateContentConfig(
-                temperature=0.1,
-                top_p=0.8,
-            ),
+            config=config,
         )
     )
 

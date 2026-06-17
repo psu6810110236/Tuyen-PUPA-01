@@ -41,8 +41,12 @@ To support the team effectively, AI Assistants are designated based on their dom
   - [x] Implemented automated Thai recipe translations using optimized `gemini-3.1-flash-lite` (low latency, zero daily quota limitations).
   - [x] Configured production Dockerfiles for frontend and AI services, and unified production deployment via `docker-compose.prod.yml` for AWS EC2.
   - [x] Auto-generated and applied missing database migrations for newly introduced models (`ChatHistory`, `RecipeCache`, `Translation`) and resolved alembic version mismatch.
-  - [x] Successfully pulled latest remote changes onto `dev` branch and resolved local file conflicts.
   - [x] Successfully pushed clean git commits to remote `dev` branch.
+- **Completed Actions / Deliverables (June 18, 2026)**:
+  - [x] Confirmed AI Service locally is 100% functional with `gemini-2.5-flash`.
+  - [x] Aligned `GEMINI_MODEL` and `GEMINI_VISION_MODEL` variables in configuration to fallback on `gemini-2.5-flash` instead of `gemini-3.5-flash`.
+  - [x] Restored `box_2d` coordinate normalization to standard format [0, 1000] and aligned bounding box renderers.
+  - [x] Enhanced AI service `_call_with_retry` mechanism to retry transient 503 and network failures.
 
 ### 🔍 2.2 Research & Documentation Agent
 - **Status**: Standby ⚪
