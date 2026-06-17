@@ -1,25 +1,40 @@
+import sys
+import os
+
+# 🛠️ ปรับแต่ง Encoding ของ Console บน Windows เพื่อรองรับการพิมพ์ภาษาไทยและ Emoji
+if sys.platform.startswith("win"):
+    try:
+        sys.stdout.reconfigure(encoding='utf-8')
+        sys.stderr.reconfigure(encoding='utf-8')
+    except AttributeError:
+        pass
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from database import Base, engine
 from models.user import User
 from models.inventory import InventoryItem
-from models.recipe import RecipeSaved
+from models.recipe import RecipeSaved, CachedResponse
 from models.nutrition import NutritionLog
+from models.recipe_cache import RecipeCache
+from models.translation import Translation
+from models.chat import ChatHistory
+
 
 # 🛠️ รันการทำ Database Migrations ผ่าน Alembic อัตโนมัติในตอนเริ่มเปิดระบบ (Enterprise Standard)
 from alembic.config import Config
 from alembic import command
-import os
 
 try:
+
     current_dir = os.path.dirname(os.path.abspath(__file__))
     ini_path = os.path.join(current_dir, "alembic.ini")
     alembic_cfg = Config(ini_path)
     alembic_cfg.set_main_option("script_location", os.path.join(current_dir, "alembic"))
     command.upgrade(alembic_cfg, "head")
-    print("🚀 [Alembic] อัปเกรดโครงสร้างตารางฐานข้อมูลสำเร็จ (Upgraded to head)")
+    print("[Alembic] Database migration completed successfully (Upgraded to head)")
 except Exception as e:
-    print(f"⚠️ [Alembic] ไม่สามารถอัปเกรดฐานข้อมูลเมื่อเริ่มต้นระบบได้: {e}")
+    print(f"[Alembic] Database upgrade failed on startup: {repr(e)}")
 
 from routers.auth import router as auth_router  # ดึง Router สำหรับ Authentication มาใช้งาน
 from routers.inventory import router as inventory_router  # ดึง Router สำหรับ Inventory มาใช้งาน
@@ -62,8 +77,8 @@ async def log_and_time_middleware(request: Request, call_next):
     # 3. จังหวะขาออก: คำนวณเวลาหลังจากระบบทำงานเสร็จสิ้น
     process_time = time.time() - start_time
     
-    # พ่น Log ออกมาที่หน้าจอ Terminal ของเราเพื่อเอาไว้ดีบั๊กตรวจสอบความเร็ว
-    print(f"⏰ [Middleware LOG] มีคนเรียกพาธ: {request.url.path} | ใช้เวลาประมวลผลไป: {process_time:.4f} วินาที")
+    # English log for Windows console compatibility
+    print(f"[Middleware LOG] Path: {request.url.path} | Process time: {process_time:.4f}s")
     
     # ส่ง Response กลับไปหาหน้าเว็บเบราว์เซอร์ของผู้ใช้
     return response

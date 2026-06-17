@@ -82,3 +82,19 @@ async def remove_saved_recipe(recipe_id: int, db: Session = Depends(get_db), cur
     if not success:
         raise HTTPException(status_code=404, detail="ไม่พบรายการเมนูอาหารนี้ที่เคยเซฟไว้ในระบบของคุณ")
     return {"status": "success", "message": "ลบสูตรอาหารที่บันทึกไว้สำเร็จแล้ว"}
+
+@router.post("/{recipe_id}/cook")
+async def cook_recipe(
+    recipe_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """ทำอาหาร: หักลบวัตถุดิบออกจากตู้เย็นตามส่วนผสมของเมนูนี้ และบันทึกประวัติสารอาหารแคลอรี่โดยอัตโนมัติ"""
+    try:
+        result = await recipe_service.cook_recipe(current_user.id, recipe_id, db)
+        return result
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"ไม่สามารถดำเนินการทำอาหารและตัดสต็อกได้: {str(e)}"
+        )

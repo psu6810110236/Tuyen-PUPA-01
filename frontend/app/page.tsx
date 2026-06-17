@@ -8,20 +8,23 @@ import ScannerView from "@/components/views/ScannerView";
 import RecipeView from "@/components/views/RecipeView";
 import ChatView from "@/components/views/ChatView";
 import InventoryView from "@/components/views/InventoryView";
-import { Home, Camera, ChefHat, MessageSquare, LogOut, Bell, Package } from "lucide-react";
+import SavedRecipesView from "@/components/views/SavedRecipesView";
+import SettingsView from "@/components/views/SettingsView";
+import { Home, Camera, ChefHat, MessageSquare, LogOut, Package, Lightbulb, Heart, Settings } from "lucide-react";
 import { nutritionAPI, type TodaySummary, type NutritionLog } from "@/lib/api";
 
 // ─── View Type ───
-// ─── View Type ───
-type ViewType = "home" | "inventory" | "scanner" | "recipe" | "chat";
+type ViewType = "home" | "inventory" | "scanner" | "recipe" | "chat" | "saved" | "settings";
 
 // ─── Navigation Items ───
 const navItems: { id: ViewType; label: string; icon: React.ReactNode }[] = [
-  { id: "home", label: "หน้าหลัก", icon: <Home className="h-5 w-5" /> },
-  { id: "inventory", label: "คลังอาหาร", icon: <Package className="h-5 w-5" /> },
-  { id: "scanner", label: "สแกน", icon: <Camera className="h-5 w-5" /> },
-  { id: "recipe", label: "สูตรอาหาร", icon: <ChefHat className="h-5 w-5" /> },
-  { id: "chat", label: "แชท AI", icon: <MessageSquare className="h-5 w-5" /> },
+  { id: "home", label: "หน้าหลัก (Dashboard)", icon: <Home className="h-5 w-5" /> },
+  { id: "inventory", label: "คลังอาหาร (Inventory)", icon: <Package className="h-5 w-5" /> },
+  { id: "saved", label: "บันทึกไว้ (Saved)", icon: <Heart className="h-5 w-5" /> },
+  { id: "scanner", label: "สแกน (Smart Scan)", icon: <Camera className="h-5 w-5" /> },
+  { id: "recipe", label: "สูตรอาหาร (Recipes)", icon: <ChefHat className="h-5 w-5" /> },
+  { id: "chat", label: "แชท AI (AI Assistant)", icon: <MessageSquare className="h-5 w-5" /> },
+  { id: "settings", label: "ตั้งค่า (Settings)", icon: <Settings className="h-5 w-5" /> },
 ];
 
 export default function DashboardPage() {
@@ -50,14 +53,22 @@ export default function DashboardPage() {
       }
     };
     loadNutritionData();
+
+    // Listen to nutrition update events
+    const handleNutritionUpdate = () => {
+      loadNutritionData();
+    };
+    window.addEventListener("nutrition-update", handleNutritionUpdate);
+
     return () => {
       active = false;
+      window.removeEventListener("nutrition-update", handleNutritionUpdate);
     };
   }, [isAuthenticated]);
 
   useEffect(() => {
     const savedView = localStorage.getItem("tuyen_active_view") as ViewType;
-    if (savedView && ["home", "inventory", "scanner", "recipe", "chat"].includes(savedView)) {
+    if (savedView && ["home", "inventory", "scanner", "recipe", "chat", "saved", "settings"].includes(savedView)) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setActiveView(savedView);
     }
@@ -73,8 +84,8 @@ export default function DashboardPage() {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4 animate-fade-in">
-          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-primary-dark shadow-soft-blue">
-            <span className="text-3xl font-heading font-bold text-white">T</span>
+          <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-surface shadow-card border border-outline p-2">
+            <img src="/g2.png" alt="Loading" className="h-full w-full object-contain animate-pulse" />
           </div>
           <div className="flex items-center gap-2">
             <svg className="h-5 w-5 animate-spin text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -120,8 +131,8 @@ export default function DashboardPage() {
 
   const weeklyStats = [
     { label: "แคลอรี่เฉลี่ย", value: avgCalories > 0 ? avgCalories.toLocaleString() : "0", unit: "kcal", color: "bg-primary-pale text-primary-dark" },
-    { label: "โปรตีนเฉลี่ย", value: avgProtein > 0 ? avgProtein.toString() : "0", unit: "g", color: "bg-accent-lavender text-purple-600" },
-    { label: "มื้ออาหารวันนี้", value: todaySummary?.meals_count?.toString() || "0", unit: "มื้อ", color: "bg-secondary-light text-surface-tint" },
+    { label: "โปรตีนเฉลี่ย", value: avgProtein > 0 ? avgProtein.toString() : "0", unit: "g", color: "bg-accent-lavender text-indigo-700" },
+    { label: "มื้ออาหารวันนี้", value: todaySummary?.meals_count?.toString() || "0", unit: "มื้อ", color: "bg-secondary-light text-primary" },
     { label: "สำเร็จแล้ว", value: todaySummary ? Math.min(100, Math.round(todaySummary.progress_percentage.calories_pct)).toString() : "0", unit: "%", color: "bg-accent-green text-teal-700" },
   ];
 
@@ -148,33 +159,37 @@ export default function DashboardPage() {
         return <RecipeView />;
       case "chat":
         return <ChatView />;
+      case "saved":
+        return <SavedRecipesView />;
+      case "settings":
+        return <SettingsView />;
       default:
         return <HomeView />;
     }
   };
 
+  // ─── Filter Mobile Nav Items ───
+  const mobileNavItems = navItems;
+
   return (
     <div className="min-h-screen bg-background">
       {/* ─── Top Header Bar ─── */}
-      <header className="sticky top-0 z-50 border-b-2 border-white bg-surface/80 backdrop-blur-md shadow-soft-blue">
+      <header className="sticky top-0 z-50 border-b border-outline bg-surface/80 backdrop-blur-md shadow-sm">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-3">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-secondary">
-              <span className="text-lg font-heading font-bold text-white">T</span>
-            </div>
-            <h1 className="text-lg font-heading font-semibold text-foreground">
+            {/* Desktop Logo */}
+            <img src="/g1.png" alt="TUYEN Logo" className="hidden sm:block h-8 w-auto object-contain" />
+            {/* Mobile/Responsive Logo */}
+            <img src="/g2.png" alt="TUYEN Logo" className="block sm:hidden h-8 w-8 object-contain" />
+            <h1 className="text-lg font-heading font-bold text-foreground tracking-tight block sm:hidden">
               TUYEN
             </h1>
           </div>
           <div className="flex items-center gap-3">
-            <button className="relative rounded-2xl p-2 text-foreground-secondary transition-airy hover:bg-surface-alt focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-pale">
-              <Bell className="h-5 w-5" />
-              <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-danger"></span>
-            </button>
             {/* Logout Button */}
             <button
               onClick={logout}
-              className="flex items-center gap-1.5 rounded-2xl px-3 py-2 text-sm font-body font-medium text-foreground-secondary transition-airy hover:bg-accent-red hover:text-danger focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger/30"
+              className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-body font-medium text-foreground-secondary transition-airy hover:bg-danger/10 hover:text-danger focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger/30"
               title="ออกจากระบบ"
             >
               <LogOut className="h-4 w-4" />
@@ -194,37 +209,34 @@ export default function DashboardPage() {
         {/* ─── Right Column: Sticky Sidebar ─── */}
         <aside className="hidden w-[340px] shrink-0 lg:block">
           <div className="sticky top-[73px] flex flex-col gap-5">
-            {/* ── Profile Greeting Card ── */}
-            <div className="rounded-2xl border-2 border-white bg-gradient-to-br from-primary to-primary-dark p-5 text-white shadow-soft-blue">
-              <div className="flex items-center gap-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/20 text-xl">
-                  👋
-                </div>
-                <div>
-                  <p className="text-sm font-body font-medium text-white/80">{greeting}</p>
-                  <h2 className="text-lg font-heading font-semibold">
-                    คุณ{user?.username || "ผู้ใช้"}
-                  </h2>
-                </div>
+            {/* ── Profile Greeting Card (Liquid Light Blue) ── */}
+            <div className="rounded-xl border border-blue-100/80 bg-gradient-to-tr from-blue-50 via-sky-50 to-indigo-50 p-5 shadow-sm">
+              <div className="flex flex-col">
+                <span className="text-[10px] font-body uppercase tracking-wider text-blue-600/80 font-bold">
+                  {greeting}
+                </span>
+                <h2 className="text-base font-heading font-extrabold text-blue-950 tracking-tight mt-0.5">
+                  คุณ{user?.username || "ผู้ใช้"}
+                </h2>
+                <p className="mt-2 text-xs font-body leading-relaxed text-blue-900/80 border-t border-blue-100/50 pt-2">
+                  {greetingSubtext}
+                </p>
               </div>
-              <p className="mt-3 text-sm font-body leading-relaxed text-white/70">
-                {greetingSubtext}
-              </p>
             </div>
 
             {/* ── Weekly Summary Stats ── */}
-            <div className="rounded-2xl border-2 border-white bg-surface p-5 shadow-soft-blue">
-              <h3 className="mb-4 text-sm font-heading font-semibold text-foreground">📊 สรุปประจำสัปดาห์</h3>
+            <div className="rounded-xl border border-outline bg-surface p-5 shadow-card">
+              <h3 className="mb-4 text-xs font-heading font-semibold text-foreground">สรุปประจำสัปดาห์</h3>
               <div className="grid grid-cols-2 gap-3">
                 {weeklyStats.map((stat) => (
                   <div
                     key={stat.label}
-                    className={`rounded-2xl ${stat.color} p-3 transition-airy hover-lift`}
+                    className={`rounded-xl ${stat.color} p-3 transition-airy hover-lift`}
                   >
-                    <p className="text-xs font-body font-medium opacity-80">{stat.label}</p>
-                    <p className="mt-1 text-lg font-heading font-bold">
+                    <p className="text-[10px] font-body font-medium opacity-85">{stat.label}</p>
+                    <p className="mt-1 text-base font-heading font-bold">
                       {stat.value}
-                      <span className="ml-1 text-xs font-body font-normal opacity-60">{stat.unit}</span>
+                      <span className="ml-1 text-[10px] font-body font-normal opacity-70">{stat.unit}</span>
                     </p>
                   </div>
                 ))}
@@ -232,23 +244,23 @@ export default function DashboardPage() {
             </div>
 
             {/* ── Quick Navigation ── */}
-            <div className="rounded-2xl border-2 border-white bg-surface p-5 shadow-soft-blue">
-              <h3 className="mb-4 text-sm font-heading font-semibold text-foreground">🧭 เมนูลัด</h3>
-              <nav className="flex flex-col gap-1.5">
+            <div className="rounded-xl border border-outline bg-surface p-5 shadow-card">
+              <h3 className="mb-4 text-xs font-heading font-semibold text-foreground">เมนู</h3>
+              <nav className="flex flex-col gap-1">
                 {navItems.map((item) => (
                   <button
                     key={item.id}
                     onClick={() => handleViewChange(item.id)}
-                    className={`flex items-center gap-3 rounded-2xl px-4 py-3 text-left text-sm font-body font-medium transition-airy focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-pale ${
+                    className={`flex items-center gap-3 rounded-lg px-3.5 py-2 text-left text-xs font-body font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 ${
                       activeView === item.id
-                        ? "bg-primary-pale text-primary-dark shadow-soft-blue"
+                        ? "bg-primary text-white shadow-sm font-semibold"
                         : "text-foreground-secondary hover:bg-surface-alt hover:text-foreground"
                     }`}
                   >
-                    <span className="flex items-center justify-center w-6 h-6">{item.icon}</span>
+                    <span className="flex items-center justify-center w-5 h-5">{item.icon}</span>
                     {item.label}
                     {activeView === item.id && (
-                      <span className="ml-auto h-1.5 w-1.5 rounded-full bg-primary"></span>
+                      <span className="ml-auto h-1.5 w-1.5 rounded-full bg-white"></span>
                     )}
                   </button>
                 ))}
@@ -256,12 +268,12 @@ export default function DashboardPage() {
             </div>
 
             {/* ── Daily Tip Card ── */}
-            <div className="rounded-2xl border-2 border-white bg-accent-yellow-light p-5 shadow-soft-blue">
+            <div className="rounded-xl border border-amber-200/50 bg-amber-50/40 p-5 shadow-card">
               <div className="flex items-start gap-3">
-                <span className="text-2xl">💡</span>
+                <Lightbulb className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
                 <div>
-                  <h3 className="text-sm font-heading font-semibold text-foreground">เคล็ดลับวันนี้</h3>
-                  <p className="mt-1.5 text-sm font-body leading-relaxed text-foreground-secondary">
+                  <h3 className="text-xs font-heading font-semibold text-foreground">เคล็ดลับสุขภาพ</h3>
+                  <p className="mt-1.5 text-xs font-body leading-relaxed text-foreground-secondary">
                     การดื่มน้ำก่อนมื้ออาหาร 30 นาที ช่วยให้ระบบย่อยอาหารทำงานได้ดีขึ้น
                     และช่วยควบคุมปริมาณอาหารที่รับประทาน
                   </p>
@@ -273,9 +285,9 @@ export default function DashboardPage() {
       </div>
 
       {/* ─── Mobile Bottom Navigation ─── */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 border-t-2 border-white bg-surface/90 backdrop-blur-md shadow-soft-blue lg:hidden">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-outline bg-surface/90 backdrop-blur-md shadow-lg lg:hidden">
         <div className="mx-auto flex max-w-md items-center justify-between px-6 py-2 relative">
-          {navItems.map((item) => {
+          {mobileNavItems.map((item) => {
             // Render the massive FAB in the middle (scanner)
             if (item.id === "scanner") {
               return (
@@ -283,7 +295,7 @@ export default function DashboardPage() {
                   key={item.id}
                   onClick={() => handleViewChange(item.id)}
                   aria-label={item.label}
-                  className="relative -top-6 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-primary to-secondary text-white shadow-soft-blue border-4 border-surface transition-transform hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-pale"
+                  className="relative -top-5 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-white shadow-lg border-2 border-surface transition-transform hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
                 >
                   <Camera className="h-7 w-7" />
                 </button>
@@ -295,14 +307,14 @@ export default function DashboardPage() {
                 key={item.id}
                 onClick={() => handleViewChange(item.id)}
                 aria-label={item.label}
-                className={`flex flex-col items-center gap-1 rounded-2xl px-2 py-2 transition-airy focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-pale ${
+                className={`flex flex-col items-center gap-1 rounded-xl px-2 py-2 transition-airy focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-pale ${
                   activeView === item.id
                     ? "text-primary-dark"
                     : "text-foreground-muted hover:text-foreground-secondary"
                 }`}
               >
-                <span className="flex items-center justify-center w-6 h-6">{item.icon}</span>
-                <span className="text-[10px] font-body font-medium">{item.label}</span>
+                <span className="flex items-center justify-center w-5 h-5">{item.icon}</span>
+                <span className="text-[10px] font-body font-medium">{item.label.split(" ")[0]}</span>
                 {activeView === item.id && (
                   <span className="absolute bottom-1 h-1 w-6 rounded-full bg-primary"></span>
                 )}

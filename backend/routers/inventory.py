@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from pydantic import BaseModel
 from datetime import date
 from typing import Optional
@@ -49,12 +50,32 @@ def add_inventory_manual(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user) # 🔒 บังคับล็อกอิน! ส่องตั๋ว JWT เอาข้อมูลผู้ใช้ปัจจุบันมาใช้งานทันที
 ):
+    from sqlalchemy import func
+    name_stripped = item_data.name.strip()
+    unit_stripped = item_data.unit.strip()
+    
+    # 🔍 ตรวจสอบว่ามีวัตถุดิบชื่อเดียวกันอยู่แล้วหรือไม่ (ไม่สนใจหน่วย เพื่อยุบรวมชื่อที่สะกดเหมือนกัน)
+    existing_item = db.query(InventoryItem).filter(
+        InventoryItem.user_id == current_user.id,
+        func.lower(InventoryItem.name) == func.lower(name_stripped)
+    ).first()
+    
+    if existing_item:
+        existing_item.quantity += item_data.quantity
+        if item_data.category and item_data.category != "other":
+            existing_item.category = item_data.category
+        if item_data.expiry_date:
+            existing_item.expiry_date = item_data.expiry_date
+        db.commit()
+        db.refresh(existing_item)
+        return existing_item
+        
     # สร้างก้อนข้อมูลเตรียมยัดลงตาราง inventory_items
     new_item = InventoryItem(
         user_id=current_user.id,       # ผูกมัดติดกับไอดีผู้ใช้ที่ล็อกอินอยู่ ณ ตอนนั้นอัตโนมัติ
-        name=item_data.name,
+        name=name_stripped,
         quantity=item_data.quantity,
-        unit=item_data.unit,
+        unit=unit_stripped,
         category=item_data.category,
         expiry_date=item_data.expiry_date,
         added_by=item_data.added_by
@@ -73,19 +94,39 @@ def add_inventory_bulk(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+    from sqlalchemy import func
     new_items = []
     for item_data in payload.items:
-        new_item = InventoryItem(
-            user_id=current_user.id,
-            name=item_data.name,
-            quantity=item_data.quantity,
-            unit=item_data.unit,
-            category=item_data.category,
-            expiry_date=item_data.expiry_date,
-            added_by=item_data.added_by
-        )
-        db.add(new_item)
-        new_items.append(new_item)
+        name_stripped = item_data.name.strip()
+        unit_stripped = item_data.unit.strip()
+        
+        # 🔍 ตรวจสอบว่ามีวัตถุดิบชื่อเดียวกันอยู่แล้วหรือไม่ (ไม่สนใจหน่วย เพื่อยุบรวมชื่อที่สะกดเหมือนกัน)
+        existing_item = db.query(InventoryItem).filter(
+            InventoryItem.user_id == current_user.id,
+            func.lower(InventoryItem.name) == func.lower(name_stripped)
+        ).first()
+        
+        if existing_item:
+            existing_item.quantity += item_data.quantity
+            if item_data.category and item_data.category != "other":
+                existing_item.category = item_data.category
+            if item_data.expiry_date:
+                existing_item.expiry_date = item_data.expiry_date
+            db.flush()  # ทำการ flush เพื่อให้การลูปเช็กรอบถัดไปมองเห็นการแก้ไข
+            new_items.append(existing_item)
+        else:
+            new_item = InventoryItem(
+                user_id=current_user.id,
+                name=name_stripped,
+                quantity=item_data.quantity,
+                unit=unit_stripped,
+                category=item_data.category,
+                expiry_date=item_data.expiry_date,
+                added_by=item_data.added_by
+            )
+            db.add(new_item)
+            db.flush()  # ทำการ flush เพื่อให้การลูปเช็กรอบถัดไปมองเห็นวัตถุดิบใหม่
+            new_items.append(new_item)
     
     db.commit()
     for item in new_items:
@@ -178,3 +219,14 @@ def delete_inventory_item(
     db.commit()
     
     return {"status": "success", "message": f"ลบรายการ '{item.name}' ออกจากตู้เย็นสำเร็จแล้ว"}
+
+# 🚀 [ เส้นทาง API: DELETE /inventory ]
+# ลบรายการวัตถุดิบทั้งหมดในตู้เย็นของผู้ใช้ปัจจุบัน
+@router.delete("/", status_code=status.HTTP_200_OK)
+def delete_all_inventory_items(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    db.query(InventoryItem).filter(InventoryItem.user_id == current_user.id).delete()
+    db.commit()
+    return {"status": "success", "message": "ลบวัตถุดิบทั้งหมดออกจากตู้เย็นของคุณเรียบร้อยแล้ว"}

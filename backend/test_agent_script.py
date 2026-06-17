@@ -1,7 +1,18 @@
 import os
 import requests
+import sys
 
-# 1. ล็อกอินเอาโทเค็น
+if sys.platform.startswith("win"):
+    try:
+        sys.stdout.reconfigure(encoding='utf-8')
+    except AttributeError:
+        pass
+
+# 1. สมัครสมาชิกก่อนหากยังไม่มีบัญชี
+register_url = "http://localhost:8000/auth/register"
+requests.post(register_url, json={"username": "devopstest", "password": "testpass"})
+
+# ล็อกอินเอาโทเค็น
 login_url = "http://localhost:8000/auth/login"
 res_login = requests.post(login_url, data={"username": "devopstest", "password": "testpass"})
 token = res_login.json()["access_token"]

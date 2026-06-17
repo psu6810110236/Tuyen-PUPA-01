@@ -152,6 +152,24 @@ export const inventoryAPI = {
     fetchAPI<{ status: string; message: string }>(`/inventory/${id}`, {
       method: "DELETE",
     }),
+
+  deleteAll: () =>
+    fetchAPI<{ status: string; message: string }>("/inventory/", {
+      method: "DELETE",
+    }),
+
+  addBulk: (items: {
+    name: string;
+    quantity: number;
+    unit: string;
+    category?: string;
+    expiry_date?: string;
+    added_by?: string;
+  }[]) =>
+    fetchAPI<InventoryItem[]>("/inventory/bulk", {
+      method: "POST",
+      body: JSON.stringify({ items }),
+    }),
 };
 
 // ═══════════════════════════════════════════
@@ -223,6 +241,27 @@ export const recipeAPI = {
   deleteSaved: (recipeId: number) =>
     fetchAPI<{ status: string; message: string }>(`/recipes/saved/${recipeId}`, {
       method: "DELETE",
+    }),
+
+  cook: (id: number) =>
+    fetchAPI<{
+      success: boolean;
+      recipe_title: string;
+      deducted_ingredients: Array<{
+        name: string;
+        deducted_amount: number;
+        unit: string;
+        remaining_amount: number;
+      }>;
+      logged_nutrition: {
+        food_name: string;
+        calories: number;
+        protein: number;
+        carb: number;
+        fat: number;
+      };
+    }>(`/recipes/${id}/cook`, {
+      method: "POST",
     }),
 };
 
@@ -331,6 +370,29 @@ export const aiAPI = {
       added: string[];
       failed: string[];
       added_count: number;
+      detections?: Array<{ name: string; quantity: number; unit: string; box_2d: number[] }>;
+    }>;
+  },
+
+  scanOnly: async (image_base64: string, mime_type: string = "image/jpeg") => {
+    const token = typeof window !== "undefined" ? localStorage.getItem("tuyen_token") : null;
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+    const res = await fetch(`${AI_BASE_URL}/ai/scan`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ image_base64, mime_type }),
+    });
+    
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}));
+      throw new APIError(errorData.detail || "Scanning failed", res.status);
+    }
+    
+    return res.json() as Promise<{
+      ingredients: Array<string | { name: string; quantity: number; unit: string; category: string; box_2d: number[] }>;
     }>;
   },
 };

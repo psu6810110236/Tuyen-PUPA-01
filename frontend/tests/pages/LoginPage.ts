@@ -21,8 +21,8 @@ export class LoginPage {
     this.registerTabBtn = page.locator("button:has-text('สมัครสมาชิก')").first();
     this.submitBtn = page.locator("button[type='submit']");
     this.switchModeBtn = page.locator("p >> button:has-text('สมัครสมาชิกเลย'), p >> button:has-text('เข้าสู่ระบบ')");
-    this.errorMessage = page.locator("text=⚠️");
-    this.successMessage = page.locator("text=✅");
+    this.errorMessage = page.locator(".text-danger");
+    this.successMessage = page.locator(".text-success");
   }
 
   async goto() {
