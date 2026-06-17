@@ -54,6 +54,8 @@ To support the team effectively, AI Assistants are designated based on their dom
   - [x] Verified successful build, type checking, and pushed clean changes to `dev` branch.
   - [x] Increased backend proxy request timeout to 120.0 seconds to prevent ReadTimeout with slow Gemini responses.
   - [x] Implemented client-side image compression and resizing (down to 1024px) in ScannerView.tsx to speed up uploads by up to 50x and prevent timeouts.
+  - [x] Restructured AI Vision prompt to detect identical items (e.g. eggs) individually instead of grouping them.
+  - [x] Redesigned ScannerView.tsx flow to present an editable confirmation list for user review and bulk add validation before storing.
 
 ### 🔍 2.2 Research & Documentation Agent
 - **Status**: Standby ⚪

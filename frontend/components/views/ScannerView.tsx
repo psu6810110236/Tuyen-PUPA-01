@@ -19,6 +19,13 @@ export default function ScannerView() {
     failed: string[];
     detections?: Array<{ name: string; quantity: number; unit: string; box_2d: number[] }>;
   } | null>(null);
+  const [detectedItems, setDetectedItems] = useState<Array<{
+    name: string;
+    quantity: number;
+    unit: string;
+    category: string;
+    box_2d: number[];
+  }>>([]);
   const [isZoomed, setIsZoomed] = useState(false);
 
   // ─── Manual Add Form State ───
@@ -37,13 +44,68 @@ export default function ScannerView() {
 
   const unitOptions = ["ชิ้น", "ฟอง", "กรัม", "กิโลกรัม", "ลิตร", "ขวด", "ถุง", "กล่อง", "หัว", "ลูก"];
   const categoryOptions = [
-    { value: "protein", label: "🥩 โปรตีน" },
-    { value: "veggie", label: "🥦 ผัก" },
-    { value: "fruit", label: "🍎 ผลไม้" },
-    { value: "dairy", label: "🧀 นมเนย" },
-    { value: "grain", label: "🌾 ธัญพืช" },
-    { value: "other", label: "📦 อื่นๆ" },
+    { value: "protein", label: "🥩  โปรตีน" },
+    { value: "veggie", label: "🥦  ผัก" },
+    { value: "fruit", label: "🍎  ผลไม้" },
+    { value: "dairy", label: "🧀  นมเนย" },
+    { value: "grain", label: "🌾  ธัญพืช" },
+    { value: "other", label: "📦  อื่นๆ" },
   ];
+
+  const normalizeBox = (box: number[]): number[] => {
+    if (!box || box.length !== 4) return [0, 0, 100, 100];
+    try {
+      let coords = box.map(Number);
+      const maxVal = Math.max(...coords);
+      if (maxVal <= 1.0) {
+        coords = coords.map((x) => x * 100);
+      } else if (maxVal > 100.0) {
+        coords = coords.map((x) => x / 10);
+      }
+      return coords.map((x) => Math.max(0, Math.min(100, x)));
+    } catch (err) {
+      return [0, 0, 100, 100];
+    }
+  };
+
+  const updateDetectedItemField = (index: number, field: string, value: any) => {
+    setDetectedItems((prev) =>
+      prev.map((item, idx) => (idx === index ? { ...item, [field]: value } : item))
+    );
+  };
+
+  const deleteDetectedItem = (index: number) => {
+    setDetectedItems((prev) => prev.filter((_, idx) => idx !== index));
+  };
+
+  const handleConfirmStore = async () => {
+    if (detectedItems.length === 0) return;
+    setIsSubmitting(true);
+    setSubmitMessage("");
+    try {
+      const bulkItems = detectedItems.map((item) => ({
+        name: item.name.trim(),
+        quantity: Number(item.quantity) || 1,
+        unit: item.unit,
+        category: item.category,
+        added_by: "scan",
+      }));
+      
+      const addedItems = await inventoryAPI.addBulk(bulkItems);
+      setSubmitMessage(`สแกนและนำเข้าตู้เย็นสำเร็จ ${addedItems.length} รายการ! ✅`);
+      setDetectedItems([]);
+      setPreviewUrl(null);
+      setScanResult(null);
+      loadInventory();
+      setTimeout(() => setSubmitMessage(""), 4000);
+    } catch (err) {
+      console.error("Failed to add bulk inventory:", err);
+      setSubmitMessage("เกิดข้อผิดพลาดในการบันทึกข้อมูล กรุณาลองใหม่ ❌");
+      setTimeout(() => setSubmitMessage(""), 4000);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const loadInventory = async () => {
     setIsLoadingInventory(true);
@@ -163,6 +225,7 @@ export default function ScannerView() {
     setIsScanning(true);
     setSubmitMessage("");
     setScanResult(null);
+    setDetectedItems([]);
 
     // 1. Show raw file preview immediately for premium UX (no waiting)
     const previewReader = new FileReader();
@@ -175,13 +238,26 @@ export default function ScannerView() {
       // 2. Compress and resize image in browser background (scales down large camera photos)
       const compressedBase64 = await compressImage(file, 1024, 1024);
       
-      // 3. Scan and add items via API (sending a much smaller payload, e.g. 100KB instead of 5MB)
-      const res = await aiAPI.scanAndAdd(compressedBase64, "image/jpeg");
-      setScanResult(res);
+      // 3. Scan items via API (only detects, does not automatically save to DB)
+      const res = await aiAPI.scanOnly(compressedBase64, "image/jpeg");
       
-      if (res.success && res.ingredients_found.length > 0) {
-        setSubmitMessage(`สแกนสำเร็จ! พบ ${res.ingredients_found.length} รายการ และเพิ่มเข้าตู้เย็นแล้ว 🎉`);
-        loadInventory();
+      const items = (res.ingredients || []).map((ing: any) => {
+        if (typeof ing === "string") {
+          return { name: ing, quantity: 1, unit: "ชิ้น", category: "other", box_2d: [0, 0, 100, 100] };
+        }
+        return {
+          name: ing.name || "",
+          quantity: Number(ing.quantity) || 1,
+          unit: ing.unit || "ชิ้น",
+          category: ing.category || "other",
+          box_2d: normalizeBox(ing.box_2d)
+        };
+      }).filter((item: any) => item.name !== "");
+
+      setDetectedItems(items);
+      
+      if (items.length > 0) {
+        setSubmitMessage(`สแกนสำเร็จ! พบวัตถุดิบ ${items.length} รายการ กรุณาตรวจสอบก่อนบันทึกเข้าคลัง 👇`);
       } else {
         setSubmitMessage("สแกนภาพสำเร็จ แต่ไม่พบวัตถุดิบ 🔍");
       }
@@ -341,7 +417,7 @@ export default function ScannerView() {
             )}
 
             {/* Bounding boxes overlay */}
-            {!isScanning && scanResult?.detections?.map((det, idx) => {
+            {!isScanning && detectedItems.map((det, idx) => {
               const [ymin, xmin, ymax, xmax] = det.box_2d;
               const top = `${ymin}%`;
               const left = `${xmin}%`;
@@ -370,7 +446,7 @@ export default function ScannerView() {
           {/* Action buttons */}
           {!isScanning && (
             <button
-              onClick={() => { setPreviewUrl(null); setScanResult(null); }}
+              onClick={() => { setPreviewUrl(null); setScanResult(null); setDetectedItems([]); }}
               className="mx-auto flex items-center justify-center gap-2 rounded-full border-2 border-white bg-gradient-to-r from-primary to-primary-dark px-6 py-3 text-sm font-heading font-semibold text-white shadow-soft-blue transition-airy hover:shadow-glow-teal hover:scale-[1.01] active:scale-[0.99] max-w-xs"
             >
               สแกนรูปภาพใหม่
@@ -379,32 +455,105 @@ export default function ScannerView() {
         </div>
       )}
 
-      {scanResult && (
-        <div className="rounded-2xl border-2 border-white bg-surface p-4 shadow-soft-blue animate-scale-in">
-          <p className="text-sm font-heading font-bold text-foreground">📊 ผลการสแกนด้วย AI:</p>
-          <div className="mt-2 flex flex-col gap-1.5">
-            {scanResult.ingredients_found.length > 0 ? (
+      {/* ─── Confirmation Form list ─── */}
+      {!isScanning && detectedItems.length > 0 && (
+        <div className="rounded-2xl border-2 border-white bg-surface p-6 shadow-soft-blue animate-scale-in flex flex-col gap-4">
+          <div className="flex items-center justify-between border-b border-outline pb-3">
+            <h3 className="text-base font-heading font-bold text-foreground flex items-center gap-2">
+              📋 ยืนยันวัตถุดิบที่ตรวจพบ ({detectedItems.length} รายการ)
+            </h3>
+            <span className="text-xs text-foreground-muted font-body">คุณสามารถแก้ไขข้อมูลได้ก่อนบันทึกจริง</span>
+          </div>
+
+          <div className="flex flex-col gap-3.5 max-h-[400px] overflow-y-auto pr-1">
+            {detectedItems.map((item, idx) => (
+              <div 
+                key={idx}
+                className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3.5 rounded-xl border border-outline bg-surface-alt/40 transition-airy hover:bg-surface-alt/80"
+              >
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <span className="text-xs font-heading font-bold h-6 w-6 rounded-full bg-primary-pale text-primary-dark flex items-center justify-center shrink-0">
+                    {idx + 1}
+                  </span>
+                  
+                  {/* Name Input */}
+                  <input
+                    type="text"
+                    value={item.name}
+                    onChange={(e) => updateDetectedItemField(idx, "name", e.target.value)}
+                    className="flex-1 sm:w-44 rounded-xl border-2 border-white bg-surface px-3 py-1.5 text-sm font-heading font-semibold text-foreground shadow-soft-blue transition-airy focus:border-primary-light focus:outline-none"
+                    placeholder="ชื่อวัตถุดิบ"
+                  />
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-end">
+                  {/* Quantity Input */}
+                  <div className="flex items-center gap-1">
+                    <span className="text-xs font-body text-foreground-secondary">จำนวน</span>
+                    <input
+                      type="number"
+                      step="0.1"
+                      min="0.1"
+                      value={item.quantity}
+                      onChange={(e) => updateDetectedItemField(idx, "quantity", parseFloat(e.target.value) || 0)}
+                      className="w-16 rounded-xl border-2 border-white bg-surface px-2 py-1.5 text-center text-sm font-body text-foreground shadow-soft-blue transition-airy focus:border-primary-light focus:outline-none"
+                    />
+                  </div>
+
+                  {/* Unit Select */}
+                  <select
+                    value={item.unit}
+                    onChange={(e) => updateDetectedItemField(idx, "unit", e.target.value)}
+                    className="rounded-xl border-2 border-white bg-surface px-2.5 py-1.5 text-xs font-body text-foreground shadow-soft-blue transition-airy focus:border-primary-light focus:outline-none"
+                  >
+                    {unitOptions.map((u) => (
+                      <option key={u} value={u}>{u}</option>
+                    ))}
+                  </select>
+
+                  {/* Category Select */}
+                  <select
+                    value={item.category}
+                    onChange={(e) => updateDetectedItemField(idx, "category", e.target.value)}
+                    className="rounded-xl border-2 border-white bg-surface px-2.5 py-1.5 text-xs font-body text-foreground shadow-soft-blue transition-airy focus:border-primary-light focus:outline-none"
+                  >
+                    {categoryOptions.map((cat) => (
+                      <option key={cat.value} value={cat.value}>{cat.label}</option>
+                    ))}
+                  </select>
+
+                  {/* Delete Button */}
+                  <button
+                    type="button"
+                    onClick={() => deleteDetectedItem(idx)}
+                    className="flex h-8.5 w-8.5 items-center justify-center rounded-xl text-foreground-muted border border-outline bg-surface hover:bg-accent-red hover:text-danger hover:border-accent-red/20 transition-all duration-200"
+                    title="ลบรายการนี้"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <button
+            type="button"
+            disabled={isSubmitting || detectedItems.length === 0}
+            onClick={handleConfirmStore}
+            className="mt-2 flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-accent-green to-emerald-600 py-3.5 text-base font-heading font-bold text-white shadow-soft-blue transition-airy hover:shadow-glow-teal hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50"
+          >
+            {isSubmitting ? (
               <>
-                <p className="text-xs font-body text-foreground-secondary">
-                  🔍 ตรวจพบวัตถุดิบ: <span className="font-semibold text-primary">{scanResult.ingredients_found.join(", ")}</span>
-                </p>
-                {scanResult.added.length > 0 && (
-                  <p className="text-xs font-body text-success">
-                    ✅ เพิ่มเข้าตู้เย็นสำเร็จ: {scanResult.added.join(", ")}
-                  </p>
-                )}
-                {scanResult.failed.length > 0 && (
-                  <p className="text-xs font-body text-danger">
-                    ❌ ข้ามหรือเพิ่มไม่สำเร็จ: {scanResult.failed.join(", ")}
-                  </p>
-                )}
+                <svg className="h-5 w-5 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                </svg>
+                กำลังบันทึกข้อมูล...
               </>
             ) : (
-              <p className="text-xs font-body text-foreground-muted">
-                ไม่พบวัตถุดิบที่สามารถระบุได้ในรูปภาพนี้
-              </p>
+              "📥 ยืนยันข้อมูลทั้งหมด และบันทึกเข้าตู้เย็น"
             )}
-          </div>
+          </button>
         </div>
       )}
 
@@ -614,7 +763,7 @@ export default function ScannerView() {
               className="w-full h-auto block rounded-xl max-h-[85vh] object-contain"
             />
             {/* Bounding boxes overlay on zoomed image */}
-            {scanResult?.detections?.map((det, idx) => {
+            {detectedItems.map((det, idx) => {
               const [ymin, xmin, ymax, xmax] = det.box_2d;
               const top = `${ymin}%`;
               const left = `${xmin}%`;
