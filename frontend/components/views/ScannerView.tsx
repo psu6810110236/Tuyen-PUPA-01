@@ -68,7 +68,7 @@ export default function ScannerView() {
     }
   };
 
-  const updateDetectedItemField = (index: number, field: string, value: any) => {
+  const updateDetectedItemField = (index: number, field: string, value: string | number) => {
     setDetectedItems((prev) =>
       prev.map((item, idx) => (idx === index ? { ...item, [field]: value } : item))
     );
@@ -241,7 +241,7 @@ export default function ScannerView() {
       // 3. Scan items via API (only detects, does not automatically save to DB)
       const res = await aiAPI.scanOnly(compressedBase64, "image/jpeg");
       
-      const items = (res.ingredients || []).map((ing: any) => {
+      const items = (res.ingredients || []).map((ing: { name?: string; quantity?: number; unit?: string; category?: string; box_2d?: number[] } | string) => {
         if (typeof ing === "string") {
           return { name: ing, quantity: 1, unit: "ชิ้น", category: "other", box_2d: [0, 0, 100, 100] };
         }
@@ -252,7 +252,7 @@ export default function ScannerView() {
           category: ing.category || "other",
           box_2d: normalizeBox(ing.box_2d)
         };
-      }).filter((item: any) => item.name !== "");
+      }).filter((item) => item.name !== "");
 
       setDetectedItems(items);
       
