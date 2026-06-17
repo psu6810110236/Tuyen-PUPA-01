@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { aiAPI } from "@/lib/api";
 import {
   BotMessageSquare,
@@ -76,19 +78,44 @@ export default function ChatView() {
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
     const savedActiveId = localStorage.getItem(ACTIVE_KEY);
+    let parsed: ChatSession[] = [];
+    
     if (saved) {
       try {
-        const parsed: ChatSession[] = JSON.parse(saved);
-        if (parsed.length > 0) {
-          setSessions(parsed);
-          setActiveId(savedActiveId || parsed[0].id);
-          return;
-        }
+        const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
+        parsed = JSON.parse(saved);
+        // Filter: Keep < 30 days AND (has messages OR is currently active)
+        parsed = parsed.filter(s => {
+          const isRecent = parseInt(s.id) > thirtyDaysAgo;
+          const hasMessages = s.messages.length > 1;
+          const isActiveNow = s.id === savedActiveId;
+          return isRecent && (hasMessages || isActiveNow);
+        });
       } catch { /* use default */ }
     }
-    const first = newSession();
-    setSessions([first]);
-    setActiveId(first.id);
+
+    const isNewLoginSession = !sessionStorage.getItem("chat_session_initialized");
+
+    if (isNewLoginSession) {
+      // Force new chat on new login
+      const first = newSession();
+      // Clean up any empty sessions
+      const cleanedParsed = parsed.filter(s => s.messages.length > 1);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setSessions([first, ...cleanedParsed]);
+      setActiveId(first.id);
+      sessionStorage.setItem("chat_session_initialized", "true");
+    } else {
+      if (parsed.length > 0) {
+        setSessions(parsed);
+        const toActivate = parsed.find(s => s.id === savedActiveId) ? savedActiveId! : parsed[0].id;
+        setActiveId(toActivate);
+      } else {
+        const first = newSession();
+        setSessions([first]);
+        setActiveId(first.id);
+      }
+    }
   }, []);
 
   useEffect(() => {
@@ -99,10 +126,10 @@ export default function ChatView() {
     if (activeId) localStorage.setItem(ACTIVE_KEY, activeId);
   }, [activeId]);
 
-  // ── Disable auto-scroll to bottom as requested ──
-  // useEffect(() => {
-  //   bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  // }, [sessions, activeId]);
+  // ── Auto-scroll to bottom ──
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [sessions, activeId]);
 
   const activeSession = sessions.find((s) => s.id === activeId);
 
@@ -135,6 +162,7 @@ export default function ChatView() {
 
     const userText = inputValue.trim();
     const userMsg: Message = {
+      // eslint-disable-next-line react-hooks/purity
       id: Date.now(),
       role: "user",
       content: userText,
@@ -152,6 +180,7 @@ export default function ChatView() {
     try {
       const data = await aiAPI.chat(userText, history);
       const aiMsg: Message = {
+        // eslint-disable-next-line react-hooks/purity
         id: Date.now() + 1,
         role: "ai",
         content: data.reply,
@@ -160,6 +189,7 @@ export default function ChatView() {
       updateSession(activeId, (s) => ({ ...s, messages: [...s.messages, aiMsg] }));
     } catch (error: unknown) {
       const errMsg: Message = {
+        // eslint-disable-next-line react-hooks/purity
         id: Date.now() + 1,
         role: "ai",
         content: `ขออภัยค่ะ เกิดข้อผิดพลาด: ${(error as Error).message || "ไม่สามารถเชื่อมต่อระบบ AI ได้"}`,
@@ -321,9 +351,24 @@ export default function ChatView() {
                       : "bg-white text-foreground rounded-bl-sm border border-[#E5E7EB] shadow-sm"
                   }`}
                 >
-                  <p className="whitespace-pre-line text-sm font-body leading-relaxed break-words">
-                    {msg.content}
-                  </p>
+                  <div className="text-sm font-body leading-relaxed break-words">
+                    <ReactMarkdown
+                      remarkPlugins={[remarkGfm]}
+                      components={{
+                        p: ({node, ...props}) => <p className="mb-2 last:mb-0 whitespace-pre-wrap" {...props} />,
+                        strong: ({node, ...props}) => <strong className="font-semibold" {...props} />,
+                        ul: ({node, ...props}) => <ul className="list-disc pl-4 mb-2" {...props} />,
+                        ol: ({node, ...props}) => <ol className="list-decimal pl-4 mb-2" {...props} />,
+                        li: ({node, ...props}) => <li className="mb-1" {...props} />,
+                        h1: ({node, ...props}) => <h1 className="text-lg font-bold mb-2" {...props} />,
+                        h2: ({node, ...props}) => <h2 className="text-base font-bold mb-2" {...props} />,
+                        h3: ({node, ...props}) => <h3 className="text-sm font-bold mb-2" {...props} />,
+                        a: ({node, ...props}) => <a className="underline hover:opacity-80" target="_blank" rel="noopener noreferrer" {...props} />
+                      }}
+                    >
+                      {msg.content}
+                    </ReactMarkdown>
+                  </div>
                   <p className={`mt-1 text-right text-[10px] font-body ${
                     msg.role === "user" ? "text-white/60" : "text-foreground-muted"
                   }`}>

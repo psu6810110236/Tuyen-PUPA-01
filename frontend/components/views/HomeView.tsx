@@ -151,12 +151,14 @@ export default function HomeView() {
           <p className="text-sm font-body text-foreground-muted">{thaiDate}</p>
           <h2 className="mt-1 text-2xl font-heading font-bold text-foreground">ตู้เย็นของคุณ</h2>
         </div>
-        <div className="flex items-center gap-2 rounded-xl bg-amber-50 px-3 py-1.5 border border-amber-200/50 shadow-sm">
-          <AlertCircle className="h-4 w-4 text-amber-500" />
-          <span className="text-xs font-body font-medium text-amber-700">
-            {expiringSoon.length} ใกล้หมดอายุ
-          </span>
-        </div>
+        {expiringSoon.length > 0 && (
+          <div className="flex items-center gap-2 rounded-xl bg-amber-50 px-3 py-1.5 border border-amber-200/50 shadow-sm">
+            <AlertCircle className="h-4 w-4 text-amber-500" />
+            <span className="text-xs font-body font-medium text-amber-700">
+              {expiringSoon.length} ใกล้หมดอายุ
+            </span>
+          </div>
+        )}
       </div>
 
       {/* ─── Nutrition Summary Widget ─── */}

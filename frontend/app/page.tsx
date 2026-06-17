@@ -105,6 +105,14 @@ export default function DashboardPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeView]);
 
+  useEffect(() => {
+    const handleNavigate = (e: CustomEvent<ViewType>) => {
+      handleViewChange(e.detail);
+    };
+    window.addEventListener("navigate", handleNavigate as EventListener);
+    return () => window.removeEventListener("navigate", handleNavigate as EventListener);
+  }, [handleViewChange]);
+
   // ─── Loading State ───
   if (isLoading) {
     return (
@@ -263,13 +271,13 @@ export default function DashboardPage() {
             {/* ── Profile Greeting Card (Liquid Light Blue) ── */}
             <div className="rounded-xl border border-blue-100/80 bg-gradient-to-tr from-blue-50 via-sky-50 to-indigo-50 p-5 shadow-sm">
               <div className="flex flex-col">
-                <span className="text-[10px] font-body uppercase tracking-wider text-blue-600/80 font-bold">
+                <span className="text-xs font-heading uppercase tracking-wider text-blue-600/90 font-bold">
                   {greeting}
                 </span>
-                <h2 className="text-base font-heading font-extrabold text-blue-950 tracking-tight mt-0.5">
+                <h2 className="text-xl font-heading font-extrabold text-blue-950 tracking-tight mt-0.5">
                   คุณ{user?.username || "ผู้ใช้"}
                 </h2>
-                <p className="mt-2 text-xs font-body leading-relaxed text-blue-900/80 border-t border-blue-100/50 pt-2">
+                <p className="mt-2.5 text-xs font-body font-medium leading-relaxed text-blue-900/90 border-t border-blue-200/50 pt-2.5">
                   {greetingSubtext}
                 </p>
               </div>
@@ -277,17 +285,17 @@ export default function DashboardPage() {
 
             {/* ── Weekly Summary Stats ── */}
             <div className="rounded-xl border border-outline bg-surface p-5 shadow-card">
-              <h3 className="mb-4 text-xs font-heading font-semibold text-foreground">สรุปประจำสัปดาห์</h3>
+              <h3 className="mb-4 text-sm font-heading font-bold text-slate-800">สรุปประจำสัปดาห์</h3>
               <div className="grid grid-cols-2 gap-3">
                 {weeklyStats.map((stat) => (
                   <div
                     key={stat.label}
                     className={`rounded-xl ${stat.color} p-3 transition-airy hover-lift`}
                   >
-                    <p className="text-[10px] font-body font-medium opacity-85">{stat.label}</p>
-                    <p className="mt-1 text-base font-heading font-bold">
+                    <p className="text-xs font-heading font-semibold opacity-90">{stat.label}</p>
+                    <p className="mt-1 text-xl font-heading font-extrabold tracking-tight">
                       {stat.value}
-                      <span className="ml-1 text-[10px] font-body font-normal opacity-70">{stat.unit}</span>
+                      <span className="ml-1 text-[11px] font-body font-bold opacity-80">{stat.unit}</span>
                     </p>
                   </div>
                 ))}
