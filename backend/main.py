@@ -54,12 +54,14 @@ cors_origins_env = os.getenv("CORS_ORIGINS")
 if cors_origins_env:
     origins.extend([origin.strip() for origin in cors_origins_env.split(",")])
 
+print(f"[CORS] Allowed Origins: {origins}")
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allow_headers=["Authorization", "Content-Type"],
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 app.include_router(auth_router)
