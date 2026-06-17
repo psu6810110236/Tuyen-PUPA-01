@@ -10,6 +10,10 @@ RUN npm ci
 # คัดลอกซอร์สโค้ดที่เหลือทั้งหมด
 COPY . .
 
+# รับค่าตัวแปรระบบสำหรับการฝังในขั้นตอน Build Next.js
+ARG NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+
 # สั่ง Build หน้าเว็บ Next.js
 RUN npm run build
 

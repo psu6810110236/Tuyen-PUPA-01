@@ -353,23 +353,7 @@ export const aiAPI = {
     }),
 
   scanAndAdd: async (image_base64: string, mime_type: string = "image/jpeg") => {
-    const token = typeof window !== "undefined" ? localStorage.getItem("tuyen_token") : null;
-    const headers: Record<string, string> = { "Content-Type": "application/json" };
-    if (token) {
-      headers["Authorization"] = `Bearer ${token}`;
-    }
-    const res = await fetch(`${AI_BASE_URL}/ai/scan-and-add`, {
-      method: "POST",
-      headers,
-      body: JSON.stringify({ image_base64, mime_type }),
-    });
-    
-    if (!res.ok) {
-      const errorData = await res.json().catch(() => ({}));
-      throw new APIError(errorData.detail || "Scanning failed", res.status);
-    }
-    
-    return res.json() as Promise<{
+    return fetchAPI<{
       success: boolean;
       message: string;
       ingredients_found: string[];
@@ -377,28 +361,18 @@ export const aiAPI = {
       failed: string[];
       added_count: number;
       detections?: Array<{ name: string; quantity: number; unit: string; box_2d: number[] }>;
-    }>;
+    }>("/ai/scan-and-add", {
+      method: "POST",
+      body: JSON.stringify({ image_base64, mime_type }),
+    });
   },
 
   scanOnly: async (image_base64: string, mime_type: string = "image/jpeg") => {
-    const token = typeof window !== "undefined" ? localStorage.getItem("tuyen_token") : null;
-    const headers: Record<string, string> = { "Content-Type": "application/json" };
-    if (token) {
-      headers["Authorization"] = `Bearer ${token}`;
-    }
-    const res = await fetch(`${AI_BASE_URL}/ai/scan`, {
+    return fetchAPI<{
+      ingredients: Array<string | { name: string; quantity: number; unit: string; category: string; box_2d: number[] }>;
+    }>("/ai/scan", {
       method: "POST",
-      headers,
       body: JSON.stringify({ image_base64, mime_type }),
     });
-    
-    if (!res.ok) {
-      const errorData = await res.json().catch(() => ({}));
-      throw new APIError(errorData.detail || "Scanning failed", res.status);
-    }
-    
-    return res.json() as Promise<{
-      ingredients: Array<string | { name: string; quantity: number; unit: string; category: string; box_2d: number[] }>;
-    }>;
   },
 };

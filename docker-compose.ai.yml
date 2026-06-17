@@ -1,0 +1,17 @@
+# docker-compose.ai.yml
+version: '3.8'
+
+services:
+  ai_service:
+    build:
+      context: ./ai
+      dockerfile: Dockerfile
+    container_name: tuyen_ai_prod
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - GEMINI_MODEL=gemini-2.5-flash
+      - GEMINI_VISION_MODEL=gemini-2.5-flash
+      - BACKEND_URL=${BACKEND_URL:-http://localhost:8000}
+    ports:
+      - "8001:8001" # เปิดพอร์ต 8001 เพื่อเชื่อมต่อจากเครื่องหลังบ้านเข้ามาได้
+    restart: always
