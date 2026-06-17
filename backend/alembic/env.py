@@ -19,6 +19,9 @@ from models.user import User
 from models.inventory import InventoryItem
 from models.recipe import RecipeSaved, CachedResponse
 from models.nutrition import NutritionLog
+from models.recipe_cache import RecipeCache
+from models.translation import Translation
+from models.chat import ChatHistory
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
