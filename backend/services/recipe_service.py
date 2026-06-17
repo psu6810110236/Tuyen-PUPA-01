@@ -569,7 +569,8 @@ async def cook_recipe(user_id: int, recipe_id: int, db: Session) -> dict:
         calories, protein, carb, fat = 280.0, 12.0, 2.0, 24.0
         
     # พยายามยิงวิเคราะห์ละเอียดกับ AI Service พอร์ต 8001
-    url = "http://host.docker.internal:8001/ai/nutrition"
+    ai_service_url = os.getenv("AI_SERVICE_URL", "http://host.docker.internal:8001")
+    url = f"{ai_service_url}/ai/nutrition"
     try:
         async with httpx.AsyncClient() as client:
             response = await client.post(url, json={"food_name": recipe["title"]}, timeout=3.0)

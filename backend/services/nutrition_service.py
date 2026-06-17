@@ -83,7 +83,8 @@ async def delete_log(user_id: int, log_id: int, db: Session) -> bool:
 
 # 5. ประมาณค่าสารอาหารจากชื่อเมนูทั่วไป (เรียกถามผ่าน Gemini AI Service โฮสต์ที่พอร์ต 8001)
 async def estimate_calories(food_name: str) -> dict:
-    url = "http://host.docker.internal:8001/ai/nutrition"
+    ai_service_url = os.getenv("AI_SERVICE_URL", "http://host.docker.internal:8001")
+    url = f"{ai_service_url}/ai/nutrition"
     
     async with httpx.AsyncClient() as client:
         try:
