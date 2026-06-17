@@ -99,7 +99,7 @@ async def estimate_calories(food_name: str) -> dict:
                     "note": data.get("summary", "วิเคราะห์คุณค่าโภชนาการโดย Gemini AI")
                 }
         except Exception as e:
-            print(f"⚠️ [Estimate Calories AI Fallback] ไม่สามารถเชื่อมต่อ AI Service ได้: {e}")
+            print(f"[Estimate Calories AI Fallback] Failed to connect to AI Service: {repr(e)}")
             
     # ค่าประมาณการเบื้องต้นหากติดต่อระบบ AI ไม่สำเร็จ
     return {

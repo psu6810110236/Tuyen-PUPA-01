@@ -26,11 +26,12 @@ def get_cached_api_response(cache_key: str) -> dict | list | None:
             CachedResponse.cached_at >= expiry_limit
         ).first()
         if cached:
-            print(f"⚡ [Cache HIT] ค้นพบแคชสำหรับคีย์: {cache_key}")
+            safe_key = cache_key.encode('ascii', errors='replace').decode('ascii')
+            print(f"[Cache HIT] Found cache for key: {safe_key}")
             return json.loads(cached.response_json)
         return None
     except Exception as e:
-        print(f"⚠️ [Cache Read Error] อ่านแคชล้มเหลว: {e}")
+        print(f"[Cache Read Error] Failed to read cache: {repr(e)}")
         return None
     finally:
         db.close()
@@ -49,10 +50,11 @@ def set_cached_api_response(cache_key: str, response_data: dict | list):
             )
             db.add(new_cache)
         db.commit()
-        print(f"💾 [Cache Saved] บันทึกแคชสำเร็จสำหรับคีย์: {cache_key}")
+        safe_key = cache_key.encode('ascii', errors='replace').decode('ascii')
+        print(f"[Cache Saved] Saved cache for key: {safe_key}")
     except Exception as e:
         db.rollback()
-        print(f"⚠️ [Cache Write Error] บันทึกแคชล้มเหลว: {e}")
+        print(f"[Cache Write Error] Failed to write cache: {repr(e)}")
     finally:
         db.close()
 
@@ -215,10 +217,21 @@ async def suggest_recipes(ingredients: list[str]) -> list[dict]:
         # แปลเป็นไทยสำหรับส่วนที่เป็นผลลัพธ์จาก Spoonacular (data) ก่อนนำมาเก็บและส่งออก
         translated_spoonacular = await translate_recipe_list(data)
         combined_data = mock_results + translated_spoonacular
+        if not combined_data:
+            # Fallback to all mock recipes if combined_data is empty
+            combined_data = []
+            for r_id, r in MOCK_RECIPES.items():
+                combined_data.append({
+                    "id": r["id"],
+                    "title": r["title"],
+                    "image": r["image"],
+                    "usedIngredientCount": 0,
+                    "missedIngredientCount": len(r["extendedIngredients"])
+                })
         set_cached_api_response(cache_key, combined_data)
         return combined_data
     except Exception as e:
-        print(f"[recipe_service] Suggest fallback triggered: {e}")
+        print(f"[recipe_service] Suggest fallback triggered: {repr(e)}")
         # หากต่อ API ไม่ได้หรือข้อมูลเป็นศูนย์ ให้ใช้ผลลัพธ์ Mock ทั้งหมดที่มี
         if not mock_results:
             mock_results = []
@@ -269,7 +282,7 @@ async def get_recipe_detail(recipe_id: int) -> dict:
         set_cached_api_response(cache_key, translated_data)
         return translated_data
     except Exception as e:
-        print(f"[recipe_service] Detail fallback triggered for recipe {recipe_id}: {e}")
+        print(f"[recipe_service] Detail fallback triggered for recipe {recipe_id}: {repr(e)}")
         # Default ไปที่ข้าวผัดอกไก่หากเรียกข้อมูลอื่นไม่สำเร็จ
         return MOCK_RECIPES.get(recipe_id, MOCK_RECIPES[101])
 
@@ -311,7 +324,7 @@ async def search_recipe_by_name(name: str) -> list[dict]:
         set_cached_api_response(cache_key, combined_data)
         return combined_data
     except Exception as e:
-        print(f"[recipe_service] Search fallback triggered for {name}: {e}")
+        print(f"[recipe_service] Search fallback triggered for {name}: {repr(e)}")
         # หากต่อ API ไม่ได้ ให้คืนค่า Mock Recipes ที่ค้นพบ (ถ้าไม่มีเลย คืน Mock ทั้งหมด)
         if not mock_results:
             mock_results = [{
@@ -567,7 +580,7 @@ async def cook_recipe(user_id: int, recipe_id: int, db: Session) -> dict:
                 carb = float(ai_data.get("carbs", carb))
                 fat = float(ai_data.get("fat", fat))
     except Exception as e:
-        print(f"⚠️ [AI Nutrition Fallback] ใช้ค่าวิเคราะห์ฐานข้อมูลจำลองเนื่องจากติดต่อ AI Service ไม่ได้: {e}")
+        print(f"[AI Nutrition Fallback] Using mock database fallback: {repr(e)}")
         
     # คำนวณประเภทมื้อตามเวลาในประเทศไทย (UTC+7)
     from datetime import timedelta, timezone
@@ -657,7 +670,7 @@ async def translate_recipe_list(recipes: list[dict]) -> list[dict]:
                 r["title"] = translated_titles[i]
         return recipes
     except Exception as e:
-        print(f"⚠️ [Translation List Error] Failed to translate recipe list: {e}")
+        print(f"[Translation List Error] Failed to translate recipe list: {repr(e)}")
         return recipes
 
 
@@ -727,5 +740,5 @@ async def translate_recipe_to_thai(recipe_data: dict) -> dict:
             "extendedIngredients": translated_ingredients
         }
     except Exception as e:
-        print(f"⚠️ [Translation Error] Failed to translate recipe {recipe_data['id']}: {e}")
+        print(f"[Translation Error] Failed to translate recipe {recipe_data['id']}: {repr(e)}")
         return recipe_data

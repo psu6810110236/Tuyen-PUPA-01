@@ -28,7 +28,7 @@ WEAK_KEYS = {"super-secret-key-xyz-123456789", "your-super-secret-key-for-jwt", 
 if not SECRET_KEY or SECRET_KEY in WEAK_KEYS:
     # 🔐 ความปลอดภัยระดับ Enterprise: สุ่มคีย์ลับขนาด 256 บิตขึ้นมาใน RAM เมื่อตรวจเจอบทบาทความปลอดภัยที่อ่อนแอ
     SECRET_KEY = secrets.token_hex(32)
-    print("⚠️ [Security WARNING] JWT SECRET_KEY ว่างเปล่า หรือคีย์มีความปลอดภัยต่ำ ระบบจึงทำการสุ่มคีย์ลับตัวใหม่แบบไดนามิกใน RAM สำเร็จ")
+    print("[Security WARNING] JWT SECRET_KEY is empty or weak. Generated a secure random key dynamically in RAM.")
 
 ALGORITHM = os.getenv("ALGORITHM", "HS256")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 30))
