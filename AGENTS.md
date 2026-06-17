@@ -43,6 +43,13 @@ To support the team effectively, AI Assistants are designated based on their dom
   - [x] Auto-generated and applied missing database migrations for newly introduced models (`ChatHistory`, `RecipeCache`, `Translation`) and resolved alembic version mismatch.
   - [x] Successfully pulled latest remote changes onto `dev` branch and resolved local file conflicts.
   - [x] Successfully pushed clean git commits to remote `dev` branch.
+- **Completed Actions / Deliverables (June 18, 2026)**:
+  - [x] Integrated Google OAuth authentication flow in backend router (`POST /auth/google`) and verified client IDs.
+  - [x] Implemented Google Sign-in button with Next.js client component (`AuthPage.tsx`) using Google Identity Services script.
+  - [x] Configured environment variables mapping for Docker Compose (`docker-compose.yml` and `docker-compose.prod.yml`) to pass `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` to the backend.
+  - [x] Cleaned up and updated backend dependency definitions in `requirements.txt`.
+  - [x] Verified successful build, type checking, and pushed clean changes to `dev` branch.
+
 
 ### 🔍 2.2 Research & Documentation Agent
 - **Status**: Standby ⚪
