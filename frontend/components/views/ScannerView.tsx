@@ -28,6 +28,29 @@ export default function ScannerView() {
   }>>([]);
   const [isZoomed, setIsZoomed] = useState(false);
 
+  const scanningTexts = [
+    "SmartFood AI กำลังวิเคราะห์รูปภาพของคุณ...",
+    "กำลังสกัดแยกแยะวัตถุดิบและส่วนประกอบ...",
+    "กำลังประเมินปริมาณและวันหมดอายุ...",
+    "ใกล้เสร็จแล้ว เตรียมนำเข้าตู้เย็น..."
+  ];
+
+  const [scanTextIndex, setScanTextIndex] = useState(0);
+
+  useEffect(() => {
+    const scanningTextsLength = 4; // Hardcoded to avoid dependency issues since array is static
+    let interval: NodeJS.Timeout;
+    if (isScanning) {
+      interval = setInterval(() => {
+        setScanTextIndex((prev) => (prev + 1) % scanningTextsLength);
+      }, 2500);
+    } else {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setScanTextIndex(0);
+    }
+    return () => clearInterval(interval);
+  }, [isScanning]);
+
   // ─── Manual Add Form State ───
   const [showManualForm, setShowManualForm] = useState(false);
   const [formName, setFormName] = useState("");
@@ -68,7 +91,7 @@ export default function ScannerView() {
     }
   };
 
-  const updateDetectedItemField = (index: number, field: string, value: any) => {
+  const updateDetectedItemField = (index: number, field: string, value: string | number) => {
     setDetectedItems((prev) =>
       prev.map((item, idx) => (idx === index ? { ...item, [field]: value } : item))
     );
@@ -241,7 +264,7 @@ export default function ScannerView() {
       // 3. Scan items via API (only detects, does not automatically save to DB)
       const res = await aiAPI.scanOnly(compressedBase64, "image/jpeg");
       
-      const items = (res.ingredients || []).map((ing: any) => {
+      const items = (res.ingredients || []).map((ing: { name?: string; quantity?: number; unit?: string; category?: string; box_2d?: number[] } | string) => {
         if (typeof ing === "string") {
           return { name: ing, quantity: 1, unit: "ชิ้น", category: "other", box_2d: [0, 0, 100, 100] };
         }
@@ -250,9 +273,9 @@ export default function ScannerView() {
           quantity: Number(ing.quantity) || 1,
           unit: ing.unit || "ชิ้น",
           category: ing.category || "other",
-          box_2d: normalizeBox(ing.box_2d)
+          box_2d: normalizeBox(ing.box_2d || [0, 0, 100, 100])
         };
-      }).filter((item: any) => item.name !== "");
+      }).filter((item) => item.name !== "");
 
       setDetectedItems(items);
       
@@ -297,6 +320,43 @@ export default function ScannerView() {
 
   return (
     <div className="flex flex-col gap-6 animate-fade-in">
+      <style dangerouslySetInnerHTML={{__html: `
+        @keyframes laserScan {
+          0% { top: 0%; opacity: 0; }
+          10% { opacity: 1; }
+          90% { opacity: 1; }
+          100% { top: 100%; opacity: 0; }
+        }
+        .animate-laser {
+          position: absolute;
+          left: 0;
+          right: 0;
+          height: 4px;
+          background: linear-gradient(90deg, transparent, rgba(6, 182, 212, 0.8), #06b6d4, rgba(6, 182, 212, 0.8), transparent);
+          box-shadow: 0 0 15px 2px #06b6d4;
+          animation: laserScan 2.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+        }
+        @keyframes HUDpulse {
+          0% { box-shadow: 0 0 0px 0px rgba(16, 185, 129, 0.3); }
+          50% { box-shadow: 0 0 15px 2px rgba(16, 185, 129, 0.7); }
+          100% { box-shadow: 0 0 0px 0px rgba(16, 185, 129, 0.3); }
+        }
+        @keyframes drawBox {
+          0% { opacity: 0; transform: scale(0.9) translateZ(0); }
+          100% { opacity: 1; transform: scale(1) translateZ(0); }
+        }
+        .hud-box {
+          animation: drawBox 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards, HUDpulse 2.5s infinite ease-in-out;
+        }
+        @keyframes floatIcon {
+          0% { transform: translateY(0px); }
+          50% { transform: translateY(-6px); }
+          100% { transform: translateY(0px); }
+        }
+        .animate-float-icon {
+          animation: floatIcon 3s ease-in-out infinite;
+        }
+      `}} />
       {/* ─── Header ─── */}
       <div>
         <h2 className="text-2xl font-heading font-bold text-foreground">📸 สแกนวัตถุดิบเข้าตู้เย็น</h2>
@@ -345,13 +405,15 @@ export default function ScannerView() {
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
               </svg>
-              <p className="text-base font-heading font-semibold text-primary">SmartFood AI กำลังวิเคราะห์รูปภาพของคุณ...</p>
+              <p className="text-base font-heading font-semibold text-primary transition-opacity duration-300">
+                {scanningTexts[scanTextIndex] || scanningTexts[0]}
+              </p>
               <p className="text-xs font-body text-foreground-muted">ระบบจะแสกนวัตถุดิบและนำเข้าตู้เย็นโดยอัตโนมัติ</p>
             </div>
           ) : (
             <>
               {/* Upload Icon */}
-              <div className={`mb-4 rounded-2xl p-4 transition-all duration-300 ${isDragging ? "bg-primary-pale" : "bg-surface-alt"}`}>
+              <div className={`mb-4 rounded-2xl p-4 transition-all duration-300 animate-float-icon ${isDragging ? "bg-primary-pale scale-110" : "bg-surface-alt"}`}>
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   className={`h-12 w-12 transition-colors duration-300 ${isDragging ? "text-primary-dark" : "text-foreground-muted"}`}
@@ -376,23 +438,6 @@ export default function ScannerView() {
         </div>
       ) : (
         <div className="flex flex-col gap-5">
-          <style dangerouslySetInnerHTML={{__html: `
-            @keyframes laserScan {
-              0% { top: 0%; }
-              50% { top: 100%; }
-              100% { top: 0%; }
-            }
-            .animate-laser {
-              position: absolute;
-              left: 0;
-              right: 0;
-              height: 3px;
-              background: linear-gradient(90deg, transparent, #06b6d4, transparent);
-              box-shadow: 0 0 10px #06b6d4;
-              animation: laserScan 2.5s linear infinite;
-            }
-          `}} />
-
           {/* ─── Preview & Detections Overlay ─── */}
           <div
             onClick={() => !isScanning && setIsZoomed(true)}
@@ -428,8 +473,8 @@ export default function ScannerView() {
               return (
                 <div
                   key={idx}
-                  style={{ top, left, width, height }}
-                  className="absolute border-2 border-accent-green bg-transparent rounded-lg group hover:border-emerald-600 hover:bg-transparent transition-all duration-200"
+                  style={{ top, left, width, height, animationDelay: `${idx * 150}ms` }}
+                  className="hud-box absolute border-2 border-accent-green bg-transparent rounded-lg group hover:border-emerald-400 hover:bg-emerald-500/10 hover:backdrop-blur-[1px] transition-all duration-300 opacity-0"
                 >
                   <span className={
                     isNearTop
@@ -469,7 +514,7 @@ export default function ScannerView() {
             {detectedItems.map((item, idx) => (
               <div 
                 key={idx}
-                className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3.5 rounded-xl border border-outline bg-surface-alt/40 transition-airy hover:bg-surface-alt/80"
+                className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3.5 rounded-xl border border-white/60 bg-gradient-to-br from-white/80 to-surface-alt/60 backdrop-blur-md shadow-sm transition-all duration-300 hover:bg-white hover:shadow-md hover:border-primary-light/50 group"
               >
                 <div className="flex items-center gap-2 w-full sm:w-auto">
                   <span className="text-xs font-heading font-bold h-6 w-6 rounded-full bg-primary-pale text-primary-dark flex items-center justify-center shrink-0">
@@ -481,7 +526,7 @@ export default function ScannerView() {
                     type="text"
                     value={item.name}
                     onChange={(e) => updateDetectedItemField(idx, "name", e.target.value)}
-                    className="flex-1 sm:w-44 rounded-xl border-2 border-white bg-surface px-3 py-1.5 text-sm font-heading font-semibold text-foreground shadow-soft-blue transition-airy focus:border-primary-light focus:outline-none"
+                    className="flex-1 sm:w-44 rounded-xl border-2 border-transparent bg-white/80 px-3 py-1.5 text-sm font-heading font-bold text-slate-800 shadow-sm transition-all duration-300 focus:border-primary-light focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/10 group-hover:bg-white"
                     placeholder="ชื่อวัตถุดิบ"
                   />
                 </div>
@@ -496,7 +541,7 @@ export default function ScannerView() {
                       min="0.1"
                       value={item.quantity}
                       onChange={(e) => updateDetectedItemField(idx, "quantity", parseFloat(e.target.value) || 0)}
-                      className="w-16 rounded-xl border-2 border-white bg-surface px-2 py-1.5 text-center text-sm font-body text-foreground shadow-soft-blue transition-airy focus:border-primary-light focus:outline-none"
+                      className="w-16 rounded-xl border-2 border-transparent bg-white/80 px-2 py-1.5 text-center text-sm font-body font-semibold text-slate-800 shadow-sm transition-all duration-300 focus:border-primary-light focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/10 group-hover:bg-white"
                     />
                   </div>
 
