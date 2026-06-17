@@ -43,7 +43,7 @@ async def scan_endpoint(payload: ScanRequest, current_user: User = Depends(get_c
             response = await client.post(
                 f"{ai_service_url}/ai/scan",
                 json={"image_base64": payload.image_base64, "mime_type": payload.mime_type},
-                timeout=60.0
+                timeout=120.0
             )
             if response.status_code != 200:
                 raise HTTPException(status_code=response.status_code, detail=response.text)
@@ -76,7 +76,7 @@ async def scan_and_add_endpoint(
                 f"{ai_service_url}/ai/scan-and-add",
                 json={"image_base64": payload.image_base64, "mime_type": payload.mime_type},
                 headers=headers,
-                timeout=60.0
+                timeout=120.0
             )
             if response.status_code != 200:
                 raise HTTPException(status_code=response.status_code, detail=response.text)

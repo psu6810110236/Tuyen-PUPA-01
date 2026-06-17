@@ -52,6 +52,7 @@ To support the team effectively, AI Assistants are designated based on their dom
   - [x] Configured environment variables mapping for Docker Compose (`docker-compose.yml` and `docker-compose.prod.yml`) to pass `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` to the backend.
   - [x] Cleaned up and updated backend dependency definitions in `requirements.txt`.
   - [x] Verified successful build, type checking, and pushed clean changes to `dev` branch.
+  - [x] Increased backend proxy request timeout to 120.0 seconds to prevent ReadTimeout with slow Gemini responses.
 
 ### 🔍 2.2 Research & Documentation Agent
 - **Status**: Standby ⚪
