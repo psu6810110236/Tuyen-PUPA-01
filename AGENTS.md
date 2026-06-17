@@ -56,6 +56,8 @@ To support the team effectively, AI Assistants are designated based on their dom
   - [x] Implemented client-side image compression and resizing (down to 1024px) in ScannerView.tsx to speed up uploads by up to 50x and prevent timeouts.
   - [x] Restructured AI Vision prompt to detect identical items (e.g. eggs) individually instead of grouping them.
   - [x] Redesigned ScannerView.tsx flow to present an editable confirmation list for user review and bulk add validation before storing.
+  - [x] Configured identical items grouping in the confirmation list and database payload, while preserving individual object bounding boxes on the image overlay.
+  - [x] Implemented integer rounding rules for count-based units (e.g. eggs, pieces) to prevent fractional quantities in inventory.
 
 ### 🔍 2.2 Research & Documentation Agent
 - **Status**: Standby ⚪
