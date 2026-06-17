@@ -97,6 +97,12 @@ export const authAPI = {
     return res.json() as Promise<{ access_token: string; token_type: string }>;
   },
 
+  loginGoogle: (credential: string) =>
+    fetchAPI<{ access_token: string; token_type: string }>("/auth/google", {
+      method: "POST",
+      body: JSON.stringify({ credential }),
+    }),
+
   logout: () =>
     fetchAPI<{ message: string }>("/auth/logout", { method: "POST" }),
 };

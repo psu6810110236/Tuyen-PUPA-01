@@ -45,22 +45,22 @@ export default function ScannerView() {
     { value: "other", label: "📦 อื่นๆ" },
   ];
 
-  // ─── Load inventory items ───
-  useEffect(() => {
-    loadInventory();
-  }, []);
-
   const loadInventory = async () => {
     setIsLoadingInventory(true);
     try {
-      const items = await inventoryAPI.getAll();
-      setInventoryItems(items);
+      const data = await inventoryAPI.getAll();
+      setInventoryItems(data);
     } catch (err) {
-      console.error("Failed to load inventory:", err);
+      console.error("Failed to load inventory for scanner view:", err);
     } finally {
       setIsLoadingInventory(false);
     }
   };
+
+  // ─── Load inventory items ───
+  useEffect(() => {
+    loadInventory();
+  }, []);
 
   // ─── Handle manual add ───
   const handleManualSubmit = async (e: React.FormEvent) => {
@@ -146,9 +146,9 @@ export default function ScannerView() {
         } else {
           setSubmitMessage("สแกนภาพสำเร็จ แต่ไม่พบวัตถุดิบ 🔍");
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error("AI Scan failed:", err);
-        setSubmitMessage(`เกิดข้อผิดพลาดในการสแกน: ${err.message || "กรุณาลองใหม่"} ❌`);
+        setSubmitMessage(`เกิดข้อผิดพลาดในการสแกน: ${(err as Error).message || "กรุณาลองใหม่"} ❌`);
       } finally {
         setIsScanning(false);
       }

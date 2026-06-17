@@ -22,6 +22,7 @@
 
 | Commit Hash | หัวข้อการเปลี่ยนแปลง | รายละเอียดและสิ่งที่ทำ |
 | :--- | :--- | :--- |
+| **`5458cca`** | feat(auth): implement Google OAuth sign-in flow on backend and frontend | **ฟีเจอร์**: เพิ่มปุ่มล็อกอินด้วย Google ในหน้าล็อกอิน, เขียน Endpoint รองรับการยืนยัน ID Token บน Backend และจัดการลงทะเบียนบัญชีด้วย Email แบบอัตโนมัติ |
 | **`6fcc1b7`** | security(auth): upgrade jwt key config to cryptographic secure key | **ความปลอดภัย**: ปรับปรุง Secret Key สำหรับสิทธิ์ความปลอดภัยการถอด/เข้ารหัส JWT ให้ใช้ Cryptographic Key ที่มีความปลอดภัยสูง |
 | **`bc39e8c`** | chore(deps): pin dependency versions for backend and ai services | **ความเสถียร**: ล็อกเวอร์ชันของไลบรารีทั้งหมดใน `requirements.txt` ป้องกันไม่ให้แอปพังเมื่ออัปเกรดเวอร์ชันของ Python Package |
 | **`9cf0e80`** | chore(db): initialize database migrations using alembic | **ฐานข้อมูล**: วางระบบควบคุมเวอร์ชันของฐานข้อมูล (Database Migrations) ด้วย Alembic เพื่อรองรับการเปลี่ยนแปลงของตารางในอนาคต |

@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth, APIError } from "@/components/AuthContext";
 import { AlertCircle, CheckCircle, Shield } from "lucide-react";
 
 type AuthMode = "login" | "register";
 
 export default function AuthPage() {
-  const { login, register } = useAuth();
+  const { login, loginGoogle, register } = useAuth();
   const [mode, setMode] = useState<AuthMode>("login");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -15,6 +15,49 @@ export default function AuthPage() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+
+  const handleGoogleCredentialResponse = async (response: any) => {
+    setIsLoading(true);
+    setError("");
+    try {
+      await loginGoogle(response.credential);
+    } catch (err: any) {
+      if (err instanceof APIError) {
+        setError(err.message);
+      } else {
+        setError(err.message || "การเข้าสู่ระบบด้วย Google ล้มเหลว");
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    // โหลด Google Identity Services script
+    const script = document.createElement("script");
+    script.src = "https://accounts.google.com/gsi/client";
+    script.async = true;
+    script.defer = true;
+    script.onload = () => {
+      const g = (window as any).google;
+      if (g) {
+        g.accounts.id.initialize({
+          client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "22020700185-lvcldg8sdovfljg4s9jl86hm76e6292k.apps.googleusercontent.com",
+          callback: handleGoogleCredentialResponse,
+        });
+        g.accounts.id.renderButton(
+          document.getElementById("google-signin-btn"),
+          { theme: "outline", size: "large", width: "350", text: "signin_with" }
+        );
+      }
+    };
+    document.body.appendChild(script);
+
+    return () => {
+      document.body.removeChild(script);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -198,6 +241,18 @@ export default function AuthPage() {
               )}
             </button>
           </form>
+
+          {/* Divider */}
+          <div className="my-4 flex items-center gap-3">
+            <div className="h-px flex-1 bg-outline/60" />
+            <span className="text-[10px] font-body font-medium text-foreground-muted">หรือ</span>
+            <div className="h-px flex-1 bg-outline/60" />
+          </div>
+
+          {/* Google Sign-in Button */}
+          <div className="w-full flex justify-center">
+            <div id="google-signin-btn"></div>
+          </div>
 
           {/* Switch Mode Link */}
           <p className="mt-5 text-center text-xs font-body text-foreground-secondary">

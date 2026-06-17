@@ -9,9 +9,9 @@ const config = {
   theme: {
     extend: {
       fontFamily: {
-        // ใช้ Plus Jakarta Sans สำหรับ Headlines และ Inter สำหรับ Body
-        heading: ['"Plus Jakarta Sans"', 'sans-serif'],
-        body: ['"Inter"', 'sans-serif'],
+        // Anuphan — Thai-first Google Font (300–800), covers Thai & Latin
+        heading: ['"Anuphan"', 'sans-serif'],
+        body:    ['"Anuphan"', 'sans-serif'],
       },
       colors: {
         // Cool Indigo-Blue — Elegant Palette

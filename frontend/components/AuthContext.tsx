@@ -21,6 +21,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (username: string, password: string) => Promise<void>;
+  loginGoogle: (credential: string) => Promise<void>;
   register: (username: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -67,6 +68,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser({ username });
   }, []);
 
+  const loginGoogle = useCallback(async (credential: string) => {
+    const data = await authAPI.loginGoogle(credential);
+    let username = "Google User";
+    try {
+      const payloadBase64 = data.access_token.split(".")[1];
+      const payload = JSON.parse(atob(payloadBase64));
+      if (payload && payload.sub) {
+        username = payload.sub;
+      }
+    } catch (e) {
+      console.error("Failed to parse Google JWT payload:", e);
+    }
+    localStorage.setItem("tuyen_token", data.access_token);
+    localStorage.setItem("tuyen_user", JSON.stringify({ username }));
+    setToken(data.access_token);
+    setUser({ username });
+  }, []);
+
   const register = useCallback(async (username: string, password: string) => {
     await authAPI.register(username, password);
     // สมัครเสร็จแล้ว auto-login ให้เลย
@@ -93,6 +112,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isAuthenticated: !!token,
         isLoading,
         login,
+        loginGoogle,
         register,
         logout,
       }}

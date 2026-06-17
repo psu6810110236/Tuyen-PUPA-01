@@ -10,7 +10,7 @@ import ChatView from "@/components/views/ChatView";
 import InventoryView from "@/components/views/InventoryView";
 import SavedRecipesView from "@/components/views/SavedRecipesView";
 import SettingsView from "@/components/views/SettingsView";
-import { Home, Camera, ChefHat, MessageSquare, LogOut, Package, Lightbulb, Heart, Settings } from "lucide-react";
+import { Home, Camera, ChefHat, MessageSquare, LogOut, Package, Lightbulb, Heart, Settings, Bookmark } from "lucide-react";
 import { nutritionAPI, type TodaySummary, type NutritionLog } from "@/lib/api";
 
 // ─── View Type ───
@@ -35,7 +35,7 @@ export default function DashboardPage() {
   const [transitionClass, setTransitionClass] = useState("");
   const prevViewRef = useRef<ViewType>("home");
   const isTransitioning = useRef(false);
-  const VIEW_ORDER: ViewType[] = ["home", "inventory", "saved", "scanner", "recipe", "chat", "settings"];
+  const VIEW_ORDER: ViewType[] = ["home", "inventory", "scanner", "recipe", "chat"];
 
   // ─── Nutrition Stats State ───
   const [todaySummary, setTodaySummary] = useState<TodaySummary | null>(null);
@@ -194,8 +194,15 @@ export default function DashboardPage() {
     }
   };
 
-  // ─── Filter Mobile Nav Items ───
-  const mobileNavItems = navItems;
+  // ─── Mobile Nav: 4 items + central scanner FAB ───
+  // (saved & settings are accessible via desktop sidebar / in-page)
+  const mobileNavItems: { id: ViewType; label: string; icon: React.ReactNode }[] = [
+    { id: "home",      label: "หน้าหลัก",   icon: <Home className="h-5 w-5" /> },
+    { id: "inventory", label: "คลังอาหาร",  icon: <Package className="h-5 w-5" /> },
+    { id: "scanner",   label: "สแกน",       icon: <Camera className="h-5 w-5" /> },
+    { id: "recipe",    label: "สูตรอาหาร",  icon: <ChefHat className="h-5 w-5" /> },
+    { id: "chat",      label: "แชท AI",     icon: <MessageSquare className="h-5 w-5" /> },
+  ];
 
   return (
     <div className="min-h-screen bg-background">
@@ -211,7 +218,19 @@ export default function DashboardPage() {
               TUYEN
             </h1>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1">
+            {/* Saved Button — access saved recipes from anywhere */}
+            <button
+              onClick={() => handleViewChange("saved")}
+              className={`flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-body font-medium transition-airy focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 ${
+                activeView === "saved"
+                  ? "text-primary bg-primary-pale"
+                  : "text-foreground-secondary hover:text-primary hover:bg-primary-pale/60"
+              }`}
+            >
+              <Bookmark className="h-4 w-4" />
+              <span className="hidden sm:inline">เมนูที่บันทึก</span>
+            </button>
             {/* Logout Button */}
             <button
               onClick={logout}
@@ -226,7 +245,11 @@ export default function DashboardPage() {
       </header>
 
         {/* ─── Main Two-Column Layout ─── */}
-      <div className="mx-auto flex max-w-7xl gap-6 px-6 py-6 pb-24 lg:pb-6">
+      <div className={`mx-auto flex max-w-7xl gap-6 lg:px-6 lg:py-6 lg:pb-6 ${
+        activeView === "chat"
+          ? "px-0 py-0 pb-0"           // Chat: no padding — fills edge-to-edge on mobile
+          : "px-6 py-6 pb-24"          // Other views: normal spacing + bottom nav clearance
+      }`}>
         {/* ─── Left Column: Dynamic Content ─── */}
         <main className="flex-1 min-w-0 overflow-hidden">
           <div className={`view-transition-container ${transitionClass}`}>
@@ -312,43 +335,76 @@ export default function DashboardPage() {
         </aside>
       </div>
 
-      {/* ─── Mobile Bottom Navigation ─── */}
+      {/* ─── Mobile Bottom Navigation — perfect 5-column grid ─── */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 glass-nav lg:hidden">
-        <div className="mx-auto flex max-w-md items-center justify-between px-6 py-2 relative">
-          {mobileNavItems.map((item) => {
-            // Render the massive FAB in the middle (scanner)
-            if (item.id === "scanner") {
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => handleViewChange(item.id)}
-                  aria-label={item.label}
-                  className="no-tap-scale fab-glow relative -top-5 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-white border-2 border-surface transition-transform hover:scale-105 active:scale-90 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
-                >
-                  <Camera className="h-7 w-7" />
-                </button>
-              );
-            }
+        {/* grid-cols-5: [Home] [Pantry] [Camera FAB] [Recipes] [Chat] */}
+        <div className="mx-auto grid grid-cols-5 items-center justify-items-center w-full max-w-md px-2 py-1">
 
-            return (
-              <button
-                key={item.id}
-                onClick={() => handleViewChange(item.id)}
-                aria-label={item.label}
-                className={`flex flex-col items-center gap-1 rounded-xl px-2 py-2 transition-airy active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-pale ${
-                  activeView === item.id
-                    ? "text-primary-dark"
-                    : "text-foreground-muted hover:text-foreground-secondary"
-                }`}
-              >
-                <span className="flex items-center justify-center w-5 h-5">{item.icon}</span>
-                <span className="text-[10px] font-body font-medium">{item.label.split(" ")[0]}</span>
-                {activeView === item.id && (
-                  <span className="absolute bottom-1 h-1 w-6 rounded-full bg-primary"></span>
-                )}
-              </button>
-            );
-          })}
+          {/* Col 1 — Home */}
+          <button
+            onClick={() => handleViewChange("home")}
+            aria-label="หน้าหลัก"
+            className={`flex flex-col items-center gap-0.5 rounded-xl px-3 py-2 w-full transition-airy active:scale-90 focus-visible:outline-none ${
+              activeView === "home" ? "text-primary" : "text-foreground-muted hover:text-foreground-secondary"
+            }`}
+          >
+            <Home className="h-5 w-5" />
+            <span className="text-[10px] font-body font-medium">หน้าหลัก</span>
+            {activeView === "home" && <span className="h-1 w-4 rounded-full bg-primary mt-0.5" />}
+          </button>
+
+          {/* Col 2 — Pantry */}
+          <button
+            onClick={() => handleViewChange("inventory")}
+            aria-label="คลังอาหาร"
+            className={`flex flex-col items-center gap-0.5 rounded-xl px-3 py-2 w-full transition-airy active:scale-90 focus-visible:outline-none ${
+              activeView === "inventory" ? "text-primary" : "text-foreground-muted hover:text-foreground-secondary"
+            }`}
+          >
+            <Package className="h-5 w-5" />
+            <span className="text-[10px] font-body font-medium">คลังอาหาร</span>
+            {activeView === "inventory" && <span className="h-1 w-4 rounded-full bg-primary mt-0.5" />}
+          </button>
+
+          {/* Col 3 — Scanner FAB (floats above the bar) */}
+          <div className="relative flex items-center justify-center">
+            <button
+              onClick={() => handleViewChange("scanner")}
+              aria-label="สแกน AI"
+              className="no-tap-scale fab-glow absolute -top-7 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-white border-[3px] border-white shadow-lg transition-transform hover:scale-105 active:scale-90 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+            >
+              <Camera className="h-6 w-6" />
+            </button>
+            {/* Spacer keeps the grid row height consistent */}
+            <span className="h-14 w-14 opacity-0 pointer-events-none" aria-hidden="true" />
+          </div>
+
+          {/* Col 4 — Recipes */}
+          <button
+            onClick={() => handleViewChange("recipe")}
+            aria-label="สูตรอาหาร"
+            className={`flex flex-col items-center gap-0.5 rounded-xl px-3 py-2 w-full transition-airy active:scale-90 focus-visible:outline-none ${
+              activeView === "recipe" ? "text-primary" : "text-foreground-muted hover:text-foreground-secondary"
+            }`}
+          >
+            <ChefHat className="h-5 w-5" />
+            <span className="text-[10px] font-body font-medium">สูตรอาหาร</span>
+            {activeView === "recipe" && <span className="h-1 w-4 rounded-full bg-primary mt-0.5" />}
+          </button>
+
+          {/* Col 5 — Chat */}
+          <button
+            onClick={() => handleViewChange("chat")}
+            aria-label="แชท AI"
+            className={`flex flex-col items-center gap-0.5 rounded-xl px-3 py-2 w-full transition-airy active:scale-90 focus-visible:outline-none ${
+              activeView === "chat" ? "text-primary" : "text-foreground-muted hover:text-foreground-secondary"
+            }`}
+          >
+            <MessageSquare className="h-5 w-5" />
+            <span className="text-[10px] font-body font-medium">แชท AI</span>
+            {activeView === "chat" && <span className="h-1 w-4 rounded-full bg-primary mt-0.5" />}
+          </button>
+
         </div>
       </nav>
     </div>

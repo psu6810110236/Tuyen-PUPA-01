@@ -141,7 +141,8 @@ export default function InventoryView() {
   };
 
   useEffect(() => {
-    fetchInventory();
+    const timer = setTimeout(() => fetchInventory(), 0);
+    return () => clearTimeout(timer);
   }, []);
 
   // ─── Handle update quantity ───
@@ -449,40 +450,30 @@ export default function InventoryView() {
               {processedItems.map((item, index) => (
                 <div
                   key={item.id}
-                  className="stagger-item flex items-center gap-3 rounded-xl border border-outline bg-surface p-4 shadow-card hover:translate-y-[-1px] hover:shadow-md transition-all duration-200 cursor-pointer"
+                  className="stagger-item flex flex-col gap-3 rounded-xl border border-outline bg-surface p-4 shadow-card hover:translate-y-[-1px] hover:shadow-md transition-all duration-200 cursor-pointer"
                   style={{ animationDelay: `${index * 45}ms` }}
                 >
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary-pale text-2xl">
-                    {item.icon}
-                  </div>
-                  <div className="flex flex-1 flex-col min-w-0">
-                    <span className="text-base font-heading font-semibold text-foreground truncate">
-                      {item.name}
-                    </span>
-                    <span className="text-xs font-body text-foreground-secondary truncate">{item.category || "อื่นๆ"}</span>
-                  </div>
-                  
-                  {/* ── Quantity Controls ── */}
-                  <div className="flex items-center gap-1.5 bg-surface-alt rounded-full p-1 border border-outline shadow-inner">
-                    <button
-                      onClick={(e) => { e.stopPropagation(); if(item.quantity > 0) handleUpdateQuantity(item, item.quantity - 1); }}
-                      className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-surface text-foreground-secondary transition-colors hover:bg-white hover:text-danger hover:shadow-sm"
-                    >
-                      <Minus className="h-3.5 w-3.5" />
-                    </button>
-                    <div className="flex flex-col items-center justify-center min-w-[2.5rem]">
-                      <span className="text-sm font-heading font-bold text-foreground leading-none">{item.quantity}</span>
-                      <span className="text-[9px] font-body text-foreground-muted leading-none mt-0.5">{item.unit}</span>
+                  {/* Top Row: Icon, Name/Category, Delete */}
+                  <div className="flex items-start gap-3 w-full">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary-pale text-2xl">
+                      {item.icon}
+                    </div>
+                    <div className="flex flex-1 flex-col min-w-0 mt-0.5">
+                      <span className="text-base font-heading font-semibold text-foreground truncate">
+                        {item.name}
+                      </span>
+                      <span className="text-xs font-body text-foreground-secondary truncate">{item.category || "อื่นๆ"}</span>
                     </div>
                     <button
-                      onClick={(e) => { e.stopPropagation(); handleUpdateQuantity(item, item.quantity + 1); }}
-                      className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-surface text-foreground-secondary transition-colors hover:bg-white hover:text-primary-dark hover:shadow-sm"
+                      onClick={(e) => { e.stopPropagation(); handleDelete(item.id, item.name); }}
+                      className="text-foreground-muted hover:text-danger transition-colors p-2 shrink-0 -mr-2"
                     >
-                      <Plus className="h-3.5 w-3.5" />
+                      <Trash2 className="h-4 w-4" />
                     </button>
                   </div>
-
-                  <div className="flex flex-col items-end gap-2 ml-1 shrink-0">
+                  
+                  {/* Bottom Row: Expiry Badge & Quantity Controls */}
+                  <div className="flex items-center justify-between mt-1 border-t border-outline/40 pt-3">
                     <span className={`rounded-full px-2 py-1 text-[10px] font-body font-medium whitespace-nowrap ${
                       item.daysLeft < 0
                         ? "bg-red-100 text-red-600 border border-red-300 expiry-glow-red"
@@ -494,12 +485,25 @@ export default function InventoryView() {
                     }`}>
                       {item.daysLeft < 0 ? "⚠️ หมดอายุแล้ว" : item.daysLeft === 0 ? "🔴 หมดวันนี้" : item.daysLeft === 999 ? "ไม่มีวันหมดอายุ" : `อีก ${item.daysLeft} วัน`}
                     </span>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); handleDelete(item.id, item.name); }}
-                      className="text-foreground-muted hover:text-danger transition-colors p-1"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
+
+                    <div className="flex items-center gap-1.5 bg-surface-alt rounded-full p-1 border border-outline shadow-inner">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); if(item.quantity > 0) handleUpdateQuantity(item, item.quantity - 1); }}
+                        className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-surface text-foreground-secondary transition-colors hover:bg-white hover:text-danger hover:shadow-sm"
+                      >
+                        <Minus className="h-3.5 w-3.5" />
+                      </button>
+                      <div className="flex flex-col items-center justify-center min-w-[2.5rem]">
+                        <span className="text-sm font-heading font-bold text-foreground leading-none">{item.quantity}</span>
+                        <span className="text-[9px] font-body text-foreground-muted leading-none mt-0.5">{item.unit}</span>
+                      </div>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleUpdateQuantity(item, item.quantity + 1); }}
+                        className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-surface text-foreground-secondary transition-colors hover:bg-white hover:text-primary-dark hover:shadow-sm"
+                      >
+                        <Plus className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}

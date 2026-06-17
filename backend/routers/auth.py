@@ -3,6 +3,7 @@ import secrets
 from datetime import datetime, timedelta, timezone
 import jwt
 import bcrypt  # ใช้ bcrypt ดิบโดยตรง ตัด passlib ทิ้งถาวร
+import httpx
 from pydantic import BaseModel
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
@@ -40,6 +41,9 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 class UserAuthSchema(BaseModel):
     username: str
     password: str
+
+class GoogleAuthRequest(BaseModel):
+    credential: str
 
 class TokenSchema(BaseModel):
     access_token: str
@@ -114,6 +118,62 @@ def login(user_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
     if not user or not verify_password(user_data.password, user.hashed_password):
         raise HTTPException(status_code=400, detail="Username หรือ Password ไม่ถูกต้อง")
     
+    access_token = create_access_token(data={"sub": user.username})
+    return {"access_token": access_token, "token_type": "bearer"}
+
+@router.post("/google", response_model=TokenSchema)
+async def google_login(payload: GoogleAuthRequest, db: Session = Depends(get_db)):
+    """ล็อกอินหรือสมัครสมาชิกด้วย Google OAuth ID Token"""
+    GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
+    if not GOOGLE_CLIENT_ID:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="ระบบยังไม่ได้กำหนดค่า GOOGLE_CLIENT_ID ในไฟล์ .env"
+        )
+
+    # 1. ส่ง ID Token ไปตรวจสอบที่ Google API
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.get(
+                f"https://oauth2.googleapis.com/tokeninfo?id_token={payload.credential}",
+                timeout=5.0
+            )
+        except Exception as e:
+            raise HTTPException(
+                status_code=400,
+                detail=f"ไม่สามารถเชื่อมต่อไปยังเซิร์ฟเวอร์ Google ได้: {str(e)}"
+            )
+            
+    if response.status_code != 200:
+        raise HTTPException(status_code=400, detail="Google Token ไม่ถูกต้อง หรือหมดอายุแล้ว")
+        
+    google_info = response.json()
+    
+    # 2. ตรวจสอบ Issuer และ Audience เพื่อความปลอดภัย
+    aud = google_info.get("aud")
+    if aud != GOOGLE_CLIENT_ID:
+        raise HTTPException(status_code=400, detail="Audience mismatch: ID Token นี้ไม่ได้มีไว้สำหรับแอปพลิเคชันนี้")
+        
+    email = google_info.get("email")
+    if not email:
+        raise HTTPException(status_code=400, detail="ไม่พบข้อมูลอีเมลจากบัญชี Google")
+        
+    email_verified = google_info.get("email_verified")
+    if email_verified != "true" and email_verified is not True:
+        raise HTTPException(status_code=400, detail="บัญชี Google นี้ยังไม่ได้ทำการยืนยันอีเมล")
+
+    # 3. ค้นหาผู้ใช้ด้วยอีเมล (ใช้ email เป็น username)
+    user = db.query(User).filter(User.username == email).first()
+    if not user:
+        # หากยังไม่มีผู้ใช้ ให้สมัครสมาชิกให้โดยอัตโนมัติ
+        random_pwd = secrets.token_hex(16)
+        hashed_pwd = hash_password(random_pwd)
+        user = User(username=email, hashed_password=hashed_pwd)
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+        
+    # 4. ออก JWT Token
     access_token = create_access_token(data={"sub": user.username})
     return {"access_token": access_token, "token_type": "bearer"}
 

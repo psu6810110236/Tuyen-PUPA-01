@@ -47,6 +47,11 @@ To support the team effectively, AI Assistants are designated based on their dom
   - [x] Aligned `GEMINI_MODEL` and `GEMINI_VISION_MODEL` variables in configuration to fallback on `gemini-2.5-flash` instead of `gemini-3.5-flash`.
   - [x] Restored `box_2d` coordinate normalization to standard format [0, 1000] and aligned bounding box renderers.
   - [x] Enhanced AI service `_call_with_retry` mechanism to retry transient 503 and network failures.
+  - [x] Integrated Google OAuth authentication flow in backend router (`POST /auth/google`) and verified client IDs.
+  - [x] Implemented Google Sign-in button with Next.js client component (`AuthPage.tsx`) using Google Identity Services script.
+  - [x] Configured environment variables mapping for Docker Compose (`docker-compose.yml` and `docker-compose.prod.yml`) to pass `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` to the backend.
+  - [x] Cleaned up and updated backend dependency definitions in `requirements.txt`.
+  - [x] Verified successful build, type checking, and pushed clean changes to `dev` branch.
 
 ### 🔍 2.2 Research & Documentation Agent
 - **Status**: Standby ⚪

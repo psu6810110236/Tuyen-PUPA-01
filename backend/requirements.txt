@@ -9,3 +9,4 @@ pyjwt==2.13.0
 fastmcp==3.4.2
 alembic==1.18.4
 httpx>=0.28.1
+pydantic-settings==2.14.1

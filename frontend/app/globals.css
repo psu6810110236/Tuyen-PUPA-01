@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Anuphan:wght@300;400;500;600;700;800&display=swap');
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
@@ -6,11 +6,12 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme {
-  /* ─── Typography (Tooyen Core) ─── */
-  --font-heading: 'Plus Jakarta Sans', sans-serif;
-  --font-body: 'Inter', sans-serif;
-  --font-thai: 'IBM Plex Sans Thai', 'Inter', system-ui, sans-serif;
-  --font-sans: 'Inter', 'IBM Plex Sans Thai', system-ui, sans-serif;
+  /* ─── Typography: Anuphan — Thai-first Google Font ─── */
+  /* Covers Thai + Latin beautifully across all weights (300–800) */
+  --font-heading: 'Anuphan', sans-serif;
+  --font-body: 'Anuphan', sans-serif;
+  --font-thai: 'Anuphan', system-ui, sans-serif;
+  --font-sans: 'Anuphan', system-ui, sans-serif;
 
   /* ─── Primary (Professional Blue - Stripe/Linear) ─── */
   --color-primary: #2563EB;
@@ -191,6 +192,15 @@ body {
 .hover-lift:hover {
   transform: translateY(-1px);
   box-shadow: var(--shadow-elevated);
+}
+
+/* Hide scrollbar while keeping scroll behaviour (for suggestion chips strip) */
+.scrollbar-none {
+  scrollbar-width: none;          /* Firefox */
+  -ms-overflow-style: none;       /* IE 10+ */
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;                  /* Chrome / Safari */
 }
 
 /* ─── Global Button Tap Feedback ─── */
