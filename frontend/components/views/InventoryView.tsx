@@ -446,10 +446,11 @@ export default function InventoryView() {
             </div>
           ) : (
             <div className="flex flex-col gap-3">
-              {processedItems.map((item) => (
+              {processedItems.map((item, index) => (
                 <div
                   key={item.id}
-                  className="flex items-center gap-3 rounded-xl border border-outline bg-surface p-4 shadow-card hover:translate-y-[-1px] hover:shadow-md transition-all duration-200 cursor-pointer"
+                  className="stagger-item flex items-center gap-3 rounded-xl border border-outline bg-surface p-4 shadow-card hover:translate-y-[-1px] hover:shadow-md transition-all duration-200 cursor-pointer"
+                  style={{ animationDelay: `${index * 45}ms` }}
                 >
                   <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary-pale text-2xl">
                     {item.icon}
@@ -483,11 +484,15 @@ export default function InventoryView() {
 
                   <div className="flex flex-col items-end gap-2 ml-1 shrink-0">
                     <span className={`rounded-full px-2 py-1 text-[10px] font-body font-medium whitespace-nowrap ${
-                      item.daysLeft < 0 ? "bg-red-100 text-red-600 border border-red-200 animate-pulse" : 
-                      item.daysLeft <= 4 ? "bg-accent-red text-danger" : 
-                      "bg-primary-pale/50 text-primary-dark border border-primary-pale"
+                      item.daysLeft < 0
+                        ? "bg-red-100 text-red-600 border border-red-300 expiry-glow-red"
+                        : item.daysLeft <= 2
+                        ? "bg-orange-100 text-orange-700 border border-orange-300 expiry-glow-orange"
+                        : item.daysLeft <= 4
+                        ? "bg-amber-50 text-amber-700 border border-amber-200"
+                        : "bg-primary-pale/50 text-primary-dark border border-primary-pale"
                     }`}>
-                      {item.daysLeft < 0 ? "หมดอายุแล้ว" : item.daysLeft === 0 ? "หมดวันนี้" : item.daysLeft === 999 ? "ไม่มีวันหมดอายุ" : `อีก ${item.daysLeft} วัน`}
+                      {item.daysLeft < 0 ? "⚠️ หมดอายุแล้ว" : item.daysLeft === 0 ? "🔴 หมดวันนี้" : item.daysLeft === 999 ? "ไม่มีวันหมดอายุ" : `อีก ${item.daysLeft} วัน`}
                     </span>
                     <button
                       onClick={(e) => { e.stopPropagation(); handleDelete(item.id, item.name); }}

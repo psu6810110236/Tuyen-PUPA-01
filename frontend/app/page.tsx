@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useAuth } from "@/components/AuthContext";
 import AuthPage from "@/components/views/AuthPage";
 import HomeView from "@/components/views/HomeView";
@@ -30,6 +30,12 @@ const navItems: { id: ViewType; label: string; icon: React.ReactNode }[] = [
 export default function DashboardPage() {
   const { isAuthenticated, isLoading, user, logout } = useAuth();
   const [activeView, setActiveView] = useState<ViewType>("home");
+  // ─── Page Transition State ───
+  const [displayedView, setDisplayedView] = useState<ViewType>("home");
+  const [transitionClass, setTransitionClass] = useState("");
+  const prevViewRef = useRef<ViewType>("home");
+  const isTransitioning = useRef(false);
+  const VIEW_ORDER: ViewType[] = ["home", "inventory", "saved", "scanner", "recipe", "chat", "settings"];
 
   // ─── Nutrition Stats State ───
   const [todaySummary, setTodaySummary] = useState<TodaySummary | null>(null);
@@ -74,10 +80,30 @@ export default function DashboardPage() {
     }
   }, []);
 
-  const handleViewChange = (view: ViewType) => {
-    setActiveView(view);
+  const handleViewChange = useCallback((view: ViewType) => {
+    if (view === activeView || isTransitioning.current) return;
     localStorage.setItem("tuyen_active_view", view);
-  };
+
+    const prevIdx = VIEW_ORDER.indexOf(prevViewRef.current);
+    const nextIdx = VIEW_ORDER.indexOf(view);
+    const direction = nextIdx >= prevIdx ? "right" : "left";
+    prevViewRef.current = view;
+    isTransitioning.current = true;
+
+    // Trigger exit animation on current, then swap & enter new
+    setTransitionClass(direction === "right" ? "page-exit-left" : "page-exit-right");
+
+    setTimeout(() => {
+      setDisplayedView(view);
+      setActiveView(view);
+      setTransitionClass(direction === "right" ? "page-enter-right" : "page-enter-left");
+      setTimeout(() => {
+        setTransitionClass("");
+        isTransitioning.current = false;
+      }, 350);
+    }, 180);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeView]);
 
   // ─── Loading State ───
   if (isLoading) {
@@ -148,7 +174,7 @@ export default function DashboardPage() {
 
   // ─── Render Active View ───
   const renderView = () => {
-    switch (activeView) {
+    switch (displayedView) {
       case "home":
         return <HomeView />;
       case "inventory":
@@ -174,7 +200,7 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* ─── Top Header Bar ─── */}
-      <header className="sticky top-0 z-50 border-b border-outline bg-surface/80 backdrop-blur-md shadow-sm">
+      <header className="sticky top-0 z-50 glass-header">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-3">
           <div className="flex items-center gap-3">
             {/* Desktop Logo */}
@@ -199,11 +225,13 @@ export default function DashboardPage() {
         </div>
       </header>
 
-      {/* ─── Main Two-Column Layout ─── */}
+        {/* ─── Main Two-Column Layout ─── */}
       <div className="mx-auto flex max-w-7xl gap-6 px-6 py-6 pb-24 lg:pb-6">
         {/* ─── Left Column: Dynamic Content ─── */}
-        <main className="flex-1 min-w-0 animate-fade-in">
-          {renderView()}
+        <main className="flex-1 min-w-0 overflow-hidden">
+          <div className={`view-transition-container ${transitionClass}`}>
+            {renderView()}
+          </div>
         </main>
 
         {/* ─── Right Column: Sticky Sidebar ─── */}
@@ -251,7 +279,7 @@ export default function DashboardPage() {
                   <button
                     key={item.id}
                     onClick={() => handleViewChange(item.id)}
-                    className={`flex items-center gap-3 rounded-lg px-3.5 py-2 text-left text-xs font-body font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 ${
+                    className={`flex items-center gap-3 rounded-lg px-3.5 py-2 text-left text-xs font-body font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 active:scale-95 ${
                       activeView === item.id
                         ? "bg-primary text-white shadow-sm font-semibold"
                         : "text-foreground-secondary hover:bg-surface-alt hover:text-foreground"
@@ -285,7 +313,7 @@ export default function DashboardPage() {
       </div>
 
       {/* ─── Mobile Bottom Navigation ─── */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-outline bg-surface/90 backdrop-blur-md shadow-lg lg:hidden">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 glass-nav lg:hidden">
         <div className="mx-auto flex max-w-md items-center justify-between px-6 py-2 relative">
           {mobileNavItems.map((item) => {
             // Render the massive FAB in the middle (scanner)
@@ -295,7 +323,7 @@ export default function DashboardPage() {
                   key={item.id}
                   onClick={() => handleViewChange(item.id)}
                   aria-label={item.label}
-                  className="relative -top-5 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-white shadow-lg border-2 border-surface transition-transform hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+                  className="no-tap-scale fab-glow relative -top-5 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-white border-2 border-surface transition-transform hover:scale-105 active:scale-90 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
                 >
                   <Camera className="h-7 w-7" />
                 </button>
@@ -307,7 +335,7 @@ export default function DashboardPage() {
                 key={item.id}
                 onClick={() => handleViewChange(item.id)}
                 aria-label={item.label}
-                className={`flex flex-col items-center gap-1 rounded-xl px-2 py-2 transition-airy focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-pale ${
+                className={`flex flex-col items-center gap-1 rounded-xl px-2 py-2 transition-airy active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-pale ${
                   activeView === item.id
                     ? "text-primary-dark"
                     : "text-foreground-muted hover:text-foreground-secondary"

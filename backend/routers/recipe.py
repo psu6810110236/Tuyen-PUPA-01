@@ -56,15 +56,6 @@ async def search_recipes(q: str, current_user: User = Depends(get_current_user))
     return await recipe_service.search_recipe_by_name(q)
 
 
-@router.get("/{recipe_id}")
-async def get_recipe_details(
-    recipe_id: int, 
-    db: Session = Depends(get_db), 
-    current_user: User = Depends(get_current_user)
-):
-    """ดึงขั้นตอนวิธีทำและส่วนผสมเชิงลึกของเมนูที่เลือกมาแสดงผล (เปรียบเทียบตู้เย็นให้อัตโนมัติ)"""
-    return await recipe_service.check_recipe_inventory(current_user.id, recipe_id, db)
-
 @router.post("/saved", response_model=RecipeSavedResponse, status_code=status.HTTP_201_CREATED)
 async def save_user_recipe(payload: RecipeSaveRequest, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     """ผู้ใช้คลิกเลือกบันทึกเมนูที่ตนเองชื่นชอบเก็บไว้ในฐานข้อมูลประจำตัว"""
@@ -82,6 +73,15 @@ async def remove_saved_recipe(recipe_id: int, db: Session = Depends(get_db), cur
     if not success:
         raise HTTPException(status_code=404, detail="ไม่พบรายการเมนูอาหารนี้ที่เคยเซฟไว้ในระบบของคุณ")
     return {"status": "success", "message": "ลบสูตรอาหารที่บันทึกไว้สำเร็จแล้ว"}
+
+@router.get("/{recipe_id}")
+async def get_recipe_details(
+    recipe_id: int, 
+    db: Session = Depends(get_db), 
+    current_user: User = Depends(get_current_user)
+):
+    """ดึงขั้นตอนวิธีทำและส่วนผสมเชิงลึกของเมนูที่เลือกมาแสดงผล (เปรียบเทียบตู้เย็นให้อัตโนมัติ)"""
+    return await recipe_service.check_recipe_inventory(current_user.id, recipe_id, db)
 
 @router.post("/{recipe_id}/cook")
 async def cook_recipe(

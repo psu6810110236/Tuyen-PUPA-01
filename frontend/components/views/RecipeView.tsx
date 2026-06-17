@@ -428,11 +428,12 @@ export default function RecipeView() {
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {displayRecipes.map((recipe) => (
+          {displayRecipes.map((recipe, index) => (
             <div
               key={recipe.id}
               onClick={() => openDetail(recipe.id)}
-              className="group cursor-pointer overflow-hidden rounded-2xl border border-outline bg-surface shadow-card transition-all duration-200 hover:translate-y-[-2px] hover:shadow-md"
+              className="stagger-item group cursor-pointer overflow-hidden rounded-2xl border border-outline bg-surface shadow-card transition-all duration-200 hover:translate-y-[-2px] hover:shadow-md"
+              style={{ animationDelay: `${index * 60}ms` }}
             >
               {/* Recipe Image */}
               <div className="relative h-40 bg-gradient-to-br from-primary-pale to-secondary-light">

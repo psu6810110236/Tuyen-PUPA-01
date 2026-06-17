@@ -327,11 +327,12 @@ export default function SavedRecipesView() {
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {savedList.map((recipe) => (
+          {savedList.map((recipe, index) => (
             <div
               key={recipe.id}
               onClick={() => openDetail(recipe.spoonacular_id)}
-              className="group cursor-pointer flex flex-col justify-between overflow-hidden rounded-xl border border-outline bg-surface shadow-card transition-all duration-200 hover:translate-y-[-1px] hover:shadow-md"
+              className="stagger-item group cursor-pointer flex flex-col justify-between overflow-hidden rounded-xl border border-outline bg-surface shadow-card transition-all duration-200 hover:translate-y-[-1px] hover:shadow-md"
+              style={{ animationDelay: `${index * 55}ms` }}
             >
               <div>
                 {/* Recipe Image preview */}

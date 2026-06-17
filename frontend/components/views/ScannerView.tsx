@@ -207,8 +207,8 @@ export default function ScannerView() {
         className={`relative flex min-h-[200px] cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed p-8 transition-all duration-300 ${isScanning
             ? "border-primary-light bg-surface-alt cursor-wait animate-pulse"
             : isDragging
-              ? "border-primary bg-primary-pale/50 shadow-glow-teal scale-[1.01]"
-              : "border-outline hover:border-primary-light hover:bg-surface-alt"
+              ? "border-primary bg-primary-pale/50 scale-[1.01] shadow-[0_0_0_4px_rgba(37,99,235,0.15),0_0_32px_8px_rgba(37,99,235,0.2)]"
+              : "border-outline hover:border-primary-light hover:bg-surface-alt scanner-zone-glow"
           }`}
       >
         <input

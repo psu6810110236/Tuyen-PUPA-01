@@ -79,6 +79,7 @@
   --animate-fade-in: fade-in 0.3s ease-out;
   --animate-slide-up: slide-up 0.4s ease-out;
   --animate-scale-in: scale-in 0.2s ease-out;
+  --animate-stagger-item: stagger-item 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 @keyframes fade-in {
@@ -94,6 +95,61 @@
 @keyframes scale-in {
   0% { opacity: 0; transform: scale(0.95); }
   100% { opacity: 1; transform: scale(1); }
+}
+
+/* ─── Staggered List Item Animation ─── */
+@keyframes stagger-item {
+  0% { opacity: 0; transform: translateY(14px) scale(0.98); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.stagger-item {
+  animation: var(--animate-stagger-item);
+  animation-fill-mode: both;
+}
+
+/* ─── iOS-Style Page Slide Transitions ─── */
+@keyframes slide-in-from-right {
+  0%   { opacity: 0; transform: translateX(40px) scale(0.98); }
+  100% { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+@keyframes slide-in-from-left {
+  0%   { opacity: 0; transform: translateX(-40px) scale(0.98); }
+  100% { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+@keyframes slide-out-to-left {
+  0%   { opacity: 1; transform: translateX(0) scale(1); }
+  100% { opacity: 0; transform: translateX(-40px) scale(0.98); }
+}
+
+@keyframes slide-out-to-right {
+  0%   { opacity: 1; transform: translateX(0) scale(1); }
+  100% { opacity: 0; transform: translateX(40px) scale(0.98); }
+}
+
+.page-enter-right {
+  animation: slide-in-from-right 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.page-enter-left {
+  animation: slide-in-from-left 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.page-exit-left {
+  animation: slide-out-to-left 0.22s cubic-bezier(0.4, 0, 1, 1) both;
+}
+
+.page-exit-right {
+  animation: slide-out-to-right 0.22s cubic-bezier(0.4, 0, 1, 1) both;
+}
+
+/* ─── Page transition wrapper ─── */
+.view-transition-container {
+  position: relative;
+  overflow: hidden;
+  will-change: transform, opacity;
 }
 
 /* ─── Base Styles ─── */
@@ -135,6 +191,118 @@ body {
 .hover-lift:hover {
   transform: translateY(-1px);
   box-shadow: var(--shadow-elevated);
+}
+
+/* ─── Global Button Tap Feedback ─── */
+button {
+  transition: transform 0.12s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.12s ease,
+              box-shadow 0.12s ease;
+}
+
+button:active {
+  transform: scale(0.96);
+}
+
+/* Prevent scale override on FAB which already has its own transform */
+button.no-tap-scale:active {
+  transform: none;
+}
+
+/* ─── Glassmorphism: Apple-style Frosted Glass ─── */
+.glass-nav {
+  /* Multi-layer frosted glass: blur + saturation boost + translucency */
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(20px) saturate(180%) brightness(1.05);
+  -webkit-backdrop-filter: blur(20px) saturate(180%) brightness(1.05);
+  border-top: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow:
+    0 -1px 0 rgba(0, 0, 0, 0.04),
+    0 -8px 24px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.glass-header {
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(24px) saturate(180%) brightness(1.04);
+  -webkit-backdrop-filter: blur(24px) saturate(180%) brightness(1.04);
+  box-shadow:
+    0 1px 0 rgba(0, 0, 0, 0.05),
+    0 4px 16px rgba(0, 0, 0, 0.04),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.04);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.6);
+}
+
+/* ─── Glow Effects ─── */
+
+/* Expiry Expired — pulsing red glow */
+@keyframes glow-red-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0),
+                0 0 8px 1px rgba(239, 68, 68, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.12),
+                0 0 14px 3px rgba(239, 68, 68, 0.28);
+  }
+}
+
+/* Expiry Soon — warm amber glow */
+@keyframes glow-orange-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0),
+                0 0 6px 1px rgba(245, 158, 11, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.1),
+                0 0 12px 2px rgba(245, 158, 11, 0.22);
+  }
+}
+
+/* AI Scanner — blue electric glow */
+@keyframes glow-blue-breathe {
+  0%, 100% {
+    box-shadow:
+      0 0 0 0 rgba(37, 99, 235, 0),
+      0 0 12px 2px rgba(37, 99, 235, 0.06),
+      inset 0 0 20px rgba(37, 99, 235, 0);
+  }
+  50% {
+    box-shadow:
+      0 0 0 4px rgba(37, 99, 235, 0.07),
+      0 0 28px 6px rgba(37, 99, 235, 0.14),
+      inset 0 0 20px rgba(37, 99, 235, 0.03);
+  }
+}
+
+/* FAB Scanner button — pulsing ring glow */
+@keyframes fab-glow-ring {
+  0%, 100% {
+    box-shadow:
+      0 0 0 0 rgba(37, 99, 235, 0.5),
+      0 4px 14px rgba(37, 99, 235, 0.35);
+  }
+  50% {
+    box-shadow:
+      0 0 0 6px rgba(37, 99, 235, 0),
+      0 4px 20px rgba(37, 99, 235, 0.5);
+  }
+}
+
+.expiry-glow-red {
+  animation: glow-red-pulse 1.8s ease-in-out infinite;
+}
+
+.expiry-glow-orange {
+  animation: glow-orange-pulse 2.4s ease-in-out infinite;
+}
+
+.scanner-zone-glow {
+  animation: glow-blue-breathe 3s ease-in-out infinite;
+}
+
+.fab-glow {
+  animation: fab-glow-ring 2.2s ease-in-out infinite;
 }
 
 @theme inline {
