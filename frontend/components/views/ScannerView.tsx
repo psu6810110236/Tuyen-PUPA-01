@@ -291,7 +291,7 @@ export default function ScannerView() {
           quantity: Number(ing.quantity) || 1,
           unit: ing.unit || "ชิ้น",
           category: ing.category || "other",
-          box_2d: normalizeBox(ing.box_2d)
+          box_2d: normalizeBox(ing.box_2d || [0, 0, 100, 100])
         };
       }).filter((item) => item.name !== "");
 
