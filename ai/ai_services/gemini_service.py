@@ -48,7 +48,10 @@ async def analyze_food_image(image_bytes: bytes, mime_type: str = "image/jpeg") 
         "walls, floors, or any non-food items. "
         "For each detected item, determine its precise location in the image as a 2D bounding box [ymin, xmin, ymax, xmax] "
         "normalized to [0, 1000] (0 is top/left, 1000 is bottom/right) tightly wrapping that specific object. "
-        "Estimate the visible quantity (typically 1.0 for a single physical instance) and determine the appropriate Thai unit and category."
+        "Estimate the visible quantity (typically 1.0 for a single physical instance).\n"
+        "Name of the item MUST be in Thai, concise, and represent a clean common food ingredient (e.g. 'ไข่ไก่', 'หมูสับ', 'นมสด', 'แครอท').\n"
+        "Category MUST be exactly one of: 'protein', 'veggie', 'fruit', 'dairy', 'grain', 'other'.\n"
+        "Unit MUST be exactly one of: 'ชิ้น', 'ฟอง', 'กรัม', 'กิโลกรัม', 'ลิตร', 'ขวด', 'ถุง', 'กล่อง', 'หัว', 'ลูก'."
     )
 
     image_part = types.Part.from_bytes(data=image_bytes, mime_type=mime_type)
