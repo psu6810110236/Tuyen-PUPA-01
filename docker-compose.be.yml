@@ -17,6 +17,8 @@ services:
       # ชี้ AI_SERVICE_URL ไปที่ IP ของเครื่อง EC2 AI Service
       - AI_SERVICE_URL=${AI_SERVICE_URL}
       - CORS_ORIGINS=${CORS_ORIGINS}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
     ports:
       - "80:8000" # เปิดสิทธิ์พอร์ต 80 เพื่อใช้เป็น Public API เข้าเครื่องได้ทันที
     restart: always
