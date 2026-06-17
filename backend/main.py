@@ -50,9 +50,9 @@ app = FastAPI()
 
 # 🔓 CORS Middleware — อนุญาตให้ Frontend (Next.js) เรียก API ข้ามโดเมนได้
 origins = ["http://localhost:3000", "http://127.0.0.1:3000"]
-cors_origins_env = os.getenv("CORS_ORIGINS")
+cors_origins_env = os.getenv("CORS_ORIGINS") or os.getenv("CORS_ALLOWED_ORIGINS")
 if cors_origins_env:
-    origins.extend([origin.strip() for origin in cors_origins_env.split(",")])
+    origins.extend([origin.strip() for origin in cors_origins_env.split(",") if origin.strip()])
 
 print(f"[CORS] Allowed Origins: {origins}")
 
