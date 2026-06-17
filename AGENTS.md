@@ -39,7 +39,7 @@ To support the team effectively, AI Assistants are designated based on their dom
   - [x] Fixed local timezone offset mismatch (UTC+7) for daily nutrition summary calculations.
   - [x] Resolved recipe ingredient matching mismatch and implemented frontend/backend cooking validation block.
   - [x] Implemented automated Thai recipe translations using optimized `gemini-3.1-flash-lite` (low latency, zero daily quota limitations).
-  - [x] Configured production Dockerfiles for frontend and AI services, and unified production deployment via `docker-compose.prod.yml` for AWS EC2.
+  - [x] Configured production Dockerfiles for frontend/AI services, and added unified + split docker-compose files for multi-instance EC2 deployments.
   - [x] Auto-generated and applied missing database migrations for newly introduced models (`ChatHistory`, `RecipeCache`, `Translation`) and resolved alembic version mismatch.
   - [x] Successfully pulled latest remote changes onto `dev` branch and resolved local file conflicts.
   - [x] Successfully pushed clean git commits to remote `dev` branch.
