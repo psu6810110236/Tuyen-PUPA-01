@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { inventoryAPI, aiAPI, type InventoryItem } from "@/lib/api";
+import { Camera, UploadCloud, Sparkles, Clock } from "lucide-react";
 
 export default function ScannerView() {
   const [isDragging, setIsDragging] = useState(false);
@@ -9,6 +10,8 @@ export default function ScannerView() {
 
   // ─── AI Scan State ───
   const [isScanning, setIsScanning] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [recentScannedNames, setRecentScannedNames] = useState<string[]>([]);
   const [scanResult, setScanResult] = useState<{
     success: boolean;
     message: string;
@@ -16,6 +19,28 @@ export default function ScannerView() {
     added: string[];
     failed: string[];
   } | null>(null);
+
+  const scanningTexts = [
+    "กำลังวิเคราะห์พิกเซลภาพ...",
+    "กำลังประมวลผลรูปทรงและสี...",
+    "ค้นหาวัตถุดิบในฐานข้อมูล...",
+    "เตรียมนำเข้าตู้เย็นอัตโนมัติ..."
+  ];
+  const [scanTextIndex, setScanTextIndex] = useState(0);
+
+  useEffect(() => {
+    const scanningTextsLength = 4; // Hardcoded to avoid dependency issues since array is static
+    let interval: NodeJS.Timeout;
+    if (isScanning) {
+      interval = setInterval(() => {
+        setScanTextIndex((prev) => (prev + 1) % scanningTextsLength);
+      }, 2500);
+    } else {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setScanTextIndex(0);
+    }
+    return () => clearInterval(interval);
+  }, [isScanning]);
 
   // ─── Manual Add Form State ───
   const [showManualForm, setShowManualForm] = useState(false);
@@ -55,6 +80,7 @@ export default function ScannerView() {
 
   // ─── Load inventory items ───
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadInventory();
   }, []);
 
@@ -125,6 +151,9 @@ export default function ScannerView() {
       return;
     }
 
+    const url = URL.createObjectURL(file);
+    setPreviewUrl(url);
+
     setIsScanning(true);
     setSubmitMessage("");
     setScanResult(null);
@@ -137,6 +166,7 @@ export default function ScannerView() {
         setScanResult(res);
         if (res.success && res.ingredients_found.length > 0) {
           setSubmitMessage(`สแกนสำเร็จ! พบ ${res.ingredients_found.length} รายการ และเพิ่มเข้าตู้เย็นแล้ว 🎉`);
+          setRecentScannedNames(res.added);
           loadInventory();
         } else {
           setSubmitMessage("สแกนภาพสำเร็จ แต่ไม่พบวัตถุดิบ 🔍");
@@ -146,6 +176,8 @@ export default function ScannerView() {
         setSubmitMessage(`เกิดข้อผิดพลาดในการสแกน: ${(err as Error).message || "กรุณาลองใหม่"} ❌`);
       } finally {
         setIsScanning(false);
+        setPreviewUrl(null);
+        URL.revokeObjectURL(url);
       }
     };
     reader.readAsDataURL(file);
@@ -177,8 +209,34 @@ export default function ScannerView() {
     other: "📦",
   };
 
+  const getExpiryStatus = (dateStr: string) => {
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    const expiry = new Date(dateStr);
+    expiry.setHours(0,0,0,0);
+    const diffTime = expiry.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays < 0) return { text: `หมดอายุแล้ว ${Math.abs(diffDays)} วัน`, color: "text-red-700 bg-red-100 border-red-200" };
+    if (diffDays === 0) return { text: "หมดอายุวันนี้!", color: "text-red-700 bg-red-100 border-red-200" };
+    if (diffDays <= 3) return { text: `เหลือ ${diffDays} วัน`, color: "text-orange-700 bg-orange-100 border-orange-200" };
+    return { text: `เหลือ ${diffDays} วัน`, color: "text-slate-600 bg-slate-100 border-slate-200" };
+  };
+
   return (
     <div className="flex flex-col gap-6 animate-fade-in">
+      <style>{`
+        @keyframes scan-laser {
+          0% { top: 0%; opacity: 0; }
+          15% { opacity: 1; }
+          85% { opacity: 1; }
+          100% { top: 100%; opacity: 0; }
+        }
+        .animate-scan-laser {
+          animation: scan-laser 2.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+        }
+      `}</style>
+
       {/* ─── Header ─── */}
       <div>
         <h2 className="text-2xl font-heading font-bold text-foreground">📸 สแกนวัตถุดิบเข้าตู้เย็น</h2>
@@ -204,11 +262,11 @@ export default function ScannerView() {
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         onClick={() => !isScanning && fileInputRef.current?.click()}
-        className={`relative flex min-h-[200px] cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed p-8 transition-all duration-300 ${isScanning
-            ? "border-primary-light bg-surface-alt cursor-wait animate-pulse"
+        className={`relative flex min-h-[240px] cursor-pointer flex-col items-center justify-center rounded-3xl border-[3px] border-dashed p-8 transition-all duration-300 group overflow-hidden ${isScanning
+            ? "border-primary-light bg-primary-pale/30 cursor-wait"
             : isDragging
-              ? "border-primary bg-primary-pale/50 scale-[1.01] shadow-[0_0_0_4px_rgba(37,99,235,0.15),0_0_32px_8px_rgba(37,99,235,0.2)]"
-              : "border-outline hover:border-primary-light hover:bg-surface-alt scanner-zone-glow"
+              ? "border-primary bg-primary/5 scale-[1.02] shadow-[0_0_40px_rgba(37,99,235,0.15)]"
+              : "border-outline hover:border-primary/50 hover:bg-surface-alt scanner-zone-glow"
           }`}
       >
         <input
@@ -221,37 +279,38 @@ export default function ScannerView() {
         />
 
         {isScanning ? (
-          <div className="flex flex-col items-center justify-center gap-3">
-            <svg className="h-10 w-10 animate-spin text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-            </svg>
-            <p className="text-base font-heading font-semibold text-primary">SmartFood AI กำลังวิเคราะห์รูปภาพของคุณ...</p>
-            <p className="text-xs font-body text-foreground-muted">ระบบจะแสกนวัตถุดิบและนำเข้าตู้เย็นโดยอัตโนมัติ</p>
+          <div className="flex flex-col items-center justify-center gap-4 z-10 w-full">
+            <div className="relative w-32 h-32 bg-slate-100 rounded-3xl overflow-hidden border-[3px] border-white shadow-xl flex items-center justify-center">
+              {previewUrl ? (
+                <img src={previewUrl} alt="Scanning preview" className="w-full h-full object-cover brightness-75 contrast-110" />
+              ) : (
+                <Camera className="w-12 h-12 text-primary/30" />
+              )}
+              <div className="absolute left-0 right-0 h-[4px] bg-primary shadow-[0_0_20px_5px_rgba(92,124,250,0.8)] animate-scan-laser" />
+            </div>
+            <div className="text-center h-16">
+              <p className="text-lg font-heading font-extrabold text-primary flex items-center justify-center gap-2 drop-shadow-sm">
+                <Sparkles className="w-5 h-5 animate-pulse text-amber-400" />
+                SmartFood AI
+              </p>
+              <p className="text-sm font-body font-bold text-slate-500 mt-1.5 transition-opacity duration-300" key={scanTextIndex}>
+                {scanningTexts[scanTextIndex]}
+              </p>
+            </div>
           </div>
         ) : (
           <>
             {/* Upload Icon */}
-            <div className={`mb-4 rounded-2xl p-4 transition-all duration-300 ${isDragging ? "bg-primary-pale" : "bg-surface-alt"}`}>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className={`h-12 w-12 transition-colors duration-300 ${isDragging ? "text-primary-dark" : "text-foreground-muted"}`}
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={1}
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
-                <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z" />
-              </svg>
+            <div className={`mb-5 rounded-3xl p-5 transition-all duration-300 ${isDragging ? "bg-primary text-white shadow-glow-blue scale-110 rotate-3" : "bg-white border border-slate-100 text-slate-400 shadow-sm group-hover:scale-105 group-hover:text-primary group-hover:border-primary/20"}`}>
+              <UploadCloud className="w-10 h-10" />
             </div>
 
-            <p className="text-base font-heading font-semibold text-foreground">
-              {isDragging ? "ปล่อยเพื่ออัปโหลด" : "ลากวางรูปภาพวัตถุดิบที่นี่"}
+            <p className={`text-xl font-heading font-extrabold transition-colors ${isDragging ? "text-primary drop-shadow-sm" : "text-slate-800"}`}>
+              {isDragging ? "ปล่อยรูปเลย! AI รอวิเคราะห์อยู่ ✨" : "ลากวางรูปภาพวัตถุดิบที่นี่"}
             </p>
-            <p className="mt-1 text-sm font-body text-foreground-secondary">หรือคลิกเพื่อเลือกไฟล์</p>
-            <p className="mt-2 text-xs font-body text-foreground-muted">รองรับไฟล์ JPG, PNG, HEIC · ขนาดไม่เกิน 10MB</p>
-            <p className="mt-1.5 text-xs font-body text-accent-green font-semibold">✨ วิเคราะห์ด้วยระบบ AI Vision ค้นหาวัตถุดิบและนำเข้าตู้เย็นทันที</p>
+            <p className="mt-2 text-sm font-body font-medium text-slate-500">หรือคลิกเพื่อเลือกไฟล์จากเครื่อง</p>
+            <p className="mt-3 text-xs font-body font-medium text-slate-500 bg-slate-100/80 border border-slate-200 px-3 py-1 rounded-full">รองรับ JPG, PNG, HEIC · ขนาดไม่เกิน 10MB</p>
+            <p className="mt-2 text-xs font-body text-emerald-700 font-bold bg-emerald-50 border border-emerald-100 px-3 py-1 rounded-full">✨ วิเคราะห์ด้วยระบบ AI Vision ค้นหาวัตถุดิบและนำเข้าตู้เย็นทันที</p>
           </>
         )}
       </div>
@@ -301,9 +360,10 @@ export default function ScannerView() {
       </button>
 
       {/* ─── Manual Add Form ─── */}
-      {showManualForm && (
-        <form onSubmit={handleManualSubmit} className="flex flex-col gap-4 rounded-2xl border-2 border-white bg-surface p-6 shadow-soft-blue animate-fade-in">
-          <h3 className="text-sm font-heading font-semibold text-foreground">📝 เพิ่มวัตถุดิบเข้าตู้เย็น</h3>
+      <div className={`grid transition-[grid-template-rows,opacity] duration-300 ease-in-out ${showManualForm ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}>
+        <div className="overflow-hidden">
+          <form onSubmit={handleManualSubmit} className="flex flex-col gap-4 rounded-2xl border-2 border-white bg-surface p-6 shadow-soft-blue mt-2 mb-2">
+            <h3 className="text-sm font-heading font-semibold text-foreground">📝 เพิ่มวัตถุดิบเข้าตู้เย็น</h3>
 
           {/* Name */}
           <div className="flex flex-col gap-1.5">
@@ -401,7 +461,8 @@ export default function ScannerView() {
             )}
           </button>
         </form>
-      )}
+        </div>
+      </div>
 
       {/* ─── Current Inventory ─── */}
       <div>
@@ -431,21 +492,36 @@ export default function ScannerView() {
           </div>
         ) : (
           <div className="flex flex-col gap-3">
-            {inventoryItems.map((item) => (
+            {inventoryItems.map((item) => {
+              const isRecent = recentScannedNames.includes(item.name);
+              return (
               <div
                 key={item.id}
-                className="flex items-center justify-between rounded-2xl border-2 border-white bg-surface p-4 shadow-soft-blue transition-airy hover-lift"
+                className={`flex items-center justify-between rounded-2xl border-2 border-white p-4 shadow-soft-blue transition-airy hover-lift ${isRecent ? "bg-emerald-50/50 animate-[pulse_3s_ease-in-out_infinite]" : "bg-surface"}`}
               >
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary-pale text-xl">
+                  <div className={`flex h-10 w-10 items-center justify-center rounded-2xl text-xl ${isRecent ? "bg-emerald-100 shadow-inner" : "bg-primary-pale"}`}>
                     {categoryEmoji[item.category || "other"] || "📦"}
                   </div>
                   <div>
-                    <p className="text-sm font-heading font-semibold text-foreground">{item.name}</p>
-                    <p className="text-xs font-body text-foreground-muted">
-                      {item.quantity} {item.unit}
-                      {item.expiry_date && ` · หมดอายุ ${new Date(item.expiry_date).toLocaleDateString("th-TH")}`}
-                    </p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-heading font-semibold text-foreground">{item.name}</p>
+                      {isRecent && <span className="bg-emerald-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md animate-bounce">NEW ✨</span>}
+                    </div>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <p className="text-xs font-body text-foreground-muted">
+                        {item.quantity} {item.unit}
+                      </p>
+                      {item.expiry_date && (
+                        <>
+                          <span className="text-foreground-muted text-xs">·</span>
+                          <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold border shadow-sm ${getExpiryStatus(item.expiry_date).color}`}>
+                            <Clock className="w-3 h-3" />
+                            {getExpiryStatus(item.expiry_date).text}
+                          </span>
+                        </>
+                      )}
+                    </div>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -464,7 +540,8 @@ export default function ScannerView() {
                   </button>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

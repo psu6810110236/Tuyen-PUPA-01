@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { inventoryAPI, type InventoryItem } from "@/lib/api";
 import { Plus, Edit2, CheckCircle, X, Minus, Trash2, Package, Search, ShoppingBag, ShoppingCart, Circle, CheckCircle2 } from "lucide-react";
+import ExpirationCalendar from "./ExpirationCalendar";
 
 // ─── Helpers for display ───
 const getFoodEmoji = (name: string, category: string | null): string => {
@@ -42,7 +44,11 @@ const getDaysLeft = (expiryDateStr: string | null): number => {
 };
 
 export default function InventoryView() {
-  const [activeTab, setActiveTab] = useState<"fridge" | "grocery">("fridge");
+  const [mounted, setMounted] = useState(false);
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => setMounted(true), []);
+
+  const [activeTab, setActiveTab] = useState<"fridge" | "grocery" | "calendar">("fridge");
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
@@ -263,7 +269,7 @@ export default function InventoryView() {
               : "border-transparent text-foreground-secondary hover:text-foreground"
           }`}
         >
-          คลังวัตถุดิบ (Fridge Inventory)
+          คลังวัตถุดิบ
         </button>
         <button
           onClick={() => setActiveTab("grocery")}
@@ -273,11 +279,21 @@ export default function InventoryView() {
               : "border-transparent text-foreground-secondary hover:text-foreground"
           }`}
         >
-          รายการซื้อของ (Grocery List)
+          รายการซื้อของ
+        </button>
+        <button
+          onClick={() => setActiveTab("calendar")}
+          className={`flex-1 py-3 text-center text-xs sm:text-sm font-heading font-semibold border-b-2 transition-airy ${
+            activeTab === "calendar"
+              ? "border-primary text-primary"
+              : "border-transparent text-foreground-secondary hover:text-foreground"
+          }`}
+        >
+          ปฏิทินหมดอายุ
         </button>
       </div>
 
-      {activeTab === "fridge" ? (
+      {activeTab === "fridge" && (
         <>
           {submitMessage && (
             <div className={`flex items-center gap-2 rounded-xl border px-4 py-3 animate-scale-in ${
@@ -510,7 +526,8 @@ export default function InventoryView() {
             </div>
           )}
         </>
-      ) : (
+      )}
+      {activeTab === "grocery" && (
         /* ─── Grocery List Section (Merged) ─── */
         <div className="grid gap-6 md:grid-cols-3">
           {/* Left Form Panel */}
@@ -641,12 +658,16 @@ export default function InventoryView() {
           </div>
         </div>
       )}
+
+      {activeTab === "calendar" && (
+        <ExpirationCalendar items={processedItems} />
+      )}
       
       {/* ─── Empty Spacer for Bottom Nav FAB ─── */}
       <div className="h-16 lg:hidden" />
 
       {/* ─── Custom Confirmation Modal ─── */}
-      {confirmModal.isOpen && (
+      {confirmModal.isOpen && mounted && createPortal(
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-fade-in">
           <div className="w-full max-w-md rounded-2xl bg-surface border border-outline p-6 shadow-2xl animate-scale-in flex flex-col gap-4">
             <div className="flex flex-col gap-2">
@@ -677,7 +698,8 @@ export default function InventoryView() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

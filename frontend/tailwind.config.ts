@@ -9,9 +9,9 @@ const config = {
   theme: {
     extend: {
       fontFamily: {
-        // Anuphan — Thai-first Google Font (300–800), covers Thai & Latin
-        heading: ['"Anuphan"', 'sans-serif'],
-        body:    ['"Anuphan"', 'sans-serif'],
+        // LINE Seed Sans TH — Premium Modern Thai Font
+        heading: ['"LINE Seed Sans TH"', 'sans-serif'],
+        body:    ['"LINE Seed Sans TH"', 'sans-serif'],
       },
       colors: {
         // Cool Indigo-Blue — Elegant Palette
