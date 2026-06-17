@@ -1,14 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { Settings, Shield, User, Bell, Save, Sparkles, CheckCircle2 } from "lucide-react";
+import { Settings, Save, CheckCircle2 } from "lucide-react";
 
 export default function SettingsView() {
   const [calGoal, setCalGoal] = useState("2000");
   const [proteinGoal, setProteinGoal] = useState("130");
   const [carbGoal, setCarbGoal] = useState("220");
   const [fatGoal, setFatGoal] = useState("65");
-  const [notifyExpiry, setNotifyExpiry] = useState(true);
+  // Removed unused notifyExpiry state
   const [showSaved, setShowSaved] = useState(false);
 
   const handleSave = (e: React.FormEvent) => {

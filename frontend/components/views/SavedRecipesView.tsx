@@ -46,7 +46,8 @@ export default function SavedRecipesView() {
   }, []);
 
   useEffect(() => {
-    loadSavedRecipes();
+    const timer = setTimeout(() => loadSavedRecipes(), 0);
+    return () => clearTimeout(timer);
   }, [loadSavedRecipes]);
 
   // ─── Unsave Recipe from List ───
@@ -326,67 +327,64 @@ export default function SavedRecipesView() {
           <p className="text-sm font-body text-foreground-muted">ยังไม่มีสูตรอาหารที่บันทึกไว้</p>
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="flex flex-col gap-2">
           {savedList.map((recipe, index) => (
             <div
               key={recipe.id}
               onClick={() => openDetail(recipe.spoonacular_id)}
-              className="stagger-item group cursor-pointer flex flex-col justify-between overflow-hidden rounded-xl border border-outline bg-surface shadow-card transition-all duration-200 hover:translate-y-[-1px] hover:shadow-md"
-              style={{ animationDelay: `${index * 55}ms` }}
+              className="stagger-item group flex cursor-pointer items-center gap-3 rounded-2xl border border-outline bg-white px-3 py-3 shadow-sm transition-all duration-200 hover:border-primary/30 hover:shadow-md hover:bg-primary-pale/20"
+              style={{ animationDelay: `${index * 45}ms` }}
             >
-              <div>
-                {/* Recipe Image preview */}
-                <div className="relative h-36 bg-gradient-to-br from-primary-pale to-secondary-light overflow-hidden">
-                  {recipe.image_url ? (
-                    <img
-                      src={recipe.image_url}
-                      alt={recipe.title}
-                      className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                    />
-                  ) : (
-                    <div className="flex h-full items-center justify-center bg-sky-50/50">
-                      <ChefHat className="h-8 w-8 text-primary" />
-                    </div>
-                  )}
-                  <button
-                    onClick={(e) => handleUnsave(recipe.spoonacular_id, e)}
-                    className="absolute top-3 right-3 flex h-8 w-8 items-center justify-center rounded-full bg-white/80 text-red-500 shadow-sm backdrop-blur-sm transition-colors hover:bg-white hover:text-red-600"
-                    title="ลบออกจากรายการโปรด"
-                  >
-                    <Heart className="h-4 w-4 fill-red-500" />
-                  </button>
-                </div>
-
-                <div className="p-4">
-                  <h4 className="font-heading font-bold text-foreground group-hover:text-primary transition-colors text-base line-clamp-2 min-h-[3rem]">
-                    {recipe.title}
-                  </h4>
-                  <div className="mt-2 flex items-center gap-3 text-xs font-body text-foreground-secondary">
-                    {recipe.ready_in_minutes && recipe.ready_in_minutes > 0 && (
-                      <span className="flex items-center gap-1">
-                        <Clock className="h-3.5 w-3.5" />
-                        {recipe.ready_in_minutes} นาที
-                      </span>
-                    )}
-                    {recipe.servings && recipe.servings > 0 && (
-                      <span className="flex items-center gap-1">
-                        <Users className="h-3.5 w-3.5" />
-                        {recipe.servings} ที่
-                      </span>
-                    )}
+              {/* Thumbnail */}
+              <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-gradient-to-br from-primary-pale to-sky-50">
+                {recipe.image_url ? (
+                  <img
+                    src={recipe.image_url}
+                    alt={recipe.title}
+                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
+                ) : (
+                  <div className="flex h-full items-center justify-center">
+                    <ChefHat className="h-6 w-6 text-primary/60" />
                   </div>
+                )}
+                {/* Unsave overlay button */}
+                <button
+                  onClick={(e) => handleUnsave(recipe.spoonacular_id, e)}
+                  className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/10 transition-all"
+                  title="ลบออกจากรายการโปรด"
+                >
+                  <Heart className="h-4 w-4 fill-red-500 text-red-500 opacity-0 group-hover:opacity-100 transition-opacity drop-shadow" />
+                </button>
+              </div>
+
+              {/* Text content */}
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-heading font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-2 leading-snug">
+                  {recipe.title}
+                </p>
+                <div className="mt-1.5 flex items-center gap-3 text-[11px] font-body text-foreground-muted">
+                  {recipe.ready_in_minutes && recipe.ready_in_minutes > 0 && (
+                    <span className="flex items-center gap-1">
+                      <Clock className="h-3 w-3" />
+                      {recipe.ready_in_minutes} นาที
+                    </span>
+                  )}
+                  {recipe.servings && recipe.servings > 0 && (
+                    <span className="flex items-center gap-1">
+                      <Users className="h-3 w-3" />
+                      {recipe.servings} ที่
+                    </span>
+                  )}
                 </div>
               </div>
 
-              <div className="mx-4 mb-4 border-t border-outline/50 pt-3 flex items-center justify-between">
-                <span className="text-[10px] font-body text-primary font-semibold flex items-center gap-1">
-                  ดูวิธีทำอาหาร <ArrowRight className="h-3 w-3" />
-                </span>
-                <ChefHat className="h-4 w-4 text-foreground-muted opacity-40" />
-              </div>
+              {/* Arrow */}
+              <ArrowRight className="h-4 w-4 text-foreground-muted/50 shrink-0 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
             </div>
           ))}
         </div>
+
       )}
     </div>
   );

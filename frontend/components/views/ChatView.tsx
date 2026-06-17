@@ -99,9 +99,10 @@ export default function ChatView() {
     if (activeId) localStorage.setItem(ACTIVE_KEY, activeId);
   }, [activeId]);
 
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [sessions, activeId]);
+  // ── Disable auto-scroll to bottom as requested ──
+  // useEffect(() => {
+  //   bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  // }, [sessions, activeId]);
 
   const activeSession = sessions.find((s) => s.id === activeId);
 
@@ -178,7 +179,7 @@ export default function ChatView() {
   };
 
   // ─── Sidebar panel — shared between drawer & desktop ───
-  const SidebarContent = () => (
+  const renderSidebarContent = () => (
     <div className="flex h-full flex-col">
       {/* New Chat */}
       <div className="p-3">
@@ -223,8 +224,8 @@ export default function ChatView() {
 
   return (
     // Fix #4: height accounts for global header (56px) + py-6 (24px) + mobile bottom nav (64px)
-    // Desktop: header (56px) + py-6 (24px) = 80px total overhead
-    <div className="relative flex h-[calc(100vh-200px)] md:h-[calc(100vh-104px)] rounded-2xl border border-[#E5E7EB] bg-[#F8F9FB] shadow-card animate-fade-in overflow-hidden">
+    // Height: mobile gets full space (no outer padding now), desktop keeps its padding
+    <div className="relative flex h-[calc(100vh-120px)] md:h-[calc(100vh-104px)] rounded-none md:rounded-2xl border-0 md:border md:border-[#E5E7EB] bg-[#F8F9FB] shadow-none md:shadow-card animate-fade-in overflow-hidden">
 
       {/* ─── Mobile Drawer Backdrop ─── */}
       {mobileDrawerOpen && (
@@ -250,12 +251,12 @@ export default function ChatView() {
             <X className="h-4 w-4 text-foreground-muted" />
           </button>
         </div>
-        <SidebarContent />
+        {renderSidebarContent()}
       </div>
 
       {/* ─── Desktop Sidebar (md+) ─── */}
       <div className="hidden md:flex w-52 shrink-0 flex-col border-r border-[#E5E7EB] bg-white">
-        <SidebarContent />
+        {renderSidebarContent()}
       </div>
 
       {/* ─── Chat Area ─── */}
@@ -349,8 +350,8 @@ export default function ChatView() {
         </div>
 
         {/* Fix #4 & #5: Input bar — text field is primary CTA, send button prominent */}
-        {/* pb-2 gives breathing room; the outer page wrapper already handles bottom nav offset */}
-        <div className="shrink-0 border-t border-[#E5E7EB] bg-white px-3 py-2.5">
+        {/* pb-12 on mobile ensures it clears the floating bottom navigation bar and camera button perfectly */}
+        <div className="shrink-0 border-t border-[#E5E7EB] bg-white px-3 pt-2.5 pb-12 md:pb-2.5">
           <div className="flex items-center gap-2">
             {/* Fix #5: Input is the primary CTA — full width, styled prominently */}
             <input
