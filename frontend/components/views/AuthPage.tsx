@@ -61,7 +61,7 @@ export default function AuthPage() {
       const g = (window as any).google;
       if (g) {
         g.accounts.id.initialize({
-          client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "22020700185-lvcldg8sdovfljg4s9jl86hm76e6292k.apps.googleusercontent.com",
+          client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "408931547857-7h808kgru96q0ij7ej4o2vstmkdo5iho.apps.googleusercontent.com",
           callback: handleGoogleCredentialResponse,
         });
         

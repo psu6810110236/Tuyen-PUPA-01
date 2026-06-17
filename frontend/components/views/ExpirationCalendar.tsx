@@ -59,7 +59,7 @@ export default function ExpirationCalendar({ items }: Props) {
     setIsSyncing(true);
 
     const client = g.accounts.oauth2.initTokenClient({
-      client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "22020700185-lvcldg8sdovfljg4s9jl86hm76e6292k.apps.googleusercontent.com",
+      client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "408931547857-7h808kgru96q0ij7ej4o2vstmkdo5iho.apps.googleusercontent.com",
       scope: "https://www.googleapis.com/auth/calendar.events",
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       callback: async (tokenResponse: any) => {
