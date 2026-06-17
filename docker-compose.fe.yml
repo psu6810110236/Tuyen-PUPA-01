@@ -1,0 +1,14 @@
+# docker-compose.fe.yml
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+    container_name: tuyen_frontend_prod
+    ports:
+      - "80:3000"
+    restart: always
