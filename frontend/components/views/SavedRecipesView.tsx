@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   recipeAPI,
   type RecipeSaved,
@@ -10,6 +10,7 @@ import {
   ChefHat,
   Heart,
   Trash2,
+  BookmarkCheck,
   ArrowRight,
   ChevronLeft,
   Clock,
@@ -28,7 +29,8 @@ export default function SavedRecipesView() {
   const [error, setError] = useState("");
   const [selectedDetail, setSelectedDetail] = useState<RecipeDetail | null>(null);
   const [isLoadingDetail, setIsLoadingDetail] = useState(false);
-  const [actionMessage, setActionMessage] = useState("");
+  const [actionMessage, setActionMessage] = useState<React.ReactNode>("");
+  const pendingDeleteRef = useRef<{ id: number; timer: NodeJS.Timeout; recipe: RecipeSaved } | null>(null);
 
   // ─── Load Saved Recipes ───
   const loadSavedRecipes = useCallback(async () => {
@@ -50,19 +52,52 @@ export default function SavedRecipesView() {
     return () => clearTimeout(timer);
   }, [loadSavedRecipes]);
 
-  // ─── Unsave Recipe from List ───
-  const handleUnsave = async (spoonacularId: number, e: React.MouseEvent) => {
-    e.stopPropagation();
-    try {
-      await recipeAPI.deleteSaved(spoonacularId);
-      setSavedList(prev => prev.filter(r => r.spoonacular_id !== spoonacularId));
-      setActionMessage("ลบสูตรอาหารออกจากรายการโปรดเรียบร้อยแล้ว ✅");
-      setTimeout(() => setActionMessage(""), 3000);
-    } catch (err) {
-      console.error("Failed to delete saved recipe:", err);
-      setActionMessage("ไม่สามารถลบสูตรอาหารได้ ❌");
-      setTimeout(() => setActionMessage(""), 3000);
+  // ─── Unsave Recipe Logic (Optimistic + Undo) ───
+  const executeOptimisticDelete = (recipe: RecipeSaved) => {
+    // If there's already a pending delete, execute it
+    if (pendingDeleteRef.current) {
+      recipeAPI.deleteSaved(pendingDeleteRef.current.id).catch(console.error);
+      clearTimeout(pendingDeleteRef.current.timer);
     }
+
+    setSavedList(prev => prev.filter(r => r.spoonacular_id !== recipe.spoonacular_id));
+    if (selectedDetail && selectedDetail.id === recipe.spoonacular_id) {
+      setSelectedDetail(null);
+    }
+
+    const timerId = setTimeout(() => {
+      recipeAPI.deleteSaved(recipe.spoonacular_id).catch(console.error);
+      if (pendingDeleteRef.current?.id === recipe.spoonacular_id) {
+        pendingDeleteRef.current = null;
+        setActionMessage("");
+      }
+    }, 5000);
+
+    pendingDeleteRef.current = { id: recipe.spoonacular_id, timer: timerId, recipe };
+
+    setActionMessage(
+      <div className="flex w-full items-center justify-between">
+        <span>ลบจากรายการที่บันทึกไว้แล้ว</span>
+        <button 
+          onClick={() => {
+            if (pendingDeleteRef.current?.id === recipe.spoonacular_id) {
+              clearTimeout(pendingDeleteRef.current.timer);
+              pendingDeleteRef.current = null;
+              setSavedList(prev => [recipe, ...prev]);
+              setActionMessage("");
+            }
+          }}
+          className="ml-4 rounded-lg bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-700 transition-colors hover:bg-emerald-200"
+        >
+          เลิกทำ (Undo)
+        </button>
+      </div>
+    );
+  };
+
+  const handleUnsave = (recipe: RecipeSaved, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    executeOptimisticDelete(recipe);
   };
 
   // ─── Open Recipe Detail ───
@@ -82,16 +117,21 @@ export default function SavedRecipesView() {
 
   // ─── Unsave from Detail View ───
   const handleUnsaveFromDetail = async (spoonacularId: number) => {
-    try {
-      await recipeAPI.deleteSaved(spoonacularId);
-      setSavedList(prev => prev.filter(r => r.spoonacular_id !== spoonacularId));
-      setSelectedDetail(null);
-      setActionMessage("ลบสูตรอาหารออกจากรายการโปรดเรียบร้อยแล้ว ✅");
-      setTimeout(() => setActionMessage(""), 3000);
-    } catch (err) {
-      console.error("Failed to delete saved recipe:", err);
-      setActionMessage("ไม่สามารถลบสูตรอาหารได้ ❌");
-      setTimeout(() => setActionMessage(""), 3000);
+    const recipe = savedList.find(r => r.spoonacular_id === spoonacularId);
+    if (recipe) {
+      executeOptimisticDelete(recipe);
+    } else {
+      try {
+        await recipeAPI.deleteSaved(spoonacularId);
+        setSavedList(prev => prev.filter(r => r.spoonacular_id !== spoonacularId));
+        setSelectedDetail(null);
+        setActionMessage("ลบจากรายการที่บันทึกไว้แล้ว ✅");
+        setTimeout(() => setActionMessage(""), 3000);
+      } catch (err) {
+        console.error("Failed to delete saved recipe:", err);
+        setActionMessage("ไม่สามารถลบสูตรอาหารได้ ❌");
+        setTimeout(() => setActionMessage(""), 3000);
+      }
     }
   };
 
@@ -131,15 +171,15 @@ export default function SavedRecipesView() {
 
         {/* Message Banner */}
         {actionMessage && (
-          <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 animate-scale-in">
-            <p className="text-sm font-body font-medium text-emerald-800">{actionMessage}</p>
+          <div className="flex w-full items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 animate-scale-in">
+            <div className="text-sm font-body font-medium text-emerald-800 w-full">{actionMessage}</div>
           </div>
         )}
 
         {/* Detail Header Card */}
         <div className="rounded-2xl border border-outline bg-surface overflow-hidden shadow-card">
           {selectedDetail.image && (
-            <img src={selectedDetail.image} alt={selectedDetail.title} className="h-56 w-full object-cover" />
+            <img src={selectedDetail.image} alt={selectedDetail.title} className="w-full aspect-video sm:aspect-[21/9] object-cover" />
           )}
           <div className="p-6">
             <h2 className="text-xl font-heading font-bold text-foreground">{selectedDetail.title}</h2>
@@ -156,9 +196,13 @@ export default function SavedRecipesView() {
               {/* Unsave Button */}
               <button
                 onClick={() => handleUnsaveFromDetail(selectedDetail.id)}
-                className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-5 py-2 text-sm font-heading font-semibold text-red-600 shadow-sm transition-colors hover:bg-red-100"
+                className="group flex items-center gap-2 rounded-xl border-2 border-primary-light bg-primary-pale/30 px-5 py-2 text-sm font-heading font-semibold text-primary-dark shadow-sm transition-all hover:bg-red-50 hover:border-red-200 hover:text-red-600"
               >
-                <Trash2 className="h-4 w-4" /> ลบออกจากรายการโปรด
+                <BookmarkCheck className="h-4 w-4 group-hover:hidden" />
+                <span className="group-hover:hidden">บันทึกเมนูนี้ไว้แล้ว</span>
+                
+                <Trash2 className="h-4 w-4 hidden group-hover:block" />
+                <span className="hidden group-hover:block">ยกเลิกการบันทึก</span>
               </button>
 
               {/* Cook Button */}
@@ -350,9 +394,9 @@ export default function SavedRecipesView() {
                 )}
                 {/* Unsave overlay button */}
                 <button
-                  onClick={(e) => handleUnsave(recipe.spoonacular_id, e)}
+                  onClick={(e) => handleUnsave(recipe, e)}
                   className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/10 transition-all"
-                  title="ลบออกจากรายการโปรด"
+                  title="ลบจากรายการที่บันทึกไว้"
                 >
                   <Heart className="h-4 w-4 fill-red-500 text-red-500 opacity-0 group-hover:opacity-100 transition-opacity drop-shadow" />
                 </button>

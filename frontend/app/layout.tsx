@@ -5,7 +5,7 @@ import { AuthProvider } from "@/components/AuthContext";
 import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
-  title: "SmartFood AI - ผู้ช่วยโภชนาการอัจฉริยะ",
+  title: "TUYEN - ผู้ช่วยโภชนาการอัจฉริยะ",
   description:
     "แอปพลิเคชันวิเคราะห์โภชนาการด้วย AI สำหรับการดูแลสุขภาพอย่างชาญฉลาด",
 };

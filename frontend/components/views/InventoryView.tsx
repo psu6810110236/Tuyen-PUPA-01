@@ -43,6 +43,19 @@ const getDaysLeft = (expiryDateStr: string | null): number => {
   return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 };
 
+export const translateCategory = (category: string | null): string => {
+  if (!category) return "อื่นๆ";
+  const cat = category.toLowerCase();
+  if (cat.includes("dairy")) return "นมและไข่";
+  if (cat.includes("produce") || cat.includes("veg") || cat.includes("fruit")) return "ผักผลไม้";
+  if (cat.includes("meat") || cat.includes("poultry") || cat.includes("protein")) return "เนื้อสัตว์";
+  if (cat.includes("seafood")) return "อาหารทะเล";
+  if (cat.includes("grain")) return "ธัญพืช";
+  if (cat.includes("pantry")) return "เครื่องปรุง/อาหารแห้ง";
+  if (cat.includes("other")) return "อื่นๆ";
+  return category;
+};
+
 export default function InventoryView() {
   const [mounted, setMounted] = useState(false);
   // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -243,6 +256,7 @@ export default function InventoryView() {
       ...item,
       daysLeft: getDaysLeft(item.expiry_date),
       icon: getFoodEmoji(item.name, item.category),
+      category: translateCategory(item.category),
     }))
     .sort((a, b) => a.daysLeft - b.daysLeft); // Sort by expiry ascending
 

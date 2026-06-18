@@ -7,7 +7,7 @@ import {
   type RecipeSearchResult,
   type RecipeDetail,
 } from "@/lib/api";
-import { ChefHat, Clock, Users, Search, Sparkles, ChevronLeft, Save, CheckCircle, AlertTriangle, ShoppingCart, MessageCircle, Info } from "lucide-react";
+import { ChefHat, Clock, Users, Search, Sparkles, ChevronLeft, Save, CheckCircle, AlertTriangle, ShoppingCart, MessageCircle, Info, BookmarkCheck } from "lucide-react";
 
 type ViewMode = "suggest" | "search" | "detail";
 
@@ -21,6 +21,7 @@ export default function RecipeView() {
   const [isSearching, setIsSearching] = useState(false);
   const [error, setError] = useState("");
   const [saveMessage, setSaveMessage] = useState("");
+  const [isSaved, setIsSaved] = useState(false);
 
   const loadSuggestions = useCallback(async () => {
     setIsLoading(true);
@@ -87,6 +88,12 @@ export default function RecipeView() {
     try {
       const detail = await recipeAPI.getDetail(id);
       setRecipeDetail(detail);
+      try {
+        const savedList = await recipeAPI.getSaved();
+        setIsSaved(savedList.some(r => r.spoonacular_id === id));
+      } catch (e) {
+        setIsSaved(false);
+      }
       setViewMode("detail");
     } catch (err) {
       console.error("Failed to load recipe detail:", err);
@@ -106,11 +113,22 @@ export default function RecipeView() {
         ready_in_minutes: recipe.readyInMinutes,
         servings: recipe.servings,
       });
-      setSaveMessage(`บันทึก "${recipe.title}" สำเร็จ! ✅`);
-      setTimeout(() => setSaveMessage(""), 3000);
+      setIsSaved(true);
     } catch (err) {
       console.error("Failed to save recipe:", err);
       setSaveMessage("ไม่สามารถบันทึกเมนูได้ ❌");
+      setTimeout(() => setSaveMessage(""), 3000);
+    }
+  };
+
+  // ─── Unsave recipe ───
+  const handleUnsave = async (recipeId: number) => {
+    try {
+      await recipeAPI.deleteSaved(recipeId);
+      setIsSaved(false);
+    } catch (err) {
+      console.error("Failed to unsave recipe:", err);
+      setSaveMessage("ไม่สามารถลบออกจากรายการที่บันทึกได้ ❌");
       setTimeout(() => setSaveMessage(""), 3000);
     }
   };
@@ -187,10 +205,22 @@ export default function RecipeView() {
             <div className="mt-4 flex flex-wrap gap-3">
               {/* Save Button */}
               <button
-                onClick={() => handleSave(recipeDetail)}
-                className="flex items-center gap-2 rounded-xl bg-primary px-5 py-2 text-sm font-heading font-semibold text-white shadow-sm transition-colors hover:bg-primary-dark"
+                onClick={() => isSaved ? handleUnsave(recipeDetail.id) : handleSave(recipeDetail)}
+                className={`flex items-center gap-2 rounded-xl px-5 py-2 text-sm font-heading font-semibold shadow-sm transition-all ${
+                  isSaved
+                    ? "bg-primary-pale/30 text-primary-dark border-2 border-primary-light hover:bg-red-50 hover:text-red-600 hover:border-red-200"
+                    : "bg-primary text-white hover:bg-primary-dark border-2 border-transparent"
+                }`}
               >
-                <Save className="h-4 w-4" /> บันทึกเมนูนี้
+                {isSaved ? (
+                  <>
+                    <BookmarkCheck className="h-4 w-4" /> บันทึกแล้ว
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-4 w-4" /> บันทึกเมนูนี้
+                  </>
+                )}
               </button>
 
               {/* Cook Button */}

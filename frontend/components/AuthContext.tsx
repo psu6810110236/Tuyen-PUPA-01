@@ -64,6 +64,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const data = await authAPI.login(username, password);
     localStorage.setItem("tuyen_token", data.access_token);
     localStorage.setItem("tuyen_user", JSON.stringify({ username }));
+    localStorage.removeItem("tuyen_active_view");
     setToken(data.access_token);
     setUser({ username });
   }, []);
@@ -82,6 +83,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     localStorage.setItem("tuyen_token", data.access_token);
     localStorage.setItem("tuyen_user", JSON.stringify({ username }));
+    localStorage.removeItem("tuyen_active_view");
     setToken(data.access_token);
     setUser({ username });
   }, []);
@@ -100,6 +102,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     localStorage.removeItem("tuyen_token");
     localStorage.removeItem("tuyen_user");
+    localStorage.removeItem("tuyen_active_view");
     setUser(null);
     setToken(null);
   }, []);

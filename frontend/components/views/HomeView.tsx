@@ -1,9 +1,12 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { createPortal } from "react-dom";
-import { AlertCircle, Clock, Leaf, Activity, Flame, Pencil, X, Save, CheckCircle2 } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 import { inventoryAPI, nutritionAPI, type InventoryItem, type TodaySummary } from "@/lib/api";
+
+import NutritionWidget from "./home/NutritionWidget";
+import CalorieGoalModal from "./home/CalorieGoalModal";
+import InventoryStatusList from "./home/InventoryStatusList";
 
 export default function HomeView() {
   const [items, setItems] = useState<InventoryItem[]>([]);
@@ -17,12 +20,20 @@ export default function HomeView() {
   const [proteinGoal, setProteinGoal] = useState("130");
   const [carbGoal, setCarbGoal] = useState("220");
   const [fatGoal, setFatGoal] = useState("65");
-  const modalRef = useRef<HTMLDivElement>(null);
   const [mounted, setMounted] = useState(false);
+
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const timer = setTimeout(() => setMounted(true), 0);
     return () => clearTimeout(timer);
+  }, []);
+
+  // Clean up any remaining timeouts on unmount (Harden fix)
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
   }, []);
 
   // Load saved goals from localStorage
@@ -43,7 +54,10 @@ export default function HomeView() {
     localStorage.setItem("goal_carbs", carbGoal);
     localStorage.setItem("goal_fat", fatGoal);
     setGoalSaved(true);
-    setTimeout(() => {
+    
+    // Harden: Clear existing timeout and track the new one
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(() => {
       setGoalSaved(false);
       setShowGoalModal(false);
     }, 1800);
@@ -88,15 +102,43 @@ export default function HomeView() {
     return diffTime;
   };
 
-  const getCategoryIcon = (category: string | null) => {
-    switch (category?.toLowerCase()) {
-      case 'dairy': return '🥛';
-      case 'produce': return '🥬';
-      case 'meat': return '🍗';
-      case 'fruit': return '🍎';
-      case 'vegetable': return '🥕';
-      default: return '📦';
-    }
+  const getFoodEmoji = (name: string, category: string | null): string => {
+    const n = name.toLowerCase();
+    if (n.includes("นม") || n.includes("milk")) return "🥛";
+    if (n.includes("ไข่") || n.includes("egg")) return "🥚";
+    if (n.includes("ไก่") || n.includes("chicken")) return "🍗";
+    if (n.includes("หมู") || n.includes("pork")) return "🥩";
+    if (n.includes("เนื้อ") || n.includes("beef")) return "🥩";
+    if (n.includes("ปลา") || n.includes("fish")) return "🐟";
+    if (n.includes("แครอท") || n.includes("carrot")) return "🥕";
+    if (n.includes("แอปเปิ้ล") || n.includes("apple")) return "🍎";
+    if (n.includes("ผัก") || n.includes("vegetable") || n.includes("spinach") || n.includes("🥬")) return "🥬";
+    if (n.includes("ส้ม") || n.includes("orange")) return "🍊";
+    if (n.includes("กล้วย") || n.includes("banana")) return "🍌";
+    if (n.includes("ชีส") || n.includes("cheese")) return "🧀";
+    if (n.includes("ขนมปัง") || n.includes("bread")) return "🍞";
+    
+    const cat = (category || "").toLowerCase();
+    if (cat.includes("dairy")) return "🥛";
+    if (cat.includes("produce") || cat.includes("veg") || cat.includes("fruit")) return "🥬";
+    if (cat.includes("meat") || cat.includes("poultry") || cat.includes("protein")) return "🥩";
+    if (cat.includes("seafood")) return "🐟";
+    if (cat.includes("grain")) return "🍞";
+    
+    return "📦";
+  };
+
+  const translateCategory = (category: string | null): string => {
+    if (!category) return "อื่นๆ";
+    const cat = category.toLowerCase();
+    if (cat.includes("dairy")) return "นมและไข่";
+    if (cat.includes("produce") || cat.includes("veg") || cat.includes("fruit")) return "ผักผลไม้";
+    if (cat.includes("meat") || cat.includes("poultry") || cat.includes("protein")) return "เนื้อสัตว์";
+    if (cat.includes("seafood")) return "อาหารทะเล";
+    if (cat.includes("grain")) return "ธัญพืช";
+    if (cat.includes("pantry")) return "เครื่องปรุง/อาหารแห้ง";
+    if (cat.includes("other")) return "อื่นๆ";
+    return category;
   };
 
   // ─── Loading Skeleton ───
@@ -124,11 +166,11 @@ export default function HomeView() {
     );
   }
 
-  // Process items
   const processedItems = items.map((item) => ({
     ...item,
     daysLeft: calculateDaysLeft(item.expiry_date),
-    icon: getCategoryIcon(item.category),
+    icon: getFoodEmoji(item.name, item.category),
+    category: translateCategory(item.category),
   }));
 
   const expiringSoon = processedItems.filter((item) => item.daysLeft <= 4).sort((a, b) => a.daysLeft - b.daysLeft);
@@ -142,6 +184,17 @@ export default function HomeView() {
     month: "long",
     day: "numeric",
   });
+
+  // ─── Calculate Dynamic Goals & Progress ───
+  const currentCalGoal = Number(calGoal) || 2000;
+  const currentProteinGoal = Number(proteinGoal) || 130;
+  const currentCarbGoal = Number(carbGoal) || 220;
+  const currentFatGoal = Number(fatGoal) || 65;
+
+  const calPct = nutritionSummary ? Math.min(100, (nutritionSummary.totals.calories / currentCalGoal) * 100) : 0;
+  const proteinPct = nutritionSummary ? Math.min(100, (nutritionSummary.totals.protein / currentProteinGoal) * 100) : 0;
+  const carbPct = nutritionSummary ? Math.min(100, (nutritionSummary.totals.carb / currentCarbGoal) * 100) : 0;
+  const fatPct = nutritionSummary ? Math.min(100, (nutritionSummary.totals.fat / currentFatGoal) * 100) : 0;
 
   return (
     <div className="flex flex-col gap-6 animate-fade-in pb-8">
@@ -163,303 +216,45 @@ export default function HomeView() {
 
       {/* ─── Nutrition Summary Widget ─── */}
       {nutritionSummary && (
-        <section className="rounded-2xl border border-outline bg-surface p-5 shadow-card animate-fade-in">
-          {/* Card header: title left, settings gear right */}
-          <div className="flex items-center gap-2 mb-4">
-            <Activity className="h-5 w-5 text-primary shrink-0" />
-            <h3 className="text-sm font-heading font-semibold text-foreground">การบริโภคอาหารวันนี้</h3>
-            <button
-              onClick={() => setShowGoalModal(true)}
-              className="ml-auto flex h-7 w-7 cursor-pointer items-center justify-center rounded-lg text-foreground-muted hover:bg-blue-50 hover:text-blue-500 active:scale-90 active:bg-blue-100 transition-all"
-              title="แก้ไขเป้าหมายแคลอรี่"
-              aria-label="แก้ไขเป้าหมายแคลอรี่"
-            >
-              <Pencil className="h-3.5 w-3.5" />
-            </button>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
-            {/* Calorie Circle / Large Progress */}
-            <div className="flex items-center gap-4 bg-surface-alt rounded-2xl p-4 border border-outline/30">
-              <div className="relative flex items-center justify-center shrink-0">
-                <svg className="w-20 h-20 transform -rotate-90">
-                  <circle
-                    cx="40"
-                    cy="40"
-                    r="34"
-                    stroke="#F1F5F9"
-                    strokeWidth="8"
-                    fill="transparent"
-                  />
-                  <circle
-                    cx="40"
-                    cy="40"
-                    r="34"
-                    stroke="url(#calorieGradient)"
-                    strokeWidth="8"
-                    fill="transparent"
-                    strokeDasharray={2 * Math.PI * 34}
-                    strokeDashoffset={2 * Math.PI * 34 * (1 - Math.min(1, (nutritionSummary.totals.calories || 0) / (nutritionSummary.goals.calories || 2000)))}
-                    strokeLinecap="round"
-                    className="transition-all duration-1000 ease-out"
-                  />
-                  <defs>
-                    <linearGradient id="calorieGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" stopColor="#4F46E5" />
-                      <stop offset="100%" stopColor="#06B6D4" />
-                    </linearGradient>
-                  </defs>
-                </svg>
-                <div className="absolute flex flex-col items-center justify-center text-center">
-                  <Flame className="h-5 w-5 text-orange-500 fill-orange-500 animate-pulse" />
-                </div>
-              </div>
-              <div className="flex flex-col">
-                <span className="text-[11px] font-body text-foreground-secondary font-medium">พลังงานที่ได้รับ</span>
-                <span className="text-xl font-heading font-extrabold text-foreground mt-0.5">
-                  {Math.round(nutritionSummary.totals.calories).toLocaleString()} <span className="text-xs font-normal text-foreground-muted">/ {Math.round(nutritionSummary.goals.calories).toLocaleString()} kcal</span>
-                </span>
-                <span className="text-[10px] font-body font-semibold text-primary mt-1">
-                  สำเร็จแล้ว {Math.round(nutritionSummary.progress_percentage.calories_pct)}%
-                </span>
-              </div>
-            </div>
-
-            {/* Macronutrients Progress */}
-            <div className="flex flex-col gap-3">
-              {/* Protein */}
-              <div className="flex flex-col gap-1">
-                <div className="flex items-center justify-between text-xs font-body font-medium">
-                  <span className="text-foreground-secondary">โปรตีน</span>
-                  <span className="text-foreground font-bold">
-                    {Math.round(nutritionSummary.totals.protein)}g <span className="text-[10px] font-normal text-foreground-muted">/ {Math.round(nutritionSummary.goals.protein)}g</span>
-                  </span>
-                </div>
-                <div className="h-2 w-full rounded-full bg-surface-alt overflow-hidden border border-outline/10">
-                  <div
-                    style={{ width: `${Math.min(100, nutritionSummary.progress_percentage.protein_pct)}%` }}
-                    className="h-full rounded-full bg-indigo-500 transition-all duration-1000 ease-out"
-                  />
-                </div>
-              </div>
-
-              {/* Carbs */}
-              <div className="flex flex-col gap-1">
-                <div className="flex items-center justify-between text-xs font-body font-medium">
-                  <span className="text-foreground-secondary">คาร์โบไฮเดรต</span>
-                  <span className="text-foreground font-bold">
-                    {Math.round(nutritionSummary.totals.carb)}g <span className="text-[10px] font-normal text-foreground-muted">/ {Math.round(nutritionSummary.goals.carb)}g</span>
-                  </span>
-                </div>
-                <div className="h-2 w-full rounded-full bg-surface-alt overflow-hidden border border-outline/10">
-                  <div
-                    style={{ width: `${Math.min(100, nutritionSummary.progress_percentage.carb_pct)}%` }}
-                    className="h-full rounded-full bg-amber-500 transition-all duration-1000 ease-out"
-                  />
-                </div>
-              </div>
-
-              {/* Fat */}
-              <div className="flex flex-col gap-1">
-                <div className="flex items-center justify-between text-xs font-body font-medium">
-                  <span className="text-foreground-secondary">ไขมัน</span>
-                  <span className="text-foreground font-bold">
-                    {Math.round(nutritionSummary.totals.fat)}g <span className="text-[10px] font-normal text-foreground-muted">/ {Math.round(nutritionSummary.goals.fat)}g</span>
-                  </span>
-                </div>
-                <div className="h-2 w-full rounded-full bg-surface-alt overflow-hidden border border-outline/10">
-                  <div
-                    style={{ width: `${Math.min(100, nutritionSummary.progress_percentage.fat_pct)}%` }}
-                    className="h-full rounded-full bg-rose-500 transition-all duration-1000 ease-out"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
+        <NutritionWidget
+          nutritionSummary={nutritionSummary}
+          setShowGoalModal={setShowGoalModal}
+          currentCalGoal={currentCalGoal}
+          calPct={calPct}
+          currentProteinGoal={currentProteinGoal}
+          proteinPct={proteinPct}
+          currentCarbGoal={currentCarbGoal}
+          carbPct={carbPct}
+          currentFatGoal={currentFatGoal}
+          fatPct={fatPct}
+        />
       )}
 
-      {/* ─── Expiring Soon Section ─── */}
-      <section className="flex flex-col gap-3">
-        <div className="flex items-center gap-2 px-1">
-          <Clock className="h-5 w-5 text-danger" />
-          <h3 className="text-sm font-heading font-semibold text-foreground">ควรทานก่อน (1-4 วัน หรือหมดอายุแล้ว)</h3>
-        </div>
-        
-        {expiringSoon.length === 0 ? (
-          <div className="rounded-2xl border border-outline bg-surface p-6 shadow-card text-center">
-            <p className="text-sm font-body text-foreground-muted">ไม่มีอาหารใกล้หมดอายุ 🥳</p>
-          </div>
-        ) : (
-          <div className="flex flex-col gap-3">
-            {expiringSoon.map((item) => (
-              <div
-                key={item.id}
-                className="flex items-center gap-4 rounded-2xl border border-outline bg-surface p-4 shadow-card transition-all duration-200 hover:translate-y-[-1px] hover:shadow-md cursor-pointer"
-              >
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-accent-red-light text-2xl">
-                  {item.icon}
-                </div>
-                <div className="flex flex-1 flex-col">
-                  <span className="text-base font-heading font-semibold text-foreground">{item.name}</span>
-                  <span className="text-xs font-body text-foreground-secondary">
-                    {item.quantity} {item.unit} {item.category ? `• ${item.category}` : ''}
-                  </span>
-                </div>
-                <div className="flex flex-col items-end">
-                  <span className={`rounded-full px-2.5 py-1 text-xs font-body font-medium ${item.daysLeft < 0 ? 'bg-danger text-white' : 'bg-accent-red text-danger'}`}>
-                    {item.daysLeft < 0 ? `หมดอายุแล้ว ${Math.abs(item.daysLeft)} วัน` : `อีก ${item.daysLeft} วัน`}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
-
-      {/* ─── Fresh Items Section ─── */}
-      <section className="flex flex-col gap-3 mt-2">
-        <div className="flex items-center gap-2 px-1">
-          <Leaf className="h-5 w-5 text-primary" />
-          <h3 className="text-sm font-heading font-semibold text-foreground">สดใหม่ (&gt; 5 วัน)</h3>
-        </div>
-
-        {freshItems.length === 0 ? (
-          <div className="rounded-2xl border border-outline bg-surface p-6 shadow-card text-center">
-            <p className="text-sm font-body text-foreground-muted">ยังไม่มีอาหารสดใหม่</p>
-          </div>
-        ) : (
-          <div className="flex flex-col gap-3">
-            {freshItems.map((item) => (
-              <div
-                key={item.id}
-                className="flex items-center gap-4 rounded-2xl border border-outline bg-surface p-4 shadow-card transition-all duration-200 hover:translate-y-[-1px] hover:shadow-md cursor-pointer"
-              >
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary-pale text-2xl">
-                  {item.icon}
-                </div>
-                <div className="flex flex-1 flex-col">
-                  <span className="text-base font-heading font-semibold text-foreground">{item.name}</span>
-                  <span className="text-xs font-body text-foreground-secondary">
-                    {item.quantity} {item.unit} {item.category ? `• ${item.category}` : ''}
-                  </span>
-                </div>
-                <div className="flex flex-col items-end">
-                  {item.daysLeft === 999 ? (
-                    <span className="text-sm font-body font-medium text-primary-dark">
-                      สดใหม่
-                    </span>
-                  ) : (
-                    <span className="text-sm font-body font-medium text-primary-dark">
-                      {item.daysLeft} วัน
-                    </span>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
+      {/* ─── Inventory Lists ─── */}
+      <InventoryStatusList 
+        expiringSoon={expiringSoon}
+        freshItems={freshItems}
+      />
       
       {/* ─── Empty Spacer for Bottom Nav FAB ─── */}
       <div className="h-16 lg:hidden" />
 
       {/* ─── Calorie Goal Modal ─── */}
-      {showGoalModal && mounted && createPortal(
-        <div
-          className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm animate-fade-in"
-          onClick={(e) => { if (e.target === e.currentTarget) setShowGoalModal(false); }}
-        >
-          <div
-            ref={modalRef}
-            className="w-full sm:max-w-md bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl border border-outline animate-scale-in"
-          >
-            {/* Modal Header */}
-            <div className="flex items-center gap-2 px-5 pt-5 pb-4 border-b border-outline">
-              <Pencil className="h-4 w-4 text-primary shrink-0" />
-              <h3 className="text-sm font-heading font-semibold text-foreground flex-1">
-                แก้ไขเป้าหมายโภชนาการ
-              </h3>
-              <button
-                onClick={() => setShowGoalModal(false)}
-                className="flex h-7 w-7 items-center justify-center rounded-lg text-foreground-muted hover:bg-surface-alt transition-all"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-
-            {/* Form — pb-24 on mobile so Save button clears the bottom nav bar */}
-            <form onSubmit={handleSaveGoals} className="flex flex-col gap-4 px-5 pt-5 pb-24 sm:pb-5">
-              {/* Success Banner */}
-              {goalSaved && (
-                <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2.5 animate-scale-in">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
-                  <span className="text-xs font-body font-semibold text-emerald-700">บันทึกเป้าหมายสำเร็จ!</span>
-                </div>
-              )}
-
-              {/* Calories — large input, most important */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-body font-semibold text-foreground">
-                  เป้าหมายแคลอรี่รายวัน
-                  <span className="ml-1 text-foreground-muted font-normal">(kcal)</span>
-                </label>
-                <input
-                  type="number"
-                  value={calGoal}
-                  onChange={e => setCalGoal(e.target.value)}
-                  min="500" max="6000"
-                  className="rounded-xl border border-outline bg-surface-alt px-4 py-2.5 text-base font-heading font-bold text-primary text-center focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10 transition-all"
-                />
-              </div>
-
-              {/* Macros Row */}
-              <div className="grid grid-cols-3 gap-3">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[11px] font-body font-medium text-foreground-secondary">โปรตีน (g)</label>
-                  <input
-                    type="number"
-                    value={proteinGoal}
-                    onChange={e => setProteinGoal(e.target.value)}
-                    min="0"
-                    className="rounded-lg border border-outline bg-surface-alt px-3 py-2 text-sm font-body text-foreground text-center focus:border-primary focus:outline-none transition-all"
-                  />
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[11px] font-body font-medium text-foreground-secondary">คาร์บ (g)</label>
-                  <input
-                    type="number"
-                    value={carbGoal}
-                    onChange={e => setCarbGoal(e.target.value)}
-                    min="0"
-                    className="rounded-lg border border-outline bg-surface-alt px-3 py-2 text-sm font-body text-foreground text-center focus:border-primary focus:outline-none transition-all"
-                  />
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[11px] font-body font-medium text-foreground-secondary">ไขมัน (g)</label>
-                  <input
-                    type="number"
-                    value={fatGoal}
-                    onChange={e => setFatGoal(e.target.value)}
-                    min="0"
-                    className="rounded-lg border border-outline bg-surface-alt px-3 py-2 text-sm font-body text-foreground text-center focus:border-primary focus:outline-none transition-all"
-                  />
-                </div>
-              </div>
-
-              {/* Save */}
-              <button
-                type="submit"
-                className="flex items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-heading font-semibold text-white hover:bg-primary-dark active:scale-95 transition-all shadow-sm mt-1"
-              >
-                <Save className="h-4 w-4" />
-                บันทึกเป้าหมาย
-              </button>
-            </form>
-          </div>
-        </div>,
-        document.body
-      )}
+      <CalorieGoalModal
+        showGoalModal={showGoalModal}
+        setShowGoalModal={setShowGoalModal}
+        mounted={mounted}
+        goalSaved={goalSaved}
+        calGoal={calGoal}
+        setCalGoal={setCalGoal}
+        proteinGoal={proteinGoal}
+        setProteinGoal={setProteinGoal}
+        carbGoal={carbGoal}
+        setCarbGoal={setCarbGoal}
+        fatGoal={fatGoal}
+        setFatGoal={setFatGoal}
+        handleSaveGoals={handleSaveGoals}
+      />
     </div>
   );
 }

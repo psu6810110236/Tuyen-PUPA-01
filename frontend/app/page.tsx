@@ -20,10 +20,10 @@ type ViewType = "home" | "inventory" | "scanner" | "recipe" | "chat" | "saved" |
 const navItems: { id: ViewType; label: string; icon: React.ReactNode }[] = [
   { id: "home", label: "หน้าหลัก (Dashboard)", icon: <Home className="h-5 w-5" /> },
   { id: "inventory", label: "คลังอาหาร (Inventory)", icon: <Package className="h-5 w-5" /> },
-  { id: "saved", label: "บันทึกไว้ (Saved)", icon: <Heart className="h-5 w-5" /> },
+  { id: "saved", label: "เมนูที่บันทึก (Saved Recipes)", icon: <Heart className="h-5 w-5" /> },
   { id: "scanner", label: "สแกน (Smart Scan)", icon: <Camera className="h-5 w-5" /> },
   { id: "recipe", label: "สูตรอาหาร (Recipes)", icon: <ChefHat className="h-5 w-5" /> },
-  { id: "chat", label: "แชท AI (AI Assistant)", icon: <MessageSquare className="h-5 w-5" /> },
+  { id: "chat", label: "แชท AI (TUYEN AI)", icon: <MessageSquare className="h-5 w-5" /> },
   { id: "settings", label: "ตั้งค่า (Settings)", icon: <Settings className="h-5 w-5" /> },
 ];
 
@@ -35,7 +35,7 @@ export default function DashboardPage() {
   const [transitionClass, setTransitionClass] = useState("");
   const prevViewRef = useRef<ViewType>("home");
   const isTransitioning = useRef(false);
-  const VIEW_ORDER: ViewType[] = ["home", "inventory", "scanner", "recipe", "chat"];
+  const VIEW_ORDER: ViewType[] = ["home", "inventory", "scanner", "recipe", "chat", "saved", "settings"];
 
   // ─── Nutrition Stats State ───
   const [todaySummary, setTodaySummary] = useState<TodaySummary | null>(null);
@@ -77,6 +77,9 @@ export default function DashboardPage() {
     if (savedView && ["home", "inventory", "scanner", "recipe", "chat", "saved", "settings"].includes(savedView)) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setActiveView(savedView);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setDisplayedView(savedView);
+      prevViewRef.current = savedView;
     }
   }, []);
 
@@ -90,12 +93,16 @@ export default function DashboardPage() {
     prevViewRef.current = view;
     isTransitioning.current = true;
 
+    // IMMEDIATE active state change for UI feedback
+    setActiveView(view);
+
     // Trigger exit animation on current, then swap & enter new
     setTransitionClass(direction === "right" ? "page-exit-left" : "page-exit-right");
 
     setTimeout(() => {
       setDisplayedView(view);
-      setActiveView(view);
+      // Wait for layout shift, then scroll to top
+      window.scrollTo({ top: 0, behavior: "instant" });
       setTransitionClass(direction === "right" ? "page-enter-right" : "page-enter-left");
       setTimeout(() => {
         setTransitionClass("");
