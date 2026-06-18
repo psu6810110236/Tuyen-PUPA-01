@@ -29,6 +29,7 @@ services:
       - SPOONACULAR_API_KEY=${SPOONACULAR_API_KEY}
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - CORS_ORIGINS=${CORS_ORIGINS}
 
     depends_on:
       - postgres_db
@@ -53,10 +54,10 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+        - NEXT_PUBLIC_GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
     container_name: tuyen_frontend_prod
-    environment:
-      # สำหรับใน Production จะตั้งชี้ไปหา API หลังบ้าน
-      - NEXT_PUBLIC_API_URL=http://localhost:8000
     ports:
       - "3000:3000"
     depends_on:

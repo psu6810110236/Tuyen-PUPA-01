@@ -26,6 +26,12 @@ export default function ScannerView() {
     category: string;
     box_2d: number[];
   }>>([]);
+  const [rawDetections, setRawDetections] = useState<Array<{
+    name: string;
+    quantity: number;
+    unit: string;
+    box_2d: number[];
+  }>>([]);
   const [isZoomed, setIsZoomed] = useState(false);
 
   const scanningTexts = [
@@ -75,6 +81,29 @@ export default function ScannerView() {
     { value: "other", label: "📦  อื่นๆ" },
   ];
 
+  const formatQuantity = (qty: number, unit: string): number => {
+    const integerUnits = ["ฟอง", "ชิ้น", "ขวด", "ถุง", "กล่อง", "หัว", "ลูก"];
+    if (integerUnits.includes(unit)) {
+      return Math.round(qty);
+    }
+    return qty;
+  };
+
+  const activeNames = new Set(detectedItems.map((item) => item.name.trim().toLowerCase()));
+  const visibleDetections = rawDetections
+    .map((det) => {
+      const matchedItem = detectedItems.find(
+        (item) => item.name.trim().toLowerCase() === det.name.trim().toLowerCase()
+      );
+      return {
+        ...det,
+        name: matchedItem ? matchedItem.name : det.name,
+        unit: matchedItem ? matchedItem.unit : det.unit,
+        quantity: matchedItem ? matchedItem.quantity : det.quantity,
+      };
+    })
+    .filter((det) => activeNames.has(det.name.trim().toLowerCase()));
+
   const normalizeBox = (box: number[]): number[] => {
     if (!box || box.length !== 4) return [0, 0, 100, 100];
     try {
@@ -93,7 +122,17 @@ export default function ScannerView() {
 
   const updateDetectedItemField = (index: number, field: string, value: string | number) => {
     setDetectedItems((prev) =>
-      prev.map((item, idx) => (idx === index ? { ...item, [field]: value } : item))
+      prev.map((item, idx) => {
+        if (idx === index) {
+          const updatedVal = field === "quantity" ? Number(value) || 0 : value;
+          const updatedItem = { ...item, [field]: updatedVal };
+          if (field === "quantity" || field === "unit") {
+            updatedItem.quantity = formatQuantity(updatedItem.quantity, updatedItem.unit);
+          }
+          return updatedItem;
+        }
+        return item;
+      })
     );
   };
 
@@ -108,7 +147,7 @@ export default function ScannerView() {
     try {
       const bulkItems = detectedItems.map((item) => ({
         name: item.name.trim(),
-        quantity: Number(item.quantity) || 1,
+        quantity: formatQuantity(Number(item.quantity) || 1, item.unit),
         unit: item.unit,
         category: item.category,
         added_by: "scan",
@@ -117,6 +156,7 @@ export default function ScannerView() {
       const addedItems = await inventoryAPI.addBulk(bulkItems);
       setSubmitMessage(`สแกนและนำเข้าตู้เย็นสำเร็จ ${addedItems.length} รายการ! ✅`);
       setDetectedItems([]);
+      setRawDetections([]);
       setPreviewUrl(null);
       setScanResult(null);
       loadInventory();
@@ -249,6 +289,7 @@ export default function ScannerView() {
     setSubmitMessage("");
     setScanResult(null);
     setDetectedItems([]);
+    setRawDetections([]);
 
     // 1. Show raw file preview immediately for premium UX (no waiting)
     const previewReader = new FileReader();
@@ -277,10 +318,32 @@ export default function ScannerView() {
         };
       }).filter((item) => item.name !== "");
 
-      setDetectedItems(items);
+      // Store raw individual detections for rendering bounding boxes on the image
+      setRawDetections(items);
+
+      // Group identical items by name for the confirmation list and DB storage
+      const groupedMap: Record<string, typeof items[0]> = {};
+      items.forEach((item: any) => {
+        const key = item.name.trim().toLowerCase();
+        if (groupedMap[key]) {
+          groupedMap[key].quantity += item.quantity;
+          if (groupedMap[key].category === "other" && item.category !== "other") {
+            groupedMap[key].category = item.category;
+          }
+        } else {
+          groupedMap[key] = { ...item };
+        }
+      });
+
+      const groupedItems = Object.values(groupedMap).map((item: any) => ({
+        ...item,
+        quantity: formatQuantity(item.quantity, item.unit)
+      }));
+
+      setDetectedItems(groupedItems);
       
-      if (items.length > 0) {
-        setSubmitMessage(`สแกนสำเร็จ! พบวัตถุดิบ ${items.length} รายการ กรุณาตรวจสอบก่อนบันทึกเข้าคลัง 👇`);
+      if (groupedItems.length > 0) {
+        setSubmitMessage(`สแกนสำเร็จ! พบวัตถุดิบ ${groupedItems.length} ชนิด (แยกตรวจจับ ${items.length} ชิ้น) กรุณาตรวจสอบก่อนบันทึก 👇`);
       } else {
         setSubmitMessage("สแกนภาพสำเร็จ แต่ไม่พบวัตถุดิบ 🔍");
       }
@@ -462,7 +525,7 @@ export default function ScannerView() {
             )}
 
             {/* Bounding boxes overlay */}
-            {!isScanning && detectedItems.map((det, idx) => {
+            {!isScanning && visibleDetections.map((det, idx) => {
               const [ymin, xmin, ymax, xmax] = det.box_2d;
               const top = `${ymin}%`;
               const left = `${xmin}%`;
@@ -808,7 +871,7 @@ export default function ScannerView() {
               className="w-full h-auto block rounded-xl max-h-[85vh] object-contain"
             />
             {/* Bounding boxes overlay on zoomed image */}
-            {detectedItems.map((det, idx) => {
+            {visibleDetections.map((det, idx) => {
               const [ymin, xmin, ymax, xmax] = det.box_2d;
               const top = `${ymin}%`;
               const left = `${xmin}%`;
