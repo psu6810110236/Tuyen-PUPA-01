@@ -22,7 +22,8 @@
 
 | Commit Hash | หัวข้อการเปลี่ยนแปลง | รายละเอียดและสิ่งที่ทำ |
 | :--- | :--- | :--- |
-| **`TBD`** | test: implement comprehensive test suite and fix security/bulk add bugs | **การทดสอบ**: สร้างและรันชุดทดสอบ 100+ cases สำหรับ Backend (Pytest) และเพิ่มระบบ E2E Testing (Playwright) รวมถึงแก้ไขบั๊ก Security ใน `users` และบั๊ก Duplicate ใน `inventory` |
+| **`TBD`** | refactor(frontend): migrate SPA to Next.js App Router for proper URL routing | **โครงสร้าง**: ปรับปรุงระบบ Frontend จากหน้าเดียว (SPA) เป็นระบบ App Router แบ่งโฟลเดอร์เพื่อให้ URL อัปเดตและสามารถแชร์ลิงก์ได้ |
+| **`ea86fd2`** | test: implement comprehensive test suite and fix security/bulk add bugs | **การทดสอบ**: สร้างและรันชุดทดสอบ 100+ cases สำหรับ Backend (Pytest) และเพิ่มระบบ E2E Testing (Playwright) รวมถึงแก้ไขบั๊ก Security ใน `users` และบั๊ก Duplicate ใน `inventory` |
 | **`5458cca`** | feat(auth): implement Google OAuth sign-in flow on backend and frontend | **ฟีเจอร์**: เพิ่มปุ่มล็อกอินด้วย Google ในหน้าล็อกอิน, เขียน Endpoint รองรับการยืนยัน ID Token บน Backend และจัดการลงทะเบียนบัญชีด้วย Email แบบอัตโนมัติ |
 | **`6fcc1b7`** | security(auth): upgrade jwt key config to cryptographic secure key | **ความปลอดภัย**: ปรับปรุง Secret Key สำหรับสิทธิ์ความปลอดภัยการถอด/เข้ารหัส JWT ให้ใช้ Cryptographic Key ที่มีความปลอดภัยสูง |
 | **`bc39e8c`** | chore(deps): pin dependency versions for backend and ai services | **ความเสถียร**: ล็อกเวอร์ชันของไลบรารีทั้งหมดใน `requirements.txt` ป้องกันไม่ให้แอปพังเมื่ออัปเกรดเวอร์ชันของ Python Package |
