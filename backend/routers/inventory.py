@@ -96,6 +96,7 @@ def add_inventory_bulk(
 ):
     from sqlalchemy import func
     new_items = []
+    seen_ids = set()  # 🔧 FIX: ป้องกัน item เดิมถูก append ซ้ำเมื่อชื่อซ้ำกันในชุดเดียวกัน
     for item_data in payload.items:
         name_stripped = item_data.name.strip()
         unit_stripped = item_data.unit.strip()
@@ -113,7 +114,9 @@ def add_inventory_bulk(
             if item_data.expiry_date:
                 existing_item.expiry_date = item_data.expiry_date
             db.flush()  # ทำการ flush เพื่อให้การลูปเช็กรอบถัดไปมองเห็นการแก้ไข
-            new_items.append(existing_item)
+            if existing_item.id not in seen_ids:
+                new_items.append(existing_item)
+                seen_ids.add(existing_item.id)
         else:
             new_item = InventoryItem(
                 user_id=current_user.id,
@@ -127,12 +130,14 @@ def add_inventory_bulk(
             db.add(new_item)
             db.flush()  # ทำการ flush เพื่อให้การลูปเช็กรอบถัดไปมองเห็นวัตถุดิบใหม่
             new_items.append(new_item)
+            seen_ids.add(new_item.id)
     
     db.commit()
     for item in new_items:
         db.refresh(item)
         
     return new_items
+
 
 class InventoryUpdateSchema(BaseModel):
     name: Optional[str] = None
