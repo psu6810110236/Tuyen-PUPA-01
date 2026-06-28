@@ -21,6 +21,8 @@ type ScannerDropzoneProps = {
   handleDrop: (e: React.DragEvent) => void;
   handleFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleResetScan: () => void;
+  handleStartScan: () => void;
+  hasDetections: boolean;
 };
 
 export default function ScannerDropzone({
@@ -38,6 +40,8 @@ export default function ScannerDropzone({
   handleDrop,
   handleFileChange,
   handleResetScan,
+  handleStartScan,
+  hasDetections,
 }: ScannerDropzoneProps) {
   return (
     <>
@@ -89,7 +93,7 @@ export default function ScannerDropzone({
               <div className="inline-flex items-center gap-1.5 rounded-full bg-primary-pale/50 px-3 py-1.5 border border-primary/10">
                 <Sparkles className="h-3.5 w-3.5 text-primary" />
                 <span className="text-[11px] font-heading font-semibold text-primary-dark">
-                  วิเคราะห์ด้วย AI Vision และนำเข้าตู้เย็นทันที
+                  วิเคราะห์ด้วย AI Vision และนำเข้าตู้เย็น
                 </span>
               </div>
             </>
@@ -149,12 +153,23 @@ export default function ScannerDropzone({
 
           {/* Action buttons */}
           {!isScanning && (
-            <button
-              onClick={handleResetScan}
-              className="mx-auto flex items-center justify-center gap-2 rounded-full border-2 border-white bg-gradient-to-r from-primary to-primary-dark px-6 py-3 text-sm font-heading font-semibold text-white shadow-soft-blue transition-airy hover:shadow-glow-teal hover:scale-[1.01] active:scale-[0.99] max-w-xs"
-            >
-              สแกนรูปภาพใหม่
-            </button>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full max-w-md mx-auto">
+              {!hasDetections && (
+                <button
+                  onClick={handleStartScan}
+                  className="w-full flex items-center justify-center gap-2 rounded-full border-2 border-white bg-gradient-to-r from-primary to-primary-dark px-6 py-3 text-sm font-heading font-bold text-white shadow-soft-blue hover:scale-[1.01] active:scale-[0.99] transition-airy cursor-pointer"
+                >
+                  <Sparkles className="h-4 w-4 text-emerald-300 animate-pulse" />
+                  เริ่มสแกนด้วย AI Vision
+                </button>
+              )}
+              <button
+                onClick={handleResetScan}
+                className="w-full flex items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-6 py-3 text-sm font-heading font-semibold text-slate-700 hover:bg-slate-50 transition-airy hover:scale-[1.01] active:scale-[0.99] cursor-pointer"
+              >
+                {hasDetections ? "สแกนรูปภาพใหม่" : "เลือกรูปภาพอื่น"}
+              </button>
+            </div>
           )}
         </div>
       )}

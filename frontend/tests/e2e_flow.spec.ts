@@ -19,6 +19,8 @@ test("E2E Presentation Flow: Register, Login, Scan Grocery, View Recipes & Detai
 
   // ไปที่หน้าหลัก (ระบบจะส่งไปหน้า Login เพราะยังไม่ได้เข้าสู่ระบบ)
   await loginPage.goto();
+  // คลิกปุ่ม เข้าสู่ระบบ บนแถบเมนูเพื่อเปิดหน้าต่างล็อกอิน (Modal)
+  await loginPage.loginTabBtn.click();
   await expect(loginPage.usernameInput).toBeVisible();
   await page.waitForTimeout(2000); // ⏳ หน่วงเวลาให้เห็นหน้า Login ชัดๆ 2 วินาที
 

@@ -31,6 +31,7 @@ export default function ScannerView() {
     box_2d: number[];
   }>>([]);
   const [isZoomed, setIsZoomed] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const scanningTexts = [
     "SmartFood AI กำลังวิเคราะห์รูปภาพของคุณ...",
@@ -110,7 +111,7 @@ export default function ScannerView() {
   const visibleDetections = rawDetections
     .map((det) => {
       const matchedItem = detectedItems.find(
-        (item) => item.name.trim().toLowerCase() === det.name.trim().toLowerCase()
+          (item) => item.name.trim().toLowerCase() === det.name.trim().toLowerCase()
       );
       return {
         ...det,
@@ -139,17 +140,17 @@ export default function ScannerView() {
 
   const updateDetectedItemField = (index: number, field: string, value: string | number) => {
     setDetectedItems((prev) =>
-      prev.map((item, idx) => {
-        if (idx === index) {
-          const updatedVal = field === "quantity" ? Number(value) || 0 : value;
-          const updatedItem = { ...item, [field]: updatedVal };
-          if (field === "quantity" || field === "unit") {
-            updatedItem.quantity = formatQuantity(updatedItem.quantity, updatedItem.unit);
+        prev.map((item, idx) => {
+          if (idx === index) {
+            const updatedVal = field === "quantity" ? Number(value) || 0 : value;
+            const updatedItem = { ...item, [field]: updatedVal };
+            if (field === "quantity" || field === "unit") {
+              updatedItem.quantity = formatQuantity(updatedItem.quantity, updatedItem.unit);
+            }
+            return updatedItem;
           }
-          return updatedItem;
-        }
-        return item;
-      })
+          return item;
+        })
     );
   };
 
@@ -169,12 +170,13 @@ export default function ScannerView() {
         category: item.category,
         added_by: "scan",
       }));
-      
+
       const addedItems = await inventoryAPI.addBulk(bulkItems);
       showMessage(`สแกนและนำเข้าตู้เย็นสำเร็จ ${addedItems.length} รายการ! ✅`);
       setDetectedItems([]);
       setRawDetections([]);
       setPreviewUrl(null);
+      setSelectedFile(null);
       loadInventory();
     } catch (err) {
       console.error("Failed to add bulk inventory:", err);
@@ -276,7 +278,7 @@ export default function ScannerView() {
     });
   };
 
-  const processFile = async (file: File) => {
+  const processFile = (file: File) => {
     if (!file) return;
 
     if (!file.type.startsWith("image/")) {
@@ -284,7 +286,7 @@ export default function ScannerView() {
       return;
     }
 
-    setIsScanning(true);
+    setSelectedFile(file);
     setSubmitMessage("");
     setDetectedItems([]);
     setRawDetections([]);
@@ -294,11 +296,20 @@ export default function ScannerView() {
       setPreviewUrl(previewReader.result as string);
     };
     previewReader.readAsDataURL(file);
+  };
+
+  const handleStartScan = async () => {
+    if (!selectedFile) return;
+
+    setIsScanning(true);
+    setSubmitMessage("");
+    setDetectedItems([]);
+    setRawDetections([]);
 
     try {
-      const compressedBase64 = await compressImage(file, 1024, 1024);
+      const compressedBase64 = await compressImage(selectedFile, 1024, 1024);
       const res = await aiAPI.scanOnly(compressedBase64, "image/jpeg");
-      
+
       const items = (res.ingredients || []).map((ing: { name?: string; quantity?: number; unit?: string; category?: string; box_2d?: number[] } | string) => {
         if (typeof ing === "string") {
           return { name: ing, quantity: 1, unit: "ชิ้น", category: "other", box_2d: [0, 0, 100, 100] };
@@ -333,7 +344,7 @@ export default function ScannerView() {
       }));
 
       setDetectedItems(groupedItems);
-      
+
       if (groupedItems.length > 0) {
         showMessage(`สแกนสำเร็จ! พบวัตถุดิบ ${groupedItems.length} ชนิด (แยกตรวจจับ ${items.length} ชิ้น) กรุณาตรวจสอบก่อนบันทึก 👇`, 6000);
       } else {
@@ -364,8 +375,10 @@ export default function ScannerView() {
   };
 
   const handleResetScan = () => {
+    setSelectedFile(null);
     setPreviewUrl(null);
     setDetectedItems([]);
+    setRawDetections([]);
   };
 
   return (
@@ -408,6 +421,8 @@ export default function ScannerView() {
         handleDrop={handleDrop}
         handleFileChange={handleFileChange}
         handleResetScan={handleResetScan}
+        handleStartScan={handleStartScan}
+        hasDetections={detectedItems.length > 0}
       />
 
       <ScannerConfirmationList
