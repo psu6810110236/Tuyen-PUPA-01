@@ -1,41 +1,34 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/components/AuthContext";
 import AuthPage from "@/components/views/AuthPage";
-import HomeView from "@/components/views/HomeView";
-import ScannerView from "@/components/views/ScannerView";
-import RecipeView from "@/components/views/RecipeView";
-import ChatView from "@/components/views/ChatView";
-import InventoryView from "@/components/views/InventoryView";
-import SavedRecipesView from "@/components/views/SavedRecipesView";
-import SettingsView from "@/components/views/SettingsView";
 import { Home, Camera, ChefHat, MessageSquare, LogOut, Package, Lightbulb, Heart, Settings, Bookmark } from "lucide-react";
 import { nutritionAPI, type TodaySummary, type NutritionLog } from "@/lib/api";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 
-// ─── View Type ───
-type ViewType = "home" | "inventory" | "scanner" | "recipe" | "chat" | "saved" | "settings";
-
-// ─── Navigation Items ───
-const navItems: { id: ViewType; label: string; icon: React.ReactNode }[] = [
-  { id: "home", label: "หน้าหลัก (Dashboard)", icon: <Home className="h-5 w-5" /> },
-  { id: "inventory", label: "คลังอาหาร (Inventory)", icon: <Package className="h-5 w-5" /> },
-  { id: "saved", label: "เมนูที่บันทึก (Saved Recipes)", icon: <Heart className="h-5 w-5" /> },
-  { id: "scanner", label: "สแกน (Smart Scan)", icon: <Camera className="h-5 w-5" /> },
-  { id: "recipe", label: "สูตรอาหาร (Recipes)", icon: <ChefHat className="h-5 w-5" /> },
-  { id: "chat", label: "แชท AI (TUYEN AI)", icon: <MessageSquare className="h-5 w-5" /> },
-  { id: "settings", label: "ตั้งค่า (Settings)", icon: <Settings className="h-5 w-5" /> },
+const navItems = [
+  { href: "/", label: "หน้าหลัก (Dashboard)", icon: <Home className="h-5 w-5" /> },
+  { href: "/inventory", label: "คลังอาหาร (Inventory)", icon: <Package className="h-5 w-5" /> },
+  { href: "/saved", label: "เมนูที่บันทึก (Saved Recipes)", icon: <Heart className="h-5 w-5" /> },
+  { href: "/scanner", label: "สแกน (Smart Scan)", icon: <Camera className="h-5 w-5" /> },
+  { href: "/recipes", label: "สูตรอาหาร (Recipes)", icon: <ChefHat className="h-5 w-5" /> },
+  { href: "/chat", label: "แชท AI (TUYEN AI)", icon: <MessageSquare className="h-5 w-5" /> },
+  { href: "/settings", label: "ตั้งค่า (Settings)", icon: <Settings className="h-5 w-5" /> },
 ];
 
-export default function DashboardPage() {
+const mobileNavItems = [
+  { href: "/", label: "หน้าหลัก", icon: <Home className="h-5 w-5" /> },
+  { href: "/inventory", label: "คลังอาหาร", icon: <Package className="h-5 w-5" /> },
+  { href: "/scanner", label: "สแกน", icon: <Camera className="h-5 w-5" /> },
+  { href: "/recipes", label: "สูตรอาหาร", icon: <ChefHat className="h-5 w-5" /> },
+  { href: "/chat", label: "แชท AI", icon: <MessageSquare className="h-5 w-5" /> },
+];
+
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading, user, logout } = useAuth();
-  const [activeView, setActiveView] = useState<ViewType>("home");
-  // ─── Page Transition State ───
-  const [displayedView, setDisplayedView] = useState<ViewType>("home");
-  const [transitionClass, setTransitionClass] = useState("");
-  const prevViewRef = useRef<ViewType>("home");
-  const isTransitioning = useRef(false);
-  const VIEW_ORDER: ViewType[] = ["home", "inventory", "scanner", "recipe", "chat", "saved", "settings"];
+  const pathname = usePathname() || "/";
 
   // ─── Nutrition Stats State ───
   const [todaySummary, setTodaySummary] = useState<TodaySummary | null>(null);
@@ -71,54 +64,6 @@ export default function DashboardPage() {
       window.removeEventListener("nutrition-update", handleNutritionUpdate);
     };
   }, [isAuthenticated]);
-
-  useEffect(() => {
-    const savedView = localStorage.getItem("tuyen_active_view") as ViewType;
-    if (savedView && ["home", "inventory", "scanner", "recipe", "chat", "saved", "settings"].includes(savedView)) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setActiveView(savedView);
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setDisplayedView(savedView);
-      prevViewRef.current = savedView;
-    }
-  }, []);
-
-  const handleViewChange = useCallback((view: ViewType) => {
-    if (view === activeView || isTransitioning.current) return;
-    localStorage.setItem("tuyen_active_view", view);
-
-    const prevIdx = VIEW_ORDER.indexOf(prevViewRef.current);
-    const nextIdx = VIEW_ORDER.indexOf(view);
-    const direction = nextIdx >= prevIdx ? "right" : "left";
-    prevViewRef.current = view;
-    isTransitioning.current = true;
-
-    // IMMEDIATE active state change for UI feedback
-    setActiveView(view);
-
-    // Trigger exit animation on current, then swap & enter new
-    setTransitionClass(direction === "right" ? "page-exit-left" : "page-exit-right");
-
-    setTimeout(() => {
-      setDisplayedView(view);
-      // Wait for layout shift, then scroll to top
-      window.scrollTo({ top: 0, behavior: "instant" });
-      setTransitionClass(direction === "right" ? "page-enter-right" : "page-enter-left");
-      setTimeout(() => {
-        setTransitionClass("");
-        isTransitioning.current = false;
-      }, 350);
-    }, 180);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeView]);
-
-  useEffect(() => {
-    const handleNavigate = (e: CustomEvent<ViewType>) => {
-      handleViewChange(e.detail);
-    };
-    window.addEventListener("navigate", handleNavigate as EventListener);
-    return () => window.removeEventListener("navigate", handleNavigate as EventListener);
-  }, [handleViewChange]);
 
   // ─── Loading State ───
   if (isLoading) {
@@ -187,66 +132,32 @@ export default function DashboardPage() {
     }
   }
 
-  // ─── Render Active View ───
-  const renderView = () => {
-    switch (displayedView) {
-      case "home":
-        return <HomeView />;
-      case "inventory":
-        return <InventoryView />;
-      case "scanner":
-        return <ScannerView />;
-      case "recipe":
-        return <RecipeView />;
-      case "chat":
-        return <ChatView />;
-      case "saved":
-        return <SavedRecipesView />;
-      case "settings":
-        return <SettingsView />;
-      default:
-        return <HomeView />;
-    }
-  };
-
-  // ─── Mobile Nav: 4 items + central scanner FAB ───
-  // (saved & settings are accessible via desktop sidebar / in-page)
-  const mobileNavItems: { id: ViewType; label: string; icon: React.ReactNode }[] = [
-    { id: "home",      label: "หน้าหลัก",   icon: <Home className="h-5 w-5" /> },
-    { id: "inventory", label: "คลังอาหาร",  icon: <Package className="h-5 w-5" /> },
-    { id: "scanner",   label: "สแกน",       icon: <Camera className="h-5 w-5" /> },
-    { id: "recipe",    label: "สูตรอาหาร",  icon: <ChefHat className="h-5 w-5" /> },
-    { id: "chat",      label: "แชท AI",     icon: <MessageSquare className="h-5 w-5" /> },
-  ];
+  const isChatPage = pathname === "/chat";
 
   return (
     <div className="min-h-screen bg-background">
       {/* ─── Top Header Bar ─── */}
       <header className="sticky top-0 z-50 glass-header">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-3">
-          <div className="flex items-center gap-3">
-            {/* Desktop Logo */}
+          <Link href="/" className="flex items-center gap-3 transition-transform active:scale-95">
             <img src="/g1.png" alt="TUYEN Logo" className="hidden sm:block h-8 w-auto object-contain" />
-            {/* Mobile/Responsive Logo */}
             <img src="/g2.png" alt="TUYEN Logo" className="block sm:hidden h-8 w-8 object-contain" />
             <h1 className="text-lg font-heading font-bold text-foreground tracking-tight block sm:hidden">
               TUYEN
             </h1>
-          </div>
+          </Link>
           <div className="flex items-center gap-1">
-            {/* Saved Button — access saved recipes from anywhere */}
-            <button
-              onClick={() => handleViewChange("saved")}
+            <Link
+              href="/saved"
               className={`flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-body font-medium transition-airy focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 ${
-                activeView === "saved"
+                pathname === "/saved"
                   ? "text-primary bg-primary-pale"
                   : "text-foreground-secondary hover:text-primary hover:bg-primary-pale/60"
               }`}
             >
               <Bookmark className="h-4 w-4" />
               <span className="hidden sm:inline">เมนูที่บันทึก</span>
-            </button>
-            {/* Logout Button */}
+            </Link>
             <button
               onClick={logout}
               className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-body font-medium text-foreground-secondary transition-airy hover:bg-danger/10 hover:text-danger focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger/30"
@@ -261,21 +172,19 @@ export default function DashboardPage() {
 
         {/* ─── Main Two-Column Layout ─── */}
       <div className={`mx-auto flex max-w-7xl gap-6 lg:px-6 lg:py-6 lg:pb-6 ${
-        activeView === "chat"
+        isChatPage
           ? "px-0 py-0 pb-0"           // Chat: no padding — fills edge-to-edge on mobile
           : "px-6 py-6 pb-24"          // Other views: normal spacing + bottom nav clearance
       }`}>
         {/* ─── Left Column: Dynamic Content ─── */}
         <main className="flex-1 min-w-0 overflow-hidden">
-          <div className={`view-transition-container ${transitionClass}`}>
-            {renderView()}
-          </div>
+          {children}
         </main>
 
         {/* ─── Right Column: Sticky Sidebar ─── */}
         <aside className="hidden w-[340px] shrink-0 lg:block">
           <div className="sticky top-[73px] flex flex-col gap-5">
-            {/* ── Profile Greeting Card (Liquid Light Blue) ── */}
+            {/* ── Profile Greeting Card ── */}
             <div className="rounded-xl border border-blue-100/80 bg-gradient-to-tr from-blue-50 via-sky-50 to-indigo-50 p-5 shadow-sm">
               <div className="flex flex-col">
                 <span className="text-xs font-heading uppercase tracking-wider text-blue-600/90 font-bold">
@@ -313,23 +222,26 @@ export default function DashboardPage() {
             <div className="rounded-xl border border-outline bg-surface p-5 shadow-card">
               <h3 className="mb-4 text-xs font-heading font-semibold text-foreground">เมนู</h3>
               <nav className="flex flex-col gap-1">
-                {navItems.map((item) => (
-                  <button
-                    key={item.id}
-                    onClick={() => handleViewChange(item.id)}
-                    className={`flex items-center gap-3 rounded-lg px-3.5 py-2 text-left text-xs font-body font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 active:scale-95 ${
-                      activeView === item.id
-                        ? "bg-primary text-white shadow-sm font-semibold"
-                        : "text-foreground-secondary hover:bg-surface-alt hover:text-foreground"
-                    }`}
-                  >
-                    <span className="flex items-center justify-center w-5 h-5">{item.icon}</span>
-                    {item.label}
-                    {activeView === item.id && (
-                      <span className="ml-auto h-1.5 w-1.5 rounded-full bg-white"></span>
-                    )}
-                  </button>
-                ))}
+                {navItems.map((item) => {
+                  const isActive = pathname === item.href;
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className={`flex items-center gap-3 rounded-lg px-3.5 py-2 text-left text-xs font-body font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 active:scale-95 ${
+                        isActive
+                          ? "bg-primary text-white shadow-sm font-semibold"
+                          : "text-foreground-secondary hover:bg-surface-alt hover:text-foreground"
+                      }`}
+                    >
+                      <span className="flex items-center justify-center w-5 h-5">{item.icon}</span>
+                      {item.label}
+                      {isActive && (
+                        <span className="ml-auto h-1.5 w-1.5 rounded-full bg-white"></span>
+                      )}
+                    </Link>
+                  );
+                })}
               </nav>
             </div>
 
@@ -350,76 +262,41 @@ export default function DashboardPage() {
         </aside>
       </div>
 
-      {/* ─── Mobile Bottom Navigation — perfect 5-column grid ─── */}
+      {/* ─── Mobile Bottom Navigation ─── */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 glass-nav lg:hidden">
-        {/* grid-cols-5: [Home] [Pantry] [Camera FAB] [Recipes] [Chat] */}
         <div className="mx-auto grid grid-cols-5 items-center justify-items-center w-full max-w-md px-2 py-1">
+          {mobileNavItems.map((item) => {
+            const isActive = pathname === item.href;
+            if (item.href === "/scanner") {
+              return (
+                <div key={item.href} className="relative flex items-center justify-center">
+                  <Link
+                    href={item.href}
+                    aria-label={item.label}
+                    className="no-tap-scale fab-glow absolute -top-7 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-white border-[3px] border-white shadow-lg transition-transform hover:scale-105 active:scale-90 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+                  >
+                    <Camera className="h-6 w-6" />
+                  </Link>
+                  <span className="h-14 w-14 opacity-0 pointer-events-none" aria-hidden="true" />
+                </div>
+              );
+            }
 
-          {/* Col 1 — Home */}
-          <button
-            onClick={() => handleViewChange("home")}
-            aria-label="หน้าหลัก"
-            className={`flex flex-col items-center gap-0.5 rounded-xl px-3 py-2 w-full transition-airy active:scale-90 focus-visible:outline-none ${
-              activeView === "home" ? "text-primary" : "text-foreground-muted hover:text-foreground-secondary"
-            }`}
-          >
-            <Home className="h-5 w-5" />
-            <span className="text-[10px] font-body font-medium">หน้าหลัก</span>
-            {activeView === "home" && <span className="h-1 w-4 rounded-full bg-primary mt-0.5" />}
-          </button>
-
-          {/* Col 2 — Pantry */}
-          <button
-            onClick={() => handleViewChange("inventory")}
-            aria-label="คลังอาหาร"
-            className={`flex flex-col items-center gap-0.5 rounded-xl px-3 py-2 w-full transition-airy active:scale-90 focus-visible:outline-none ${
-              activeView === "inventory" ? "text-primary" : "text-foreground-muted hover:text-foreground-secondary"
-            }`}
-          >
-            <Package className="h-5 w-5" />
-            <span className="text-[10px] font-body font-medium">คลังอาหาร</span>
-            {activeView === "inventory" && <span className="h-1 w-4 rounded-full bg-primary mt-0.5" />}
-          </button>
-
-          {/* Col 3 — Scanner FAB (floats above the bar) */}
-          <div className="relative flex items-center justify-center">
-            <button
-              onClick={() => handleViewChange("scanner")}
-              aria-label="สแกน AI"
-              className="no-tap-scale fab-glow absolute -top-7 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-white border-[3px] border-white shadow-lg transition-transform hover:scale-105 active:scale-90 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
-            >
-              <Camera className="h-6 w-6" />
-            </button>
-            {/* Spacer keeps the grid row height consistent */}
-            <span className="h-14 w-14 opacity-0 pointer-events-none" aria-hidden="true" />
-          </div>
-
-          {/* Col 4 — Recipes */}
-          <button
-            onClick={() => handleViewChange("recipe")}
-            aria-label="สูตรอาหาร"
-            className={`flex flex-col items-center gap-0.5 rounded-xl px-3 py-2 w-full transition-airy active:scale-90 focus-visible:outline-none ${
-              activeView === "recipe" ? "text-primary" : "text-foreground-muted hover:text-foreground-secondary"
-            }`}
-          >
-            <ChefHat className="h-5 w-5" />
-            <span className="text-[10px] font-body font-medium">สูตรอาหาร</span>
-            {activeView === "recipe" && <span className="h-1 w-4 rounded-full bg-primary mt-0.5" />}
-          </button>
-
-          {/* Col 5 — Chat */}
-          <button
-            onClick={() => handleViewChange("chat")}
-            aria-label="แชท AI"
-            className={`flex flex-col items-center gap-0.5 rounded-xl px-3 py-2 w-full transition-airy active:scale-90 focus-visible:outline-none ${
-              activeView === "chat" ? "text-primary" : "text-foreground-muted hover:text-foreground-secondary"
-            }`}
-          >
-            <MessageSquare className="h-5 w-5" />
-            <span className="text-[10px] font-body font-medium">แชท AI</span>
-            {activeView === "chat" && <span className="h-1 w-4 rounded-full bg-primary mt-0.5" />}
-          </button>
-
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                aria-label={item.label}
+                className={`flex flex-col items-center gap-0.5 rounded-xl px-3 py-2 w-full transition-airy active:scale-90 focus-visible:outline-none ${
+                  isActive ? "text-primary" : "text-foreground-muted hover:text-foreground-secondary"
+                }`}
+              >
+                {item.icon}
+                <span className="text-[10px] font-body font-medium">{item.label}</span>
+                {isActive && <span className="h-1 w-4 rounded-full bg-primary mt-0.5" />}
+              </Link>
+            );
+          })}
         </div>
       </nav>
     </div>

@@ -92,3 +92,39 @@ docker compose up --build -d
    ```
 
 เมื่อรันครบแล้ว สามารถเปิดเว็บไปที่ [http://localhost:3000](http://localhost:3000) เพื่อเริ่มต้นใช้งานแอปพลิเคชันได้ทันที!
+
+---
+
+## 🧪 การรัน Test (Testing)
+
+โปรเจกต์นี้มีระบบ Automated Tests ครอบคลุมทั้งฝั่ง Backend และ Frontend
+
+### 1. Backend Tests (Pytest)
+ระบบทดสอบฝั่ง API หลังบ้าน ใช้ฐานข้อมูลจำลอง (SQLite in-memory) ไม่กระทบข้อมูลจริง:
+```bash
+cd backend
+
+# ติดตั้ง dependencies สำหรับ test (ทำครั้งแรก)
+pip install -r requirements-test.txt
+
+# รัน test ทั้งหมด (100+ cases)
+python -m pytest tests/ -v
+
+# รันเฉพาะไฟล์ที่ต้องการ
+python -m pytest tests/test_inventory.py -v
+```
+
+### 2. Frontend E2E Tests (Playwright)
+จำลองพฤติกรรมผู้ใช้งานจริงบนเบราว์เซอร์ (ต้องรัน Backend และ AI Service ไว้ก่อนรันคำสั่งเหล่านี้):
+```bash
+cd frontend
+
+# ติดตั้งเบราว์เซอร์สำหรับทดสอบ (ทำครั้งแรก)
+npx playwright install
+
+# รัน test แบบมี UI (แนะนำสำหรับการดีบัก)
+npx playwright test --ui
+
+# รัน test เบื้องหลัง
+npx playwright test
+```

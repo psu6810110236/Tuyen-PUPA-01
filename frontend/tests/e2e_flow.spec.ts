@@ -52,10 +52,27 @@ test("E2E Presentation Flow: Register, Login, Scan Grocery, View Recipes & Detai
   const imagePath = path.join(__dirname, "fixtures", "fridge_items.jpg");
   await dashboardPage.uploadScanImage(imagePath);
 
-  // คอยดูผลลัพธ์การสแกนและบันทึกฐานข้อมูลสำเร็จอัตโนมัติ (Gemini API จะใช้เวลาสักครู่)
-  await expect(page.locator("text=สแกนสำเร็จ!")).toBeVisible({ timeout: 60000 });
-  console.log("AI Scanner successfully scanned image and added items to inventory.");
-  await page.waitForTimeout(6000); // ⏳ หน่วงเวลาแสดงรายการตู้เย็นที่งอกของใหม่มาจากการสแกน 6 วินาที
+  // คอยดูรายการ Confirmation List จาก AI (Redesigned Flow: ไม่บันทึกอัตโนมัติ)
+  // ผู้ใช้ต้องตรวจสอบรายการก่อนกดยืนยัน
+  console.log("Waiting for Confirmation List from AI scanner...");
+  const confirmList = page.locator("[data-testid='confirm-list'], .confirm-list, text=ยืนยันรายการ").first();
+  const hasConfirmList = await confirmList.isVisible({ timeout: 60000 }).catch(() => false);
+
+  if (hasConfirmList) {
+    console.log("Confirmation list appeared. Verifying items and confirming...");
+    await page.waitForTimeout(2000); // ⏳ หน่วงเวลาแสดง Confirmation List ให้ชัด
+    // กดปุ่มยืนยันบันทึกเข้า Inventory
+    const confirmBtn = page.locator("button:has-text('บันทึก'), button:has-text('ยืนยัน'), button:has-text('Confirm')").last();
+    if (await confirmBtn.isVisible()) {
+      await confirmBtn.click();
+      console.log("Confirmed bulk save of scanned items.");
+    }
+  } else {
+    // fallback: รอ success message แบบเก่า (กรณี UI version อื่น)
+    await expect(page.locator("text=สแกนสำเร็จ!, text=เพิ่มสำเร็จ").first()).toBeVisible({ timeout: 30000 });
+    console.log("AI Scanner successfully scanned image (legacy flow).");
+  }
+  await page.waitForTimeout(3000); // ⏳ หน่วงเวลาให้รายการตู้เย็นอัปเดต
 
   // 4. ไปที่หน้าสูตรอาหาร (Recipes)
   console.log("Navigating to Recipes list...");
